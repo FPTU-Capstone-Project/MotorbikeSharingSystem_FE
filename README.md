@@ -149,6 +149,42 @@ chmod +x setup.sh
 
 This script will handle all installation, dependencies, and startup processes automatically.
 
+### Quick Start with Bash Script
+
+We provide an automated setup script that handles everything for you:
+
+<details>
+<summary>Using the Setup Script</summary>
+
+The setup script provides three options:
+
+1. **Start Development Server** (Recommended for development)
+   ```bash
+   ./setup.sh
+   # Choose option 1 when prompted
+   ```
+
+2. **Build for Production** (For deployment preparation)
+   ```bash
+   ./setup.sh
+   # Choose option 2 when prompted
+   ```
+
+3. **Show Project Information** (For overview only)
+   ```bash
+   ./setup.sh
+   # Choose option 3 when prompted
+   ```
+
+The script automatically:
+- Checks system requirements
+- Installs dependencies
+- Sets up git hooks
+- Provides interactive menu options
+- Opens browser automatically for development
+
+</details>
+
 ## Project Structure
 
 ```
@@ -270,51 +306,313 @@ When creating new components:
 
 ## Deployment
 
+### Automated Deployment with Bash Script
+
+We provide a comprehensive deployment script that handles the entire workflow:
+
+<details>
+<summary>Using the Deployment Script</summary>
+
+**Make the script executable:**
+```bash
+chmod +x commit-and-deploy.sh
+```
+
+**Run the deployment script:**
+```bash
+./commit-and-deploy.sh
+```
+
+**Available Options:**
+1. **Commit and push to GitHub only** - For code versioning
+2. **Build and deploy to Vercel only** - For quick deployments
+3. **Commit, push, and deploy** - Complete workflow
+4. **Show deployment status** - Check current deployments
+5. **Exit** - Close the script
+
+The script automatically:
+- Checks git status and handles commits
+- Builds the project for production
+- Deploys to Vercel with production settings
+- Opens the deployment URL in your browser
+- Handles error cases and provides helpful feedback
+
+</details>
+
+### Manual Deployment Methods
+
+<details>
+<summary>Manual Git Operations</summary>
+
+**Initial repository setup:**
+```bash
+git init
+git add .
+git commit -m "Initial commit for MSSUS admin dashboard"
+git remote add origin https://github.com/username/repository.git
+git branch -M main
+git push -u origin main
+```
+
+**Subsequent updates:**
+```bash
+git add .
+git commit -m "Your commit message"
+git push origin main
+```
+
+**Branch management:**
+```bash
+# Create and switch to new branch
+git checkout -b feature-name
+
+# Switch back to main
+git checkout main
+
+# Merge feature branch
+git merge feature-name
+```
+
+</details>
+
+<details>
+<summary>Manual Vercel Deployment</summary>
+
+**One-time setup:**
+```bash
+# Install Vercel CLI globally
+npm install -g vercel
+
+# Login to your Vercel account
+vercel login
+```
+
+**Deploy to production:**
+```bash
+# Build the project
+npm run build
+
+# Deploy to Vercel
+vercel --prod
+```
+
+**Deploy with custom settings:**
+```bash
+# Deploy with specific configuration
+vercel --prod --name mssus-admin --regions iad1
+```
+
+**Environment variables setup:**
+```bash
+# Set environment variables
+vercel env add REACT_APP_API_URL production
+vercel env add REACT_APP_VERSION production
+```
+
+</details>
+
+<details>
+<summary>Other Deployment Platforms</summary>
+
+**Netlify Deployment:**
+```bash
+# Install Netlify CLI
+npm install -g netlify-cli
+
+# Build and deploy
+npm run build
+netlify deploy --prod --dir=build
+```
+
+**GitHub Pages:**
+```bash
+# Install gh-pages
+npm install -g gh-pages
+
+# Deploy to GitHub Pages
+npm run build
+gh-pages -d build
+```
+
+**Firebase Hosting:**
+```bash
+# Install Firebase CLI
+npm install -g firebase-tools
+
+# Initialize and deploy
+firebase init hosting
+npm run build
+firebase deploy
+```
+
+**AWS S3 Static Website:**
+```bash
+# Build the project
+npm run build
+
+# Sync to S3 bucket (requires AWS CLI)
+aws s3 sync build/ s3://your-bucket-name --delete
+aws s3 website s3://your-bucket-name --index-document index.html
+```
+
+</details>
+
 ### Production Build
 
+**Standard build process:**
 ```bash
 npm run build
 ```
 
-This creates an optimized production build in the `build` folder.
+**Build with environment-specific configurations:**
+```bash
+# Development build
+npm run build:dev
 
-### Deployment Options
+# Staging build  
+npm run build:staging
 
-<details>
-<summary>Vercel Deployment</summary>
+# Production build
+npm run build:prod
+```
 
-1. **Automatic Deployment**
-   ```bash
-   npx vercel
-   ```
-
-2. **Configure Build Settings**
-   - Build Command: `npm run build`
-   - Output Directory: `build`
-   - Install Command: `npm install`
-
-3. **Environment Variables**
-   Set up production environment variables in Vercel dashboard
-
-</details>
-
-<details>
-<summary>Other Platforms</summary>
-
-The build folder can be deployed to:
-- **Netlify**: Drag and drop deployment
-- **AWS S3**: Static website hosting
-- **Firebase Hosting**: Google Firebase platform
-- **GitHub Pages**: Direct repository deployment
-
-</details>
+**Build analysis:**
+```bash
+# Analyze bundle size
+npm install -g webpack-bundle-analyzer
+npx webpack-bundle-analyzer build/static/js/*.js
+```
 
 ### Environment Configuration
 
-Create environment files for different stages:
-- `.env.development` - Development environment
-- `.env.staging` - Staging environment  
-- `.env.production` - Production environment
+<details>
+<summary>Environment Variables Setup</summary>
+
+Create environment files for different deployment stages:
+
+**Development (.env.development):**
+```bash
+REACT_APP_ENV=development
+REACT_APP_API_URL=http://localhost:8000/api
+REACT_APP_VERSION=dev
+REACT_APP_DEBUG=true
+```
+
+**Staging (.env.staging):**
+```bash
+REACT_APP_ENV=staging
+REACT_APP_API_URL=https://api-staging.mssus.com
+REACT_APP_VERSION=staging
+REACT_APP_DEBUG=false
+```
+
+**Production (.env.production):**
+```bash
+REACT_APP_ENV=production
+REACT_APP_API_URL=https://api.mssus.com
+REACT_APP_VERSION=1.0.0
+REACT_APP_DEBUG=false
+```
+
+**Using environment variables in your code:**
+```javascript
+const apiUrl = process.env.REACT_APP_API_URL;
+const isProduction = process.env.REACT_APP_ENV === 'production';
+```
+
+</details>
+
+### Continuous Integration and Deployment
+
+<details>
+<summary>GitHub Actions Workflow</summary>
+
+Create `.github/workflows/deploy.yml` for automated deployments:
+
+```yaml
+name: Deploy to Vercel
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v2
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v2
+      with:
+        node-version: '18'
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Run tests
+      run: npm test -- --coverage --watchAll=false
+    
+    - name: Build project
+      run: npm run build
+    
+    - name: Deploy to Vercel
+      uses: amondnet/vercel-action@v20
+      with:
+        vercel-token: ${{ secrets.VERCEL_TOKEN }}
+        vercel-org-id: ${{ secrets.ORG_ID }}
+        vercel-project-id: ${{ secrets.PROJECT_ID }}
+        vercel-args: '--prod'
+```
+
+</details>
+
+### Deployment Troubleshooting
+
+<details>
+<summary>Common Issues and Solutions</summary>
+
+**Build failures:**
+```bash
+# Clear node modules and reinstall
+rm -rf node_modules package-lock.json
+npm install
+
+# Clear build cache
+rm -rf build
+npm run build
+```
+
+**Git push issues:**
+```bash
+# Force push (use carefully)
+git push --force-with-lease origin main
+
+# Reset to remote state
+git fetch origin
+git reset --hard origin/main
+```
+
+**Vercel deployment issues:**
+```bash
+# Clear Vercel cache
+vercel --debug
+
+# Redeploy with fresh build
+rm -rf .vercel
+vercel --prod
+```
+
+**Environment variable issues:**
+- Ensure all required variables are set in Vercel dashboard
+- Check variable names start with REACT_APP_ prefix
+- Verify production environment variables are different from development
+
+</details>
 
 ## Contributing
 
