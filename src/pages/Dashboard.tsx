@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { memo, useMemo } from 'react';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import {
   UsersIcon,
   MapIcon,
@@ -23,41 +24,6 @@ import {
   Cell,
 } from 'recharts';
 
-const stats = [
-  {
-    name: 'Total Users',
-    value: '2,847',
-    change: '+12.5%',
-    changeType: 'increase',
-    icon: UsersIcon,
-    color: 'bg-blue-500',
-  },
-  {
-    name: 'Active Rides',
-    value: '156',
-    change: '+8.2%',
-    changeType: 'increase',
-    icon: MapIcon,
-    color: 'bg-green-500',
-  },
-  {
-    name: 'Total Revenue',
-    value: '$48,562',
-    change: '+23.1%',
-    changeType: 'increase',
-    icon: CurrencyDollarIcon,
-    color: 'bg-purple-500',
-  },
-  {
-    name: 'SOS Alerts',
-    value: '3',
-    change: '-2',
-    changeType: 'decrease',
-    icon: ExclamationTriangleIcon,
-    color: 'bg-red-500',
-  },
-];
-
 const revenueData = [
   { month: 'Jan', revenue: 4200, rides: 120 },
   { month: 'Feb', revenue: 5800, rides: 150 },
@@ -67,11 +33,6 @@ const revenueData = [
   { month: 'Jun', revenue: 10200, rides: 280 },
 ];
 
-const rideStatusData = [
-  { name: 'Completed', value: 1245, color: '#10B981' },
-  { name: 'Ongoing', value: 156, color: '#3B82F6' },
-  { name: 'Cancelled', value: 89, color: '#EF4444' },
-];
 
 const recentActivity = [
   {
@@ -108,14 +69,57 @@ const recentActivity = [
   },
 ];
 
-export default function Dashboard() {
+const Dashboard = memo(() => {
+  const { t } = useTranslation();
+
+  const stats = useMemo(() => [
+    {
+      name: t('dashboard.totalUsers'),
+      value: '2,847',
+      change: '+12.5%',
+      changeType: 'increase' as const,
+      icon: UsersIcon,
+      color: 'bg-blue-500',
+    },
+    {
+      name: t('dashboard.activeRides'),
+      value: '156',
+      change: '+8.2%',
+      changeType: 'increase' as const,
+      icon: MapIcon,
+      color: 'bg-green-500',
+    },
+    {
+      name: t('dashboard.totalRevenue'),
+      value: '$48,562',
+      change: '+23.1%',
+      changeType: 'increase' as const,
+      icon: CurrencyDollarIcon,
+      color: 'bg-purple-500',
+    },
+    {
+      name: t('dashboard.sosAlerts'),
+      value: '3',
+      change: '-2',
+      changeType: 'decrease' as const,
+      icon: ExclamationTriangleIcon,
+      color: 'bg-red-500',
+    },
+  ], [t]);
+
+  const rideStatusData = useMemo(() => [
+    { name: t('dashboard.completed'), value: 1245, color: '#10B981' },
+    { name: t('dashboard.ongoing'), value: 156, color: '#3B82F6' },
+    { name: t('dashboard.cancelled'), value: 89, color: '#EF4444' },
+  ], [t]);
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Dashboard Overview</h1>
+        <h1 className="text-3xl font-bold text-gray-900">{t('dashboard.title')}</h1>
         <p className="mt-2 text-gray-600">
-          Monitor your motorbike sharing system performance and key metrics
+          {t('dashboard.subtitle')}
         </p>
       </div>
 
@@ -127,7 +131,7 @@ export default function Dashboard() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.1 }}
-            className="card"
+            className="card-interactive"
           >
             <div className="flex items-center">
               <div className={`p-3 rounded-lg ${stat.color}`}>
@@ -165,7 +169,7 @@ export default function Dashboard() {
           transition={{ delay: 0.3 }}
           className="card"
         >
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Revenue Trend</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('dashboard.revenueTrend')}</h3>
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={revenueData}>
@@ -199,7 +203,7 @@ export default function Dashboard() {
           transition={{ delay: 0.4 }}
           className="card"
         >
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Ride Status Distribution</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('dashboard.rideStatusDistribution')}</h3>
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
@@ -243,7 +247,7 @@ export default function Dashboard() {
         transition={{ delay: 0.5 }}
         className="card"
       >
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Monthly Rides</h3>
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('dashboard.monthlyRides')}</h3>
         <div className="h-80">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={revenueData}>
@@ -270,7 +274,7 @@ export default function Dashboard() {
         transition={{ delay: 0.6 }}
         className="card"
       >
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Activity</h3>
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('dashboard.recentActivity')}</h3>
         <div className="space-y-4">
           {recentActivity.map((activity) => (
             <div key={activity.id} className="flex items-center p-4 bg-gray-50 rounded-lg">
@@ -295,4 +299,8 @@ export default function Dashboard() {
       </motion.div>
     </div>
   );
-}
+});
+
+Dashboard.displayName = 'Dashboard';
+
+export default Dashboard;

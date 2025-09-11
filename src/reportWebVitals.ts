@@ -12,4 +12,25 @@ const reportWebVitals = (onPerfEntry?: ReportHandler) => {
   }
 };
 
+// Enhanced performance monitoring
+export const logWebVitals = () => {
+  reportWebVitals((metric) => {
+    // Log to console in development
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`${metric.name}: ${metric.value}`);
+    }
+    
+    // Send to analytics in production
+    if (process.env.NODE_ENV === 'production') {
+      // Example: Analytics service
+      // analytics.track('Web Vitals', {
+      //   name: metric.name,
+      //   value: metric.value,
+      //   id: metric.id,
+      //   delta: metric.delta,
+      // });
+    }
+  });
+};
+
 export default reportWebVitals;
