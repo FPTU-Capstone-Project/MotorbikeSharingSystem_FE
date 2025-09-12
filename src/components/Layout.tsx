@@ -154,54 +154,25 @@ const SidebarContent = memo(({ location }: { location: any }) => {
       {navigation.map((item) => {
         const isActive = location.pathname === item.href;
         return (
-          <motion.div
+          <Link
             key={item.name}
-            whileHover={{ scale: 1.02, x: 4 }}
-            whileTap={{ scale: 0.98 }}
-            transition={{ duration: 0.12, ease: [0.4, 0.0, 0.2, 1] }}
-            className="gpu-accelerated"
+            to={item.href}
+            className={cn(
+              'group flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200',
+              isActive
+                ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-600'
+                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+            )}
           >
-            <Link
-              to={item.href}
+            <item.icon
               className={cn(
-                'group flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-all duration-150 relative overflow-hidden',
-                isActive
-                  ? 'bg-blue-50 text-blue-700 shadow-sm'
-                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 hover:shadow-sm'
+                'mr-3 h-5 w-5 transition-colors',
+                isActive ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-500'
               )}
-            >
-              <motion.div
-                animate={isActive ? { rotate: 360 } : { rotate: 0 }}
-                transition={{ duration: 0.3, ease: "easeInOut" }}
-                className={cn(
-                  'mr-3 h-5 w-5 transition-colors duration-150',
-                  isActive ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-500'
-                )}
-              >
-                <item.icon className="w-full h-full" aria-hidden="true" />
-              </motion.div>
-              
-              <span className="relative z-10">{item.name}</span>
-              
-              {isActive && (
-                <motion.div
-                  layoutId="activeTab"
-                  className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-blue-600/10 rounded-lg"
-                  initial={false}
-                  transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-                />
-              )}
-              
-              {isActive && (
-                <motion.div
-                  layoutId="activeIndicator"
-                  className="absolute left-0 w-1 bg-blue-600 rounded-r-full h-8"
-                  initial={false}
-                  transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                />
-              )}
-            </Link>
-          </motion.div>
+              aria-hidden="true"
+            />
+            {item.name}
+          </Link>
         );
       })}
     </nav>
