@@ -42,7 +42,7 @@ git log --oneline -5
 ### Step 2: Fetch Latest Changes
 **What we did:**
 ```bash
-git fetch origin
+git fetch origin master
 ```
 
 **Why this is important:**
@@ -59,19 +59,52 @@ git log --oneline master..HEAD
 **What we discovered:**
 - Our branch had 5 unique commits
 - Master branch was at a different point in history
-- Rebase was necessary to create linear history
+- Remote conflicts existed that needed resolution
 
-### Step 4: Perform Interactive Rebase
+### Step 4: Perform Rebase Against Origin/Master
 **What we did:**
 ```bash
-git rebase -i master
+git rebase origin/master
 ```
 
 **What happened:**
-- Git automatically handled all conflicts
-- All commits were cleanly applied on top of master
-- No manual conflict resolution required
+- Git showed warnings about skipped commits
+- Some commits were already applied in different forms
 - Result: "Successfully rebased and updated refs/heads/remove-i18n"
+
+### Step 5: Resolve Remote Conflicts with Force Push
+**The Challenge:**
+- Local rebase was successful but remote still showed conflicts
+- Remote branch history was different from local
+- GitHub interface showed conflicts in multiple files:
+  - `src/components/Layout.tsx`
+  - `src/index.css` 
+  - `src/pages/Dashboard.tsx`
+  - `src/pages/UserManagement.tsx`
+
+**What we did:**
+```bash
+git push --force-with-lease origin remove-i18n
+```
+
+**Result:**
+- Successfully force-updated remote branch
+- Remote conflicts resolved  
+- Clean linear history established both locally and remotely
+
+### 🔒 About Force Push Safety
+**Why `--force-with-lease`?**
+- Safer than regular `--force` push
+- Only pushes if remote hasn't changed since our last fetch
+- Prevents accidentally overwriting someone else's work
+- Recommended for rewriting branch history
+
+**When is it safe to force push?**
+✅ On feature branches you own  
+✅ After successful local rebase  
+✅ When no one else is working on the branch  
+❌ Never on main/master branches  
+❌ Never on shared branches without team coordination
 
 ## 🚀 Why We Used Rebase Instead of Merge
 
@@ -195,9 +228,27 @@ git rebase --continue
 git reflog
 ```
 
+## 🏆 Final Resolution Summary
+
+### ✅ What Was Successfully Resolved:
+1. **Local Conflicts**: Rebased against origin/master successfully
+2. **Remote Conflicts**: Force-pushed with `--force-with-lease` to update remote branch
+3. **File Conflicts**: All files mentioned in GitHub were automatically resolved:
+   - `src/components/Layout.tsx` ✅
+   - `src/index.css` ✅  
+   - `src/pages/Dashboard.tsx` ✅
+   - `src/pages/UserManagement.tsx` ✅
+
+### 📈 Branch Status:
+- **Local**: Clean working tree, up to date with remote
+- **Remote**: Conflicts resolved, ready for merge/PR
+- **History**: Linear commit timeline achieved
+- **Commits**: All performance optimization commits preserved
+
 ---
 
 **Date**: September 13, 2025  
 **Branch**: remove-i18n  
-**Status**: ✅ Successfully Resolved  
-**Performance**: ✅ Restored to Original Speed
+**Status**: ✅ Successfully Resolved (Both Local & Remote)  
+**Performance**: ✅ Restored to Original Speed  
+**Method**: Rebase + Force Push with Lease
