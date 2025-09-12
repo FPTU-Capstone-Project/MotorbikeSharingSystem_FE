@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo, memo } from 'react';
+import React, { useState, useCallback, memo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
   HomeIcon,
@@ -13,32 +13,24 @@ import {
   MagnifyingGlassIcon,
 } from '@heroicons/react/24/outline';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useTranslation } from 'react-i18next';
 import { cn } from '../utils/cn';
-import LanguageSwitcher from './LanguageSwitcher';
 
 interface LayoutProps {
   children: React.ReactNode;
 }
 
-const useNavigation = () => {
-  const { t } = useTranslation();
-  
-  return useMemo(() => [
-    { name: t('nav.dashboard'), href: '/', icon: HomeIcon },
-    { name: t('nav.users'), href: '/users', icon: UsersIcon },
-    { name: t('nav.rides'), href: '/rides', icon: MapIcon },
-    { name: t('nav.payments'), href: '/payments', icon: CreditCardIcon },
-    { name: t('nav.safety'), href: '/safety', icon: ShieldCheckIcon },
-    { name: t('nav.analytics'), href: '/analytics', icon: ChartBarIcon },
-  ], [t]);
-};
+const navigation = [
+  { name: 'Dashboard', href: '/', icon: HomeIcon },
+  { name: 'Users', href: '/users', icon: UsersIcon },
+  { name: 'Rides', href: '/rides', icon: MapIcon },
+  { name: 'Payments', href: '/payments', icon: CreditCardIcon },
+  { name: 'Safety', href: '/safety', icon: ShieldCheckIcon },
+  { name: 'Analytics', href: '/analytics', icon: ChartBarIcon },
+];
 
 const Layout = memo(({ children }: LayoutProps) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
-  const { t } = useTranslation();
-  const navigation = useNavigation();
   
   const closeSidebar = useCallback(() => {
     setSidebarOpen(false);
@@ -84,7 +76,7 @@ const Layout = memo(({ children }: LayoutProps) => {
                 <XMarkIcon className="h-5 w-5" />
               </button>
             </div>
-            <SidebarContent location={location} navigation={navigation} />
+            <SidebarContent location={location} />
           </motion.div>
         )}
       </AnimatePresence>
@@ -96,7 +88,7 @@ const Layout = memo(({ children }: LayoutProps) => {
             <div className="flex items-center h-16 px-6 border-b border-gray-200">
               <h1 className="text-xl font-bold text-gray-900">MSSUS Admin</h1>
             </div>
-            <SidebarContent location={location} navigation={navigation} />
+            <SidebarContent location={location} />
           </div>
         </div>
       </div>
@@ -120,14 +112,13 @@ const Layout = memo(({ children }: LayoutProps) => {
                   </div>
                   <input
                     className="input-field pl-10 pr-4 py-2 w-80 text-sm"
-                    placeholder={t('header.searchPlaceholder')}
+                    placeholder="Search users, rides, or transactions..."
                     type="search"
                   />
                 </div>
               </div>
             </div>
             <div className="flex items-center space-x-4">
-              <LanguageSwitcher />
               <button className="relative p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
                 <BellIcon className="h-6 w-6" />
                 <span className="absolute -top-1 -right-1 h-4 w-4 bg-red-500 rounded-full flex items-center justify-center text-xs text-white font-medium">
@@ -138,7 +129,7 @@ const Layout = memo(({ children }: LayoutProps) => {
                 <div className="h-8 w-8 bg-primary-600 rounded-full flex items-center justify-center">
                   <span className="text-sm font-medium text-white">A</span>
                 </div>
-                <span className="text-sm font-medium text-gray-900">{t('header.adminUser')}</span>
+                <span className="text-sm font-medium text-gray-900">Admin User</span>
               </div>
             </div>
           </div>
@@ -157,7 +148,7 @@ const Layout = memo(({ children }: LayoutProps) => {
 
 Layout.displayName = 'Layout';
 
-const SidebarContent = memo(({ location, navigation }: { location: any; navigation: any[] }) => {
+const SidebarContent = memo(({ location }: { location: any }) => {
   return (
     <nav className="flex-1 px-4 py-6 space-y-2">
       {navigation.map((item) => {
