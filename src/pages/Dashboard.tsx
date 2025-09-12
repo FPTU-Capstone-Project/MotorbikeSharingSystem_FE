@@ -1,6 +1,5 @@
-import React, { memo, useMemo } from 'react';
+import React, { memo } from 'react';
 import { motion } from 'framer-motion';
-import { useTranslation } from 'react-i18next';
 import {
   UsersIcon,
   MapIcon,
@@ -69,57 +68,56 @@ const recentActivity = [
   },
 ];
 
+const stats = [
+  {
+    name: 'Total Users',
+    value: '2,847',
+    change: '+12.5%',
+    changeType: 'increase' as const,
+    icon: UsersIcon,
+    color: 'bg-blue-500',
+  },
+  {
+    name: 'Active Rides',
+    value: '156',
+    change: '+8.2%',
+    changeType: 'increase' as const,
+    icon: MapIcon,
+    color: 'bg-green-500',
+  },
+  {
+    name: 'Total Revenue',
+    value: '$48,562',
+    change: '+23.1%',
+    changeType: 'increase' as const,
+    icon: CurrencyDollarIcon,
+    color: 'bg-purple-500',
+  },
+  {
+    name: 'SOS Alerts',
+    value: '3',
+    change: '-2',
+    changeType: 'decrease' as const,
+    icon: ExclamationTriangleIcon,
+    color: 'bg-red-500',
+  },
+];
+
+const rideStatusData = [
+  { name: 'Completed', value: 1245, color: '#10B981' },
+  { name: 'Ongoing', value: 156, color: '#3B82F6' },
+  { name: 'Cancelled', value: 89, color: '#EF4444' },
+];
+
 const Dashboard = memo(() => {
-  const { t } = useTranslation();
-
-  const stats = useMemo(() => [
-    {
-      name: t('dashboard.totalUsers'),
-      value: '2,847',
-      change: '+12.5%',
-      changeType: 'increase' as const,
-      icon: UsersIcon,
-      color: 'bg-blue-500',
-    },
-    {
-      name: t('dashboard.activeRides'),
-      value: '156',
-      change: '+8.2%',
-      changeType: 'increase' as const,
-      icon: MapIcon,
-      color: 'bg-green-500',
-    },
-    {
-      name: t('dashboard.totalRevenue'),
-      value: '$48,562',
-      change: '+23.1%',
-      changeType: 'increase' as const,
-      icon: CurrencyDollarIcon,
-      color: 'bg-purple-500',
-    },
-    {
-      name: t('dashboard.sosAlerts'),
-      value: '3',
-      change: '-2',
-      changeType: 'decrease' as const,
-      icon: ExclamationTriangleIcon,
-      color: 'bg-red-500',
-    },
-  ], [t]);
-
-  const rideStatusData = useMemo(() => [
-    { name: t('dashboard.completed'), value: 1245, color: '#10B981' },
-    { name: t('dashboard.ongoing'), value: 156, color: '#3B82F6' },
-    { name: t('dashboard.cancelled'), value: 89, color: '#EF4444' },
-  ], [t]);
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">{t('dashboard.title')}</h1>
+        <h1 className="text-3xl font-bold text-gray-900">Dashboard Overview</h1>
         <p className="mt-2 text-gray-600">
-          {t('dashboard.subtitle')}
+          Monitor your motorbike sharing system performance and key metrics
         </p>
       </div>
 
@@ -169,7 +167,7 @@ const Dashboard = memo(() => {
           transition={{ delay: 0.3 }}
           className="card"
         >
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('dashboard.revenueTrend')}</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Revenue Trend</h3>
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={revenueData}>
@@ -203,7 +201,7 @@ const Dashboard = memo(() => {
           transition={{ delay: 0.4 }}
           className="card"
         >
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('dashboard.rideStatusDistribution')}</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Ride Status Distribution</h3>
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
@@ -247,7 +245,7 @@ const Dashboard = memo(() => {
         transition={{ delay: 0.5 }}
         className="card"
       >
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('dashboard.monthlyRides')}</h3>
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Monthly Rides</h3>
         <div className="h-80">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={revenueData}>
@@ -274,7 +272,7 @@ const Dashboard = memo(() => {
         transition={{ delay: 0.6 }}
         className="card"
       >
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('dashboard.recentActivity')}</h3>
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Activity</h3>
         <div className="space-y-4">
           {recentActivity.map((activity) => (
             <div key={activity.id} className="flex items-center p-4 bg-gray-50 rounded-lg">
