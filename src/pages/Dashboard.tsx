@@ -1,5 +1,4 @@
-import React, { memo } from 'react';
-import { motion } from 'framer-motion';
+import React from 'react';
 import {
   UsersIcon,
   MapIcon,
@@ -109,7 +108,7 @@ const rideStatusData = [
   { name: 'Cancelled', value: 89, color: '#EF4444' },
 ];
 
-const Dashboard = memo(() => {
+export default function Dashboard() {
 
   return (
     <div className="space-y-6">
@@ -124,13 +123,7 @@ const Dashboard = memo(() => {
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {stats.map((stat, index) => (
-          <motion.div
-            key={stat.name}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.1 }}
-            className="card-interactive gpu-accelerated hover-scale"
-          >
+          <div key={stat.name} className="card">
             <div className="flex items-center">
               <div className={`p-3 rounded-lg ${stat.color}`}>
                 <stat.icon className="h-6 w-6 text-white" />
@@ -154,19 +147,14 @@ const Dashboard = memo(() => {
                 </span>
               </div>
             </div>
-          </motion.div>
+          </div>
         ))}
       </div>
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Revenue Chart */}
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.3, ease: [0.4, 0.0, 0.2, 1] }}
-          className="card gpu-accelerated hover-lift"
-        >
+        <div className="card">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Revenue Trend</h3>
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
@@ -192,15 +180,10 @@ const Dashboard = memo(() => {
               </LineChart>
             </ResponsiveContainer>
           </div>
-        </motion.div>
+        </div>
 
         {/* Ride Status Distribution */}
-        <motion.div
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.4, ease: [0.4, 0.0, 0.2, 1] }}
-          className="card gpu-accelerated hover-lift"
-        >
+        <div className="card">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Ride Status Distribution</h3>
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
@@ -235,16 +218,11 @@ const Dashboard = memo(() => {
               </div>
             ))}
           </div>
-        </motion.div>
+        </div>
       </div>
 
       {/* Monthly Rides Chart */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.5, ease: [0.4, 0.0, 0.2, 1] }}
-        className="card gpu-accelerated hover-lift"
-      >
+      <div className="card">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Monthly Rides</h3>
         <div className="h-80">
           <ResponsiveContainer width="100%" height="100%">
@@ -263,15 +241,10 @@ const Dashboard = memo(() => {
             </BarChart>
           </ResponsiveContainer>
         </div>
-      </motion.div>
+      </div>
 
       {/* Recent Activity */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.6, ease: [0.4, 0.0, 0.2, 1] }}
-        className="card gpu-accelerated hover-lift"
-      >
+      <div className="card">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Activity</h3>
         <div className="space-y-4">
           {recentActivity.map((activity) => (
@@ -294,11 +267,7 @@ const Dashboard = memo(() => {
             </div>
           ))}
         </div>
-      </motion.div>
+      </div>
     </div>
   );
-});
-
-Dashboard.displayName = 'Dashboard';
-
-export default Dashboard;
+}
