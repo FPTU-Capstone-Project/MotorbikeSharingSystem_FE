@@ -129,7 +129,7 @@ const Dashboard = memo(() => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.1 }}
-            className="card-interactive"
+            className="card-interactive gpu-accelerated hover-scale"
           >
             <div className="flex items-center">
               <div className={`p-3 rounded-lg ${stat.color}`}>
@@ -164,8 +164,8 @@ const Dashboard = memo(() => {
         <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.3 }}
-          className="card"
+          transition={{ delay: 0.3, ease: [0.4, 0.0, 0.2, 1] }}
+          className="card gpu-accelerated hover-lift"
         >
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Revenue Trend</h3>
           <div className="h-80">
@@ -198,8 +198,8 @@ const Dashboard = memo(() => {
         <motion.div
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.4 }}
-          className="card"
+          transition={{ delay: 0.4, ease: [0.4, 0.0, 0.2, 1] }}
+          className="card gpu-accelerated hover-lift"
         >
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Ride Status Distribution</h3>
           <div className="h-80">
@@ -242,8 +242,8 @@ const Dashboard = memo(() => {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.5 }}
-        className="card"
+        transition={{ delay: 0.5, ease: [0.4, 0.0, 0.2, 1] }}
+        className="card gpu-accelerated hover-lift"
       >
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Monthly Rides</h3>
         <div className="h-80">
@@ -269,8 +269,8 @@ const Dashboard = memo(() => {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.6 }}
-        className="card"
+        transition={{ delay: 0.6, ease: [0.4, 0.0, 0.2, 1] }}
+        className="card gpu-accelerated hover-lift"
       >
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Activity</h3>
         <div className="space-y-4">
