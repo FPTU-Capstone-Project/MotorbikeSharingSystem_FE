@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import Layout from './components/Layout';
 import LoadingSpinner from './components/LoadingSpinner';
+import PerformanceOptimizer from './components/PerformanceOptimizer';
 
 // Lazy load all pages for optimal performance
 const Dashboard = lazy(() => import('./pages/Dashboard'));
@@ -14,8 +15,10 @@ const Analytics = lazy(() => import('./pages/Analytics'));
 
 function App() {
   return (
-    <Router>
-      <div className="min-h-screen bg-gray-50">
+    <>
+      <PerformanceOptimizer />
+      <Router>
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
         <Layout>
           <Suspense fallback={<LoadingSpinner />}>
             <Routes>
@@ -33,13 +36,16 @@ function App() {
           toastOptions={{
             duration: 4000,
             style: {
-              background: '#363636',
+              background: 'rgba(0, 0, 0, 0.8)',
               color: '#fff',
+              borderRadius: '12px',
+              backdropFilter: 'blur(12px)',
             },
           }}
         />
-      </div>
-    </Router>
+        </div>
+      </Router>
+    </>
   );
 }
 
