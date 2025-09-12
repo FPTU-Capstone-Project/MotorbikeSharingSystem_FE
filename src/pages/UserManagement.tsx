@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import {
   MagnifyingGlassIcon,
@@ -65,19 +65,31 @@ export default function UserManagement() {
   const [filterRole, setFilterRole] = useState<'all' | 'student' | 'driver'>('all');
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive' | 'suspended'>('all');
 
-  const filteredUsers = users.filter(user => {
-    const matchesSearch = 
-      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.studentId?.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesRole = filterRole === 'all' || user.role === filterRole;
-    const matchesStatus = filterStatus === 'all' || user.status === filterStatus;
-    
-    return matchesSearch && matchesRole && matchesStatus;
-  });
+  // Memoized filtered users for performance
+  const filteredUsers = useMemo(() => {
+    return users.filter(user => {
+      const matchesSearch = 
+        user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.studentId?.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      const matchesRole = filterRole === 'all' || user.role === filterRole;
+      const matchesStatus = filterStatus === 'all' || user.status === filterStatus;
+      
+      return matchesSearch && matchesRole && matchesStatus;
+    });
+  }, [users, searchTerm, filterRole, filterStatus]);
 
-  const handleVerifyUser = (userId: string) => {
+  // Memoized stats for performance
+  const stats = useMemo(() => [
+    { label: 'Total Users', value: users.length, color: 'bg-blue-500' },
+    { label: 'Students', value: users.filter(u => u.role === 'student').length, color: 'bg-green-500' },
+    { label: 'Drivers', value: users.filter(u => u.role === 'driver').length, color: 'bg-purple-500' },
+    { label: 'Pending Verification', value: users.filter(u => !u.isVerified).length, color: 'bg-yellow-500' },
+  ], [users]);
+
+  // Optimized handlers with useCallback
+  const handleVerifyUser = useCallback((userId: string) => {
     setUsers(prev => 
       prev.map(user => 
         user.id === userId 
@@ -86,9 +98,9 @@ export default function UserManagement() {
       )
     );
     toast.success('User verified successfully');
-  };
+  }, []);
 
-  const handleSuspendUser = (userId: string) => {
+  const handleSuspendUser = useCallback((userId: string) => {
     setUsers(prev => 
       prev.map(user => 
         user.id === userId 
@@ -97,12 +109,16 @@ export default function UserManagement() {
       )
     );
     toast.success('User suspended successfully');
-  };
+  }, []);
 
-  const handleDeleteUser = (userId: string) => {
+  const handleDeleteUser = useCallback((userId: string) => {
     setUsers(prev => prev.filter(user => user.id !== userId));
     toast.success('User deleted successfully');
-  };
+  }, []);
+
+  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -122,23 +138,27 @@ export default function UserManagement() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        {[
-          { label: 'Total Users', value: users.length, color: 'bg-blue-500' },
-          { label: 'Students', value: users.filter(u => u.role === 'student').length, color: 'bg-green-500' },
-          { label: 'Drivers', value: users.filter(u => u.role === 'driver').length, color: 'bg-purple-500' },
-          { label: 'Pending Verification', value: users.filter(u => !u.isVerified).length, color: 'bg-yellow-500' },
-        ].map((stat, index) => (
+        {stats.map((stat, index) => (
           <motion.div
             key={stat.label}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.1 }}
-            className="card"
+            transition={{ 
+              delay: index * 0.05,
+              duration: 0.3,
+              ease: [0.4, 0.0, 0.2, 1]
+            }}
+            className="card-interactive gpu-accelerated"
           >
             <div className="flex items-center">
-              <div className={`p-3 rounded-lg ${stat.color}`}>
+              <motion.div 
+                className={`p-3 rounded-lg ${stat.color}`}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                transition={{ duration: 0.1 }}
+              >
                 <span className="text-white font-bold text-lg">{stat.value}</span>
-              </div>
+              </motion.div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-500">{stat.label}</p>
               </div>
@@ -163,7 +183,7 @@ export default function UserManagement() {
                 placeholder="Search users..."
                 className="input-field pl-10 w-full sm:w-80"
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={handleSearchChange}
               />
             </div>
             <div className="flex space-x-2">
@@ -227,8 +247,18 @@ export default function UserManagement() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {filteredUsers.map((user) => (
-                <tr key={user.id} className="hover:bg-gray-50 transition-colors">
+              {filteredUsers.map((user, index) => (
+                <motion.tr 
+                  key={user.id} 
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ 
+                    delay: index * 0.02,
+                    duration: 0.2,
+                    ease: [0.4, 0.0, 0.2, 1]
+                  }}
+                  className="table-row gpu-accelerated"
+                >
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <img
@@ -281,37 +311,56 @@ export default function UserManagement() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div className="flex items-center space-x-2">
-                      <button className="text-blue-600 hover:text-blue-900 p-1 rounded">
+                      <motion.button 
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
+                        transition={{ duration: 0.1 }}
+                        className="text-blue-600 hover:text-blue-900 p-2 rounded-lg hover:bg-blue-50 click-feedback"
+                      >
                         <EyeIcon className="h-4 w-4" />
-                      </button>
-                      <button className="text-gray-600 hover:text-gray-900 p-1 rounded">
+                      </motion.button>
+                      <motion.button 
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
+                        transition={{ duration: 0.1 }}
+                        className="text-gray-600 hover:text-gray-900 p-2 rounded-lg hover:bg-gray-50 click-feedback"
+                      >
                         <PencilIcon className="h-4 w-4" />
-                      </button>
+                      </motion.button>
                       {!user.isVerified && (
-                        <button
+                        <motion.button
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.9 }}
+                          transition={{ duration: 0.1 }}
                           onClick={() => handleVerifyUser(user.id)}
-                          className="text-green-600 hover:text-green-900 p-1 rounded"
+                          className="text-green-600 hover:text-green-900 p-2 rounded-lg hover:bg-green-50 click-feedback"
                         >
                           <CheckCircleIcon className="h-4 w-4" />
-                        </button>
+                        </motion.button>
                       )}
                       {user.status !== 'suspended' && (
-                        <button
+                        <motion.button
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.9 }}
+                          transition={{ duration: 0.1 }}
                           onClick={() => handleSuspendUser(user.id)}
-                          className="text-yellow-600 hover:text-yellow-900 p-1 rounded"
+                          className="text-yellow-600 hover:text-yellow-900 p-2 rounded-lg hover:bg-yellow-50 click-feedback"
                         >
                           <XCircleIcon className="h-4 w-4" />
-                        </button>
+                        </motion.button>
                       )}
-                      <button
+                      <motion.button
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
+                        transition={{ duration: 0.1 }}
                         onClick={() => handleDeleteUser(user.id)}
-                        className="text-red-600 hover:text-red-900 p-1 rounded"
+                        className="text-red-600 hover:text-red-900 p-2 rounded-lg hover:bg-red-50 click-feedback"
                       >
                         <TrashIcon className="h-4 w-4" />
-                      </button>
+                      </motion.button>
                     </div>
                   </td>
-                </tr>
+                </motion.tr>
               ))}
             </tbody>
           </table>
