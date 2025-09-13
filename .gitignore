@@ -25,3 +25,5 @@ yarn-error.log*
 
 # Claude Code files
 .claude
+
+/logs
