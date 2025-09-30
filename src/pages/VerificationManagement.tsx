@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   MagnifyingGlassIcon,
   CheckCircleIcon,
@@ -8,96 +8,14 @@ import {
   IdentificationIcon,
   ClockIcon,
   UserIcon,
+  ArrowPathIcon,
 } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
-
-interface StudentVerification {
-  id: string;
-  userId: string;
-  fullName: string;
-  email: string;
-  phone: string;
-  studentId: string;
-  status: 'pending' | 'approved' | 'rejected';
-  documentUrl: string; // URL ảnh thẻ sinh viên
-  identityCardUrl: string; // URL ảnh CCCD
-  submittedAt: string;
-  verifiedAt?: string;
-  verifiedBy?: string;
-  rejectionReason?: string;
-}
-
-// Mock data mẫu
-const mockStudentVerifications: StudentVerification[] = [
-  {
-    id: '1',
-    userId: '101',
-    fullName: 'Nguyễn Văn An',
-    email: 'annv@student.fpt.edu.vn',
-    phone: '0901234567',
-    studentId: 'SE171234',
-    status: 'pending',
-    documentUrl: 'https://images.unsplash.com/photo-1633409361618-c73427e4e206?w=800&h=600&fit=crop', // Ảnh thẻ sinh viên mẫu
-    identityCardUrl: 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=800&h=600&fit=crop', // Ảnh CCCD mẫu
-    submittedAt: '2024-01-20T10:30:00Z',
-  },
-  {
-    id: '2',
-    userId: '102',
-    fullName: 'Trần Thị Bình',
-    email: 'binhtt@student.fpt.edu.vn',
-    phone: '0912345678',
-    studentId: 'SE171235',
-    status: 'pending',
-    documentUrl: 'https://images.unsplash.com/photo-1554224311-beee460201f9?w=800&h=600&fit=crop',
-    identityCardUrl: 'https://images.unsplash.com/photo-1554224154-26032ffc0d07?w=800&h=600&fit=crop',
-    submittedAt: '2024-01-20T11:15:00Z',
-  },
-  {
-    id: '3',
-    userId: '103',
-    fullName: 'Lê Hoàng Cường',
-    email: 'cuonglh@student.fpt.edu.vn',
-    phone: '0923456789',
-    studentId: 'SE171236',
-    status: 'approved',
-    documentUrl: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=800&h=600&fit=crop',
-    identityCardUrl: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=800&h=600&fit=crop',
-    submittedAt: '2024-01-19T09:00:00Z',
-    verifiedAt: '2024-01-19T14:30:00Z',
-    verifiedBy: 'Admin Dương',
-  },
-  {
-    id: '4',
-    userId: '104',
-    fullName: 'Phạm Minh Đức',
-    email: 'ducpm@student.fpt.edu.vn',
-    phone: '0934567890',
-    studentId: 'SE171237',
-    status: 'rejected',
-    documentUrl: 'https://images.unsplash.com/photo-1557862921-37829c790f19?w=800&h=600&fit=crop',
-    identityCardUrl: 'https://images.unsplash.com/photo-1557862921-37829c790f19?w=800&h=600&fit=crop',
-    submittedAt: '2024-01-18T15:20:00Z',
-    verifiedAt: '2024-01-18T16:45:00Z',
-    verifiedBy: 'Admin Đức',
-    rejectionReason: 'Ảnh không rõ ràng, vui lòng chụp lại',
-  },
-  {
-    id: '5',
-    userId: '105',
-    fullName: 'Võ Thị Ế',
-    email: 'evt@student.fpt.edu.vn',
-    phone: '0945678901',
-    studentId: 'SE171238',
-    status: 'pending',
-    documentUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=800&h=600&fit=crop',
-    identityCardUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=800&h=600&fit=crop',
-    submittedAt: '2024-01-20T13:45:00Z',
-  },
-];
+import verificationService, { StudentVerification } from '../services/verificationService';
 
 export default function VerificationManagement() {
-  const [verifications, setVerifications] = useState<StudentVerification[]>(mockStudentVerifications);
+  const [verifications, setVerifications] = useState<StudentVerification[]>([]);
+  const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
   const [selectedVerification, setSelectedVerification] = useState<StudentVerification | null>(null);
@@ -106,11 +24,56 @@ export default function VerificationManagement() {
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [verificationToReject, setVerificationToReject] = useState<StudentVerification | null>(null);
 
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalElements, setTotalElements] = useState(0);
+  const pageSize = 10;
+
+  // Fetch verifications on component mount and when filters change
+  useEffect(() => {
+    fetchVerifications();
+  }, [filterStatus, currentPage]);
+
+  const fetchVerifications = async () => {
+    setLoading(true);
+    try {
+      let response;
+
+      if (filterStatus === 'pending') {
+        // Get pending verifications
+        response = await verificationService.getPendingStudentVerifications(
+          currentPage,
+          pageSize,
+          'createdAt',
+          'desc'
+        );
+      } else {
+        // Get all verifications (history)
+        response = await verificationService.getStudentVerificationHistory(
+          currentPage,
+          pageSize,
+          'createdAt',
+          'desc'
+        );
+      }
+
+      setVerifications(response.content);
+      setTotalPages(response.totalPages);
+      setTotalElements(response.totalElements);
+    } catch (error: any) {
+      console.error('Error fetching verifications:', error);
+      toast.error(error.response?.data?.message || 'Không thể tải danh sách xác minh');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const filteredVerifications = verifications.filter(verification => {
     const matchesSearch =
-      verification.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      verification.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      verification.studentId.toLowerCase().includes(searchTerm.toLowerCase());
+      verification.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      verification.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      verification.student_id?.toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesStatus = filterStatus === 'all' || verification.status === filterStatus;
 
@@ -121,24 +84,27 @@ export default function VerificationManagement() {
   const approvedCount = verifications.filter(v => v.status === 'approved').length;
   const rejectedCount = verifications.filter(v => v.status === 'rejected').length;
 
-  const handleApprove = (verification: StudentVerification) => {
-    setVerifications(prev =>
-      prev.map(v =>
-        v.id === verification.id
-          ? {
-              ...v,
-              status: 'approved',
-              verifiedAt: new Date().toISOString(),
-              verifiedBy: 'Current Admin',
-            }
-          : v
-      )
-    );
-    toast.success(`Đã duyệt thẻ sinh viên của ${verification.fullName}`);
-    setShowDetailModal(false);
+  const handleApprove = async (verification: StudentVerification) => {
+    try {
+      setLoading(true);
+      await verificationService.approveStudentVerification(verification.user_id, {
+        notes: 'Approved by admin',
+      });
+
+      toast.success(`Đã duyệt thẻ sinh viên của ${verification.full_name}`);
+      setShowDetailModal(false);
+
+      // Refresh the list
+      await fetchVerifications();
+    } catch (error: any) {
+      console.error('Error approving verification:', error);
+      toast.error(error.response?.data?.message || 'Không thể duyệt xác minh');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleReject = () => {
+  const handleReject = async () => {
     if (!verificationToReject) return;
 
     if (!rejectionReason.trim()) {
@@ -146,24 +112,26 @@ export default function VerificationManagement() {
       return;
     }
 
-    setVerifications(prev =>
-      prev.map(v =>
-        v.id === verificationToReject.id
-          ? {
-              ...v,
-              status: 'rejected',
-              verifiedAt: new Date().toISOString(),
-              verifiedBy: 'Current Admin',
-              rejectionReason: rejectionReason,
-            }
-          : v
-      )
-    );
-    toast.error(`Đã từ chối thẻ sinh viên của ${verificationToReject.fullName}`);
-    setShowRejectModal(false);
-    setShowDetailModal(false);
-    setRejectionReason('');
-    setVerificationToReject(null);
+    try {
+      setLoading(true);
+      await verificationService.rejectStudentVerification(verificationToReject.user_id, {
+        reason: rejectionReason,
+      });
+
+      toast.error(`Đã từ chối thẻ sinh viên của ${verificationToReject.full_name}`);
+      setShowRejectModal(false);
+      setShowDetailModal(false);
+      setRejectionReason('');
+      setVerificationToReject(null);
+
+      // Refresh the list
+      await fetchVerifications();
+    } catch (error: any) {
+      console.error('Error rejecting verification:', error);
+      toast.error(error.response?.data?.message || 'Không thể từ chối xác minh');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const openRejectModal = (verification: StudentVerification) => {
@@ -176,6 +144,11 @@ export default function VerificationManagement() {
     setShowDetailModal(true);
   };
 
+  const handleRefresh = () => {
+    setCurrentPage(0);
+    fetchVerifications();
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -186,6 +159,14 @@ export default function VerificationManagement() {
             Quản lý và duyệt thẻ sinh viên, căn cước công dân
           </p>
         </div>
+        <button
+          onClick={handleRefresh}
+          disabled={loading}
+          className="btn-primary flex items-center mt-4 sm:mt-0 disabled:opacity-50"
+        >
+          <ArrowPathIcon className={`h-5 w-5 mr-2 ${loading ? 'animate-spin' : ''}`} />
+          Làm mới
+        </button>
       </div>
 
       {/* Stats Cards */}
@@ -197,7 +178,7 @@ export default function VerificationManagement() {
             </div>
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-500">Tổng số</p>
-              <p className="text-2xl font-bold text-gray-900">{verifications.length}</p>
+              <p className="text-2xl font-bold text-gray-900">{totalElements}</p>
             </div>
           </div>
         </div>
@@ -255,7 +236,10 @@ export default function VerificationManagement() {
           <select
             className="input-field"
             value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value as any)}
+            onChange={(e) => {
+              setFilterStatus(e.target.value as any);
+              setCurrentPage(0);
+            }}
           >
             <option value="all">Tất cả trạng thái</option>
             <option value="pending">Chờ duyệt</option>
@@ -267,91 +251,164 @@ export default function VerificationManagement() {
 
       {/* Verifications Table */}
       <div className="card overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Sinh viên
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  MSSV
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Số điện thoại
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Trạng thái
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Ngày gửi
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Hành động
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {filteredVerifications.map((verification) => (
-                <tr key={verification.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <div className="h-10 w-10 flex-shrink-0">
-                        <div className="h-10 w-10 rounded-full bg-blue-500 flex items-center justify-center">
-                          <UserIcon className="h-6 w-6 text-white" />
-                        </div>
-                      </div>
-                      <div className="ml-4">
-                        <div className="text-sm font-medium text-gray-900">{verification.fullName}</div>
-                        <div className="text-sm text-gray-500">{verification.email}</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900 font-medium">{verification.studentId}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{verification.phone}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${
-                      verification.status === 'approved'
-                        ? 'bg-green-100 text-green-800'
-                        : verification.status === 'rejected'
-                        ? 'bg-red-100 text-red-800'
-                        : 'bg-yellow-100 text-yellow-800'
-                    }`}>
-                      {verification.status === 'approved' && 'Đã duyệt'}
-                      {verification.status === 'rejected' && 'Từ chối'}
-                      {verification.status === 'pending' && 'Chờ duyệt'}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {new Date(verification.submittedAt).toLocaleDateString('vi-VN')}
-                    <div className="text-xs text-gray-400">
-                      {new Date(verification.submittedAt).toLocaleTimeString('vi-VN')}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <button
-                      onClick={() => openDetailModal(verification)}
-                      className="text-blue-600 hover:text-blue-900 flex items-center"
-                    >
-                      <EyeIcon className="h-4 w-4 mr-1" />
-                      Xem chi tiết
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {filteredVerifications.length === 0 && (
-          <div className="text-center py-12">
-            <DocumentTextIcon className="mx-auto h-12 w-12 text-gray-400" />
-            <p className="mt-2 text-gray-500">Không tìm thấy yêu cầu xác minh nào.</p>
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <ArrowPathIcon className="h-8 w-8 text-blue-500 animate-spin" />
+            <span className="ml-3 text-gray-600">Đang tải...</span>
           </div>
+        ) : (
+          <>
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Sinh viên
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      MSSV
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Số điện thoại
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Trạng thái
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Ngày gửi
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Hành động
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {filteredVerifications.map((verification) => (
+                    <tr key={verification.verification_id} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <div className="h-10 w-10 flex-shrink-0">
+                            <div className="h-10 w-10 rounded-full bg-blue-500 flex items-center justify-center">
+                              <UserIcon className="h-6 w-6 text-white" />
+                            </div>
+                          </div>
+                          <div className="ml-4">
+                            <div className="text-sm font-medium text-gray-900">{verification.full_name}</div>
+                            <div className="text-sm text-gray-500">{verification.email}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900 font-medium">{verification.student_id}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">{verification.phone}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${
+                          verification.status === 'approved'
+                            ? 'bg-green-100 text-green-800'
+                            : verification.status === 'rejected'
+                            ? 'bg-red-100 text-red-800'
+                            : 'bg-yellow-100 text-yellow-800'
+                        }`}>
+                          {verification.status === 'approved' && 'Đã duyệt'}
+                          {verification.status === 'rejected' && 'Từ chối'}
+                          {verification.status === 'pending' && 'Chờ duyệt'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {new Date(verification.created_at).toLocaleDateString('vi-VN')}
+                        <div className="text-xs text-gray-400">
+                          {new Date(verification.created_at).toLocaleTimeString('vi-VN')}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <button
+                          onClick={() => openDetailModal(verification)}
+                          className="text-blue-600 hover:text-blue-900 flex items-center"
+                        >
+                          <EyeIcon className="h-4 w-4 mr-1" />
+                          Xem chi tiết
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {filteredVerifications.length === 0 && (
+              <div className="text-center py-12">
+                <DocumentTextIcon className="mx-auto h-12 w-12 text-gray-400" />
+                <p className="mt-2 text-gray-500">Không tìm thấy yêu cầu xác minh nào.</p>
+              </div>
+            )}
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+                <div className="flex-1 flex justify-between sm:hidden">
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.max(0, prev - 1))}
+                    disabled={currentPage === 0}
+                    className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
+                  >
+                    Trước
+                  </button>
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.min(totalPages - 1, prev + 1))}
+                    disabled={currentPage >= totalPages - 1}
+                    className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
+                  >
+                    Sau
+                  </button>
+                </div>
+                <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                  <div>
+                    <p className="text-sm text-gray-700">
+                      Hiển thị <span className="font-medium">{currentPage * pageSize + 1}</span> đến{' '}
+                      <span className="font-medium">
+                        {Math.min((currentPage + 1) * pageSize, totalElements)}
+                      </span>{' '}
+                      trong <span className="font-medium">{totalElements}</span> kết quả
+                    </p>
+                  </div>
+                  <div>
+                    <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+                      <button
+                        onClick={() => setCurrentPage(prev => Math.max(0, prev - 1))}
+                        disabled={currentPage === 0}
+                        className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
+                      >
+                        Trước
+                      </button>
+                      {[...Array(totalPages)].map((_, idx) => (
+                        <button
+                          key={idx}
+                          onClick={() => setCurrentPage(idx)}
+                          className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+                            currentPage === idx
+                              ? 'z-10 bg-blue-50 border-blue-500 text-blue-600'
+                              : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
+                          }`}
+                        >
+                          {idx + 1}
+                        </button>
+                      ))}
+                      <button
+                        onClick={() => setCurrentPage(prev => Math.min(totalPages - 1, prev + 1))}
+                        disabled={currentPage >= totalPages - 1}
+                        className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
+                      >
+                        Sau
+                      </button>
+                    </nav>
+                  </div>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
 
@@ -386,11 +443,11 @@ export default function VerificationManagement() {
                       <div className="grid grid-cols-2 gap-4">
                         <div>
                           <p className="text-sm text-gray-500">Họ và tên</p>
-                          <p className="text-base font-medium text-gray-900">{selectedVerification.fullName}</p>
+                          <p className="text-base font-medium text-gray-900">{selectedVerification.full_name}</p>
                         </div>
                         <div>
                           <p className="text-sm text-gray-500">MSSV</p>
-                          <p className="text-base font-medium text-gray-900">{selectedVerification.studentId}</p>
+                          <p className="text-base font-medium text-gray-900">{selectedVerification.student_id}</p>
                         </div>
                         <div>
                           <p className="text-sm text-gray-500">Email</p>
@@ -417,7 +474,7 @@ export default function VerificationManagement() {
                         <div>
                           <p className="text-sm text-gray-500">Ngày gửi</p>
                           <p className="text-base font-medium text-gray-900">
-                            {new Date(selectedVerification.submittedAt).toLocaleString('vi-VN')}
+                            {new Date(selectedVerification.created_at).toLocaleString('vi-VN')}
                           </p>
                         </div>
                       </div>
@@ -427,19 +484,19 @@ export default function VerificationManagement() {
                           <div className="grid grid-cols-2 gap-4">
                             <div>
                               <p className="text-sm text-gray-500">Người duyệt</p>
-                              <p className="text-base font-medium text-gray-900">{selectedVerification.verifiedBy}</p>
+                              <p className="text-base font-medium text-gray-900">{selectedVerification.verified_by || 'N/A'}</p>
                             </div>
                             <div>
                               <p className="text-sm text-gray-500">Ngày duyệt</p>
                               <p className="text-base font-medium text-gray-900">
-                                {selectedVerification.verifiedAt && new Date(selectedVerification.verifiedAt).toLocaleString('vi-VN')}
+                                {selectedVerification.verified_at ? new Date(selectedVerification.verified_at).toLocaleString('vi-VN') : 'N/A'}
                               </p>
                             </div>
                           </div>
-                          {selectedVerification.rejectionReason && (
+                          {selectedVerification.rejection_reason && (
                             <div className="mt-4">
                               <p className="text-sm text-gray-500">Lý do từ chối</p>
-                              <p className="text-base font-medium text-red-600">{selectedVerification.rejectionReason}</p>
+                              <p className="text-base font-medium text-red-600">{selectedVerification.rejection_reason}</p>
                             </div>
                           )}
                         </div>
@@ -448,33 +505,24 @@ export default function VerificationManagement() {
 
                     {/* Documents */}
                     <div className="space-y-4">
-                      <div>
-                        <h4 className="text-lg font-semibold text-gray-900 mb-3 flex items-center">
-                          <DocumentTextIcon className="h-5 w-5 mr-2 text-green-500" />
-                          Ảnh thẻ sinh viên
-                        </h4>
-                        <div className="border-2 border-gray-200 rounded-lg overflow-hidden">
-                          <img
-                            src={selectedVerification.documentUrl}
-                            alt="Thẻ sinh viên"
-                            className="w-full h-auto object-contain max-h-96"
-                          />
+                      {selectedVerification.document_url && (
+                        <div>
+                          <h4 className="text-lg font-semibold text-gray-900 mb-3 flex items-center">
+                            <DocumentTextIcon className="h-5 w-5 mr-2 text-green-500" />
+                            Ảnh thẻ sinh viên / CCCD
+                          </h4>
+                          <div className="border-2 border-gray-200 rounded-lg overflow-hidden">
+                            <img
+                              src={selectedVerification.document_url}
+                              alt="Thẻ sinh viên"
+                              className="w-full h-auto object-contain max-h-96"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).src = 'https://via.placeholder.com/800x600?text=Image+Not+Available';
+                              }}
+                            />
+                          </div>
                         </div>
-                      </div>
-
-                      <div>
-                        <h4 className="text-lg font-semibold text-gray-900 mb-3 flex items-center">
-                          <IdentificationIcon className="h-5 w-5 mr-2 text-purple-500" />
-                          Ảnh căn cước công dân (CCCD)
-                        </h4>
-                        <div className="border-2 border-gray-200 rounded-lg overflow-hidden">
-                          <img
-                            src={selectedVerification.identityCardUrl}
-                            alt="Căn cước công dân"
-                            className="w-full h-auto object-contain max-h-96"
-                          />
-                        </div>
-                      </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -484,14 +532,16 @@ export default function VerificationManagement() {
                 <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse gap-3">
                   <button
                     onClick={() => handleApprove(selectedVerification)}
-                    className="w-full sm:w-auto inline-flex justify-center items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                    disabled={loading}
+                    className="w-full sm:w-auto inline-flex justify-center items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50"
                   >
                     <CheckCircleIcon className="h-5 w-5 mr-2" />
                     Duyệt
                   </button>
                   <button
                     onClick={() => openRejectModal(selectedVerification)}
-                    className="mt-3 sm:mt-0 w-full sm:w-auto inline-flex justify-center items-center px-6 py-3 border border-gray-300 text-base font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                    disabled={loading}
+                    className="mt-3 sm:mt-0 w-full sm:w-auto inline-flex justify-center items-center px-6 py-3 border border-gray-300 text-base font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50"
                   >
                     <XCircleIcon className="h-5 w-5 mr-2" />
                     Từ chối
@@ -521,7 +571,7 @@ export default function VerificationManagement() {
                     </h3>
                     <div className="mt-2">
                       <p className="text-sm text-gray-500 mb-4">
-                        Bạn đang từ chối xác minh của <span className="font-semibold">{verificationToReject.fullName}</span>.
+                        Bạn đang từ chối xác minh của <span className="font-semibold">{verificationToReject.full_name}</span>.
                         Vui lòng nhập lý do từ chối.
                       </p>
                       <textarea
@@ -538,7 +588,8 @@ export default function VerificationManagement() {
               <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse gap-3">
                 <button
                   onClick={handleReject}
-                  className="w-full sm:w-auto inline-flex justify-center px-4 py-2 border border-transparent text-base font-medium rounded-lg text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                  disabled={loading}
+                  className="w-full sm:w-auto inline-flex justify-center px-4 py-2 border border-transparent text-base font-medium rounded-lg text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50"
                 >
                   Xác nhận từ chối
                 </button>
@@ -548,7 +599,8 @@ export default function VerificationManagement() {
                     setRejectionReason('');
                     setVerificationToReject(null);
                   }}
-                  className="mt-3 sm:mt-0 w-full sm:w-auto inline-flex justify-center px-4 py-2 border border-gray-300 text-base font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                  disabled={loading}
+                  className="mt-3 sm:mt-0 w-full sm:w-auto inline-flex justify-center px-4 py-2 border border-gray-300 text-base font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 disabled:opacity-50"
                 >
                   Hủy
                 </button>

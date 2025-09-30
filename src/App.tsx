@@ -9,6 +9,7 @@ import PerformanceOptimizer from './components/PerformanceOptimizer';
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const UserManagement = lazy(() => import('./pages/UserManagement'));
 const VerificationManagement = lazy(() => import('./pages/VerificationManagement'));
+const DriverVerificationManagement = lazy(() => import('./pages/DriverVerificationManagement'));
 const RideManagement = lazy(() => import('./pages/RideManagement'));
 const PaymentManagement = lazy(() => import('./pages/PaymentManagement'));
 const SafetyManagement = lazy(() => import('./pages/SafetyManagement'));
@@ -26,6 +27,7 @@ function App() {
               <Route path="/" element={<Dashboard />} />
               <Route path="/users" element={<UserManagement />} />
               <Route path="/verification" element={<VerificationManagement />} />
+              <Route path="/driver-verification" element={<DriverVerificationManagement />} />
               <Route path="/rides" element={<RideManagement />} />
               <Route path="/payments" element={<PaymentManagement />} />
               <Route path="/safety" element={<SafetyManagement />} />
