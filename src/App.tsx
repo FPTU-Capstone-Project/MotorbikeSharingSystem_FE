@@ -8,6 +8,7 @@ import PerformanceOptimizer from './components/PerformanceOptimizer';
 // Lazy load all pages for optimal performance
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const UserManagement = lazy(() => import('./pages/UserManagement'));
+const VerificationManagement = lazy(() => import('./pages/VerificationManagement'));
 const RideManagement = lazy(() => import('./pages/RideManagement'));
 const PaymentManagement = lazy(() => import('./pages/PaymentManagement'));
 const SafetyManagement = lazy(() => import('./pages/SafetyManagement'));
@@ -24,6 +25,7 @@ function App() {
             <Routes>
               <Route path="/" element={<Dashboard />} />
               <Route path="/users" element={<UserManagement />} />
+              <Route path="/verification" element={<VerificationManagement />} />
               <Route path="/rides" element={<RideManagement />} />
               <Route path="/payments" element={<PaymentManagement />} />
               <Route path="/safety" element={<SafetyManagement />} />

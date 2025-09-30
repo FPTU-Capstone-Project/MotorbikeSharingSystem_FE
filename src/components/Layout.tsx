@@ -11,6 +11,7 @@ import {
   Bars3Icon,
   XMarkIcon,
   MagnifyingGlassIcon,
+  DocumentCheckIcon,
 } from '@heroicons/react/24/outline';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../utils/cn';
@@ -22,6 +23,7 @@ interface LayoutProps {
 const navigation = [
   { name: 'Dashboard', href: '/', icon: HomeIcon },
   { name: 'Users', href: '/users', icon: UsersIcon },
+  { name: 'Verification', href: '/verification', icon: DocumentCheckIcon },
   { name: 'Rides', href: '/rides', icon: MapIcon },
   { name: 'Payments', href: '/payments', icon: CreditCardIcon },
   { name: 'Safety', href: '/safety', icon: ShieldCheckIcon },
