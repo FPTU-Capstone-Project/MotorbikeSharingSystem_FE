@@ -1,15 +1,6 @@
 /**
- * API Configuration - Switch between local and production
+ * API Configuration - Auto-detect environment
  */
-
-export enum ApiEnvironment {
-  LOCAL = 'local',
-  DEPLOY = 'deploy'
-}
-
-// Toggle between environments by commenting/uncommenting
-export const CURRENT_ENV: ApiEnvironment = ApiEnvironment.LOCAL;
-// export const CURRENT_ENV: ApiEnvironment = ApiEnvironment.DEPLOY;
 
 interface ApiConfig {
   baseURL: string;
@@ -18,22 +9,17 @@ interface ApiConfig {
   retryDelay: number;
 }
 
-const API_CONFIGS: Record<ApiEnvironment, ApiConfig> = {
-  [ApiEnvironment.LOCAL]: {
-    baseURL: 'http://localhost:8081/api/v1',
-    timeout: 30000,
-    retryAttempts: 3,
-    retryDelay: 1000,
-  },
-  [ApiEnvironment.DEPLOY]: {
-    baseURL: 'https://your-production-domain.com/api/v1',
-    timeout: 30000,
-    retryAttempts: 3,
-    retryDelay: 1000,
-  },
+// Use environment variable or fallback to localhost
+const BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8081/api/v1';
+
+const API_CONFIG: ApiConfig = {
+  baseURL: BASE_URL,
+  timeout: 30000,
+  retryAttempts: 3,
+  retryDelay: 1000,
 };
 
-export const getApiConfig = (): ApiConfig => API_CONFIGS[CURRENT_ENV];
+export const getApiConfig = (): ApiConfig => API_CONFIG;
 
 export const API_ENDPOINTS = {
   AUTH: {

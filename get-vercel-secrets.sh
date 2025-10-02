@@ -68,6 +68,12 @@ echo "   Name: VERCEL_ORG_ID"
 echo "   Value: $ORG_ID"
 echo ""
 
+echo "🌐 Step 5: Setup Backend API URL (Optional)"
+echo "--------------------------------"
+echo "Hiện tại API URL: http://localhost:8081/api/v1"
+echo "Để thay đổi, edit file .env.production"
+echo ""
+
 echo "✅ Setup Complete!"
 echo "--------------------------------"
 echo "Sau khi thêm secrets, push code để trigger deployment:"
