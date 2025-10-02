@@ -36,6 +36,11 @@ const API_CONFIGS: Record<ApiEnvironment, ApiConfig> = {
 export const getApiConfig = (): ApiConfig => API_CONFIGS[CURRENT_ENV];
 
 export const API_ENDPOINTS = {
+  AUTH: {
+    LOGIN: '/auth/login',
+    LOGOUT: '/auth/logout',
+    REFRESH: '/auth/refresh',
+  },
   ADMIN_WALLET: {
     SEARCH: '/admin/wallet/search',
     ADJUSTMENT: '/admin/wallet/adjustment',

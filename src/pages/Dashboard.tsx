@@ -26,7 +26,6 @@ import {
 import { motion } from 'framer-motion';
 import { ReportsAPI } from '../api';
 import { useApi } from '../utils/hooks';
-import { MOCK_DASHBOARD } from '../api/mock-data';
 import DashboardSkeleton from '../components/DashboardSkeleton';
 
 const revenueData = [
@@ -92,48 +91,7 @@ const recentActivity = [
   },
 ];
 
-const stats = [
-  {
-    name: 'Total Users',
-    value: '2,847',
-    change: '+12.5%',
-    changeType: 'increase' as const,
-    icon: UsersIcon,
-    gradient: 'from-blue-600 to-blue-700',
-    bgGradient: 'from-blue-50 to-blue-100',
-    details: '147 new this week',
-  },
-  {
-    name: 'Active Rides',
-    value: '156',
-    change: '+8.2%',
-    changeType: 'increase' as const,
-    icon: TruckIcon,
-    gradient: 'from-green-600 to-emerald-700',
-    bgGradient: 'from-green-50 to-emerald-100',
-    details: '23 shared rides',
-  },
-  {
-    name: 'Total Revenue',
-    value: '$48,562',
-    change: '+23.1%',
-    changeType: 'increase' as const,
-    icon: CurrencyDollarIcon,
-    gradient: 'from-purple-600 to-indigo-700',
-    bgGradient: 'from-purple-50 to-indigo-100',
-    details: '$12.3k this week',
-  },
-  {
-    name: 'Avg. Response Time',
-    value: '2.3 min',
-    change: '-15s',
-    changeType: 'decrease' as const,
-    icon: ClockIcon,
-    gradient: 'from-orange-600 to-red-700',
-    bgGradient: 'from-orange-50 to-red-100',
-    details: 'Emergency response',
-  },
-];
+// Stats are now generated dynamically from API data in useMemo below
 
 const rideStatusData = [
   { name: 'Completed', value: 1245, color: '#059669', percentage: 78.5 },
@@ -259,11 +217,11 @@ export default function Dashboard() {
     {
       enabled: true,
       refetchInterval: 30000,
-      onError: (err) => console.warn('API failed, using mock data:', err)
+      onError: (err) => console.error('Dashboard API error:', err)
     }
   );
 
-  const dashboardData = apiData || MOCK_DASHBOARD;
+  const dashboardData = apiData;
 
   const stats = useMemo(() => {
     if (!dashboardData) return [];
@@ -321,27 +279,71 @@ export default function Dashboard() {
     return <DashboardSkeleton />;
   }
 
+  // Show error if no data available
+  if (error && !apiData) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="max-w-md w-full">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-red-50 border border-red-200 rounded-xl p-6 shadow-lg"
+          >
+            <div className="flex items-start space-x-4">
+              <div className="flex-shrink-0">
+                <ExclamationTriangleIcon className="h-10 w-10 text-red-600" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-red-900 mb-2">
+                  Dashboard API Error
+                </h3>
+                <p className="text-sm text-red-700 mb-4">
+                  {error.message || 'Failed to load dashboard data'}
+                </p>
+                <div className="bg-red-100 rounded-lg p-3 mb-4">
+                  <p className="text-xs font-mono text-red-800">
+                    {error.message.includes('500') || error.message.includes('Internal Server')
+                      ? 'Server Error (500): The backend API is experiencing issues.' 
+                      : error.message.includes('401') || error.message.includes('Unauthorized')
+                      ? 'Unauthorized (401): Authentication required.'
+                      : `Error: ${error.message || 'Network Error'}`}
+                  </p>
+                </div>
+                <button
+                  onClick={() => refetch()}
+                  className="w-full bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+                >
+                  Retry Loading Dashboard
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-8">
-      {error && !apiData && (
+    <div className="space-y-8">{/* Warning banner if data might be stale */}
+      {error && apiData && (
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-lg"
         >
           <div className="flex items-center">
-            <ExclamationTriangleIcon className="h-6 w-6 text-amber-500 mr-3" />
+            <ExclamationTriangleIcon className="h-5 w-5 text-amber-500 mr-3" />
             <div className="flex-1">
               <p className="text-sm font-medium text-amber-800">
-                Using Mock Data - Backend Authentication Required
+                Dashboard data may be outdated
               </p>
               <p className="text-xs text-amber-700 mt-1">
-                {error.message}. Configure JWT authentication to use live data.
+                Failed to fetch latest data. Showing cached results.
               </p>
             </div>
             <button
               onClick={() => refetch()}
-              className="ml-4 text-sm text-amber-700 hover:text-amber-800 font-medium underline"
+              className="text-sm text-amber-700 hover:text-amber-800 font-medium underline"
             >
               Retry
             </button>

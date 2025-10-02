@@ -11,9 +11,12 @@ import {
   Bars3Icon,
   XMarkIcon,
   MagnifyingGlassIcon,
+  ArrowRightOnRectangleIcon,
+  UserCircleIcon,
 } from '@heroicons/react/24/outline';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../utils/cn';
+import { useAuth } from '../contexts/AuthContext';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -24,13 +27,16 @@ const navigation = [
   { name: 'Users', href: '/users', icon: UsersIcon },
   { name: 'Rides', href: '/rides', icon: MapIcon },
   { name: 'Payments', href: '/payments', icon: CreditCardIcon },
+  { name: 'Verification', href: '/verification', icon: ShieldCheckIcon },
   { name: 'Safety', href: '/safety', icon: ShieldCheckIcon },
   { name: 'Analytics', href: '/analytics', icon: ChartBarIcon },
 ];
 
 const Layout = memo(({ children }: LayoutProps) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const location = useLocation();
+  const { user, logout } = useAuth();
   
   const closeSidebar = useCallback(() => {
     setSidebarOpen(false);
@@ -39,6 +45,12 @@ const Layout = memo(({ children }: LayoutProps) => {
   const openSidebar = useCallback(() => {
     setSidebarOpen(true);
   }, []);
+
+  const handleLogout = async () => {
+    if (window.confirm('Are you sure you want to logout?')) {
+      await logout();
+    }
+  };
 
   return (
     <div className="flex h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
@@ -141,14 +153,64 @@ const Layout = memo(({ children }: LayoutProps) => {
                   3
                 </span>
               </button>
-              <div className="flex items-center space-x-3 bg-gray-50/80 rounded-2xl px-4 py-2 border border-gray-200/60 hover:bg-white/80 transition-all duration-200">
-                <div className="h-10 w-10 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-                  <span className="text-sm font-bold text-white">A</span>
-                </div>
-                <div>
-                  <span className="text-sm font-semibold text-gray-900">Admin User</span>
-                  <p className="text-xs text-gray-500">Administrator</p>
-                </div>
+              
+              {/* User Profile Dropdown */}
+              <div className="relative">
+                <button
+                  onClick={() => setProfileMenuOpen(!profileMenuOpen)}
+                  className="flex items-center space-x-3 bg-gray-50/80 rounded-2xl px-4 py-2 border border-gray-200/60 hover:bg-white/80 transition-all duration-200"
+                >
+                  <div className="h-10 w-10 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                    <span className="text-sm font-bold text-white">
+                      {user?.full_name?.charAt(0) || 'A'}
+                    </span>
+                  </div>
+                  <div className="hidden sm:block text-left">
+                    <span className="text-sm font-semibold text-gray-900 block">
+                      {user?.full_name || 'Admin User'}
+                    </span>
+                    <p className="text-xs text-gray-500">{user?.user_type || 'Administrator'}</p>
+                  </div>
+                </button>
+                
+                {/* Dropdown Menu */}
+                <AnimatePresence>
+                  {profileMenuOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden z-50"
+                    >
+                      <div className="p-4 bg-gradient-to-r from-indigo-50 to-purple-50 border-b border-gray-100">
+                        <p className="text-sm font-semibold text-gray-900">{user?.email}</p>
+                        <p className="text-xs text-gray-500 mt-1">Signed in as {user?.user_type}</p>
+                      </div>
+                      <div className="py-2">
+                        <button
+                          onClick={() => {
+                            setProfileMenuOpen(false);
+                            // Navigate to profile page
+                          }}
+                          className="w-full px-4 py-3 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-3 transition-colors"
+                        >
+                          <UserCircleIcon className="h-5 w-5 text-gray-400" />
+                          <span>View Profile</span>
+                        </button>
+                        <button
+                          onClick={() => {
+                            setProfileMenuOpen(false);
+                            handleLogout();
+                          }}
+                          className="w-full px-4 py-3 text-left text-sm text-red-600 hover:bg-red-50 flex items-center space-x-3 transition-colors"
+                        >
+                          <ArrowRightOnRectangleIcon className="h-5 w-5" />
+                          <span>Logout</span>
+                        </button>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             </div>
           </div>
