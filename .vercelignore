@@ -1,0 +1,30 @@
+# Dependencies
+node_modules
+
+# Testing
+coverage
+*.test.ts
+*.test.tsx
+*.spec.ts
+*.spec.tsx
+__tests__
+__mocks__
+
+# Development
+.git
+.github
+.vscode
+.idea
+*.log
+logs
+
+# Documentation
+docs
+*.md
+!README.md
+
+# Config files
+.env.local
+.env.development
+.env.test
+.DS_Store
