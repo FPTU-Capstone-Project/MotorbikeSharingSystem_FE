@@ -7,6 +7,7 @@ import {
   SparklesIcon,
   TruckIcon,
   ClockIcon,
+  ExclamationTriangleIcon,
 } from '@heroicons/react/24/outline';
 import {
   XAxis,
@@ -23,6 +24,10 @@ import {
   Area,
 } from 'recharts';
 import { motion } from 'framer-motion';
+import { ReportsAPI } from '../api';
+import { useApi } from '../utils/hooks';
+import { MOCK_DASHBOARD } from '../api/mock-data';
+import DashboardSkeleton from '../components/DashboardSkeleton';
 
 const revenueData = [
   { month: 'Jan', revenue: 4200, rides: 120, users: 850 },
@@ -247,11 +252,103 @@ const ActivityItem = memo(({ activity, index }: { activity: any; index: number }
 ActivityItem.displayName = 'ActivityItem';
 
 export default function Dashboard() {
-  const memoizedStats = useMemo(() => stats, []);
   const memoizedActivity = useMemo(() => recentActivity, []);
+
+  const { data: apiData, loading, error, refetch } = useApi(
+    () => ReportsAPI.getDashboard(),
+    {
+      enabled: true,
+      refetchInterval: 30000,
+      onError: (err) => console.warn('API failed, using mock data:', err)
+    }
+  );
+
+  const dashboardData = apiData || MOCK_DASHBOARD;
+
+  const stats = useMemo(() => {
+    if (!dashboardData) return [];
+
+    const formatCurrency = (amount: string) => {
+      const num = parseFloat(amount);
+      return `₫${num.toLocaleString('vi-VN')}`;
+    };
+
+    return [
+      {
+        name: 'Total Active Wallets',
+        value: dashboardData.totalActiveWallets.toLocaleString(),
+        change: '+12.5%',
+        changeType: 'increase' as const,
+        icon: UsersIcon,
+        gradient: 'from-blue-600 to-blue-700',
+        bgGradient: 'from-blue-50 to-blue-100',
+        details: `Avg: ${formatCurrency(dashboardData.averageWalletBalance)}`,
+      },
+      {
+        name: "Today's Top-ups",
+        value: formatCurrency(dashboardData.todayTopUps),
+        change: `${dashboardData.topUpCount} transactions`,
+        changeType: 'increase' as const,
+        icon: TruckIcon,
+        gradient: 'from-green-600 to-emerald-700',
+        bgGradient: 'from-green-50 to-emerald-100',
+        details: 'Successful deposits',
+      },
+      {
+        name: 'Total System Balance',
+        value: formatCurrency(dashboardData.totalSystemBalance),
+        change: '+23.1%',
+        changeType: 'increase' as const,
+        icon: CurrencyDollarIcon,
+        gradient: 'from-purple-600 to-indigo-700',
+        bgGradient: 'from-purple-50 to-indigo-100',
+        details: `Payouts: ${formatCurrency(dashboardData.todayPayouts)}`,
+      },
+      {
+        name: 'Pending Transactions',
+        value: dashboardData.pendingTransactions.toString(),
+        change: 'Awaiting processing',
+        changeType: dashboardData.pendingTransactions > 10 ? 'increase' as const : 'decrease' as const,
+        icon: ClockIcon,
+        gradient: dashboardData.pendingTransactions > 10 ? 'from-orange-600 to-red-700' : 'from-green-600 to-emerald-700',
+        bgGradient: dashboardData.pendingTransactions > 10 ? 'from-orange-50 to-red-100' : 'from-green-50 to-emerald-100',
+        details: `${dashboardData.payoutCount} payouts today`,
+      },
+    ];
+  }, [dashboardData]);
+
+  if (loading && !dashboardData) {
+    return <DashboardSkeleton />;
+  }
 
   return (
     <div className="space-y-8">
+      {error && !apiData && (
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-lg"
+        >
+          <div className="flex items-center">
+            <ExclamationTriangleIcon className="h-6 w-6 text-amber-500 mr-3" />
+            <div className="flex-1">
+              <p className="text-sm font-medium text-amber-800">
+                Using Mock Data - Backend Authentication Required
+              </p>
+              <p className="text-xs text-amber-700 mt-1">
+                {error.message}. Configure JWT authentication to use live data.
+              </p>
+            </div>
+            <button
+              onClick={() => refetch()}
+              className="ml-4 text-sm text-amber-700 hover:text-amber-800 font-medium underline"
+            >
+              Retry
+            </button>
+          </div>
+        </motion.div>
+      )}
+
       {/* Header */}
       <div className="mb-10">
         <div className="flex items-center space-x-3 mb-3">
@@ -267,7 +364,7 @@ export default function Dashboard() {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
-        {memoizedStats.map((stat, index) => (
+        {stats.map((stat, index) => (
           <StatCard key={stat.name} stat={stat} index={index} />
         ))}
       </div>
