@@ -9,6 +9,7 @@ import {
   XCircleIcon,
   UserPlusIcon,
 } from '@heroicons/react/24/outline';
+import { motion, AnimatePresence } from 'framer-motion';
 import { User } from '../types';
 import toast from 'react-hot-toast';
 
@@ -65,14 +66,14 @@ export default function UserManagement() {
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive' | 'suspended'>('all');
 
   const filteredUsers = users.filter(user => {
-    const matchesSearch = 
-      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.studentId?.toLowerCase().includes(searchTerm.toLowerCase());
-    
+    const matchesSearch =
+      (user.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (user.email || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (user.studentId || '').toLowerCase().includes(searchTerm.toLowerCase());
+
     const matchesRole = filterRole === 'all' || user.role === filterRole;
     const matchesStatus = filterStatus === 'all' || user.status === filterStatus;
-    
+
     return matchesSearch && matchesRole && matchesStatus;
   });
 
@@ -103,45 +104,71 @@ export default function UserManagement() {
     toast.success('User deleted successfully');
   };
 
+  const statColors = [
+    { from: 'from-blue-500', to: 'to-blue-600' },
+    { from: 'from-green-500', to: 'to-emerald-600' },
+    { from: 'from-purple-500', to: 'to-indigo-600' },
+    { from: 'from-yellow-500', to: 'to-orange-500' },
+  ];
+
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex flex-col sm:flex-row sm:items-center sm:justify-between"
+      >
         <div>
           <h1 className="text-3xl font-bold text-gray-900">User Management</h1>
           <p className="mt-2 text-gray-600">
             Manage student and driver accounts, verification status, and user activities
           </p>
         </div>
-        <button className="btn-primary flex items-center mt-4 sm:mt-0">
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          className="btn-primary flex items-center mt-4 sm:mt-0"
+        >
           <UserPlusIcon className="h-5 w-5 mr-2" />
           Add New User
-        </button>
-      </div>
+        </motion.button>
+      </motion.div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         {[
-          { label: 'Total Users', value: users.length, color: 'bg-blue-500' },
-          { label: 'Students', value: users.filter(u => u.role === 'student').length, color: 'bg-green-500' },
-          { label: 'Drivers', value: users.filter(u => u.role === 'driver').length, color: 'bg-purple-500' },
-          { label: 'Pending Verification', value: users.filter(u => !u.isVerified).length, color: 'bg-yellow-500' },
+          { label: 'Total Users', value: users.length },
+          { label: 'Students', value: users.filter(u => u.role === 'student').length },
+          { label: 'Drivers', value: users.filter(u => u.role === 'driver').length },
+          { label: 'Pending Verification', value: users.filter(u => !u.isVerified).length },
         ].map((stat, index) => (
-          <div key={stat.label} className="card">
+          <motion.div
+            key={stat.label}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: index * 0.1 + 0.1 }}
+            className="card hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
+          >
             <div className="flex items-center">
-              <div className={`p-3 rounded-lg ${stat.color}`}>
+              <div className={`p-3 rounded-lg bg-gradient-to-r ${statColors[index].from} ${statColors[index].to} shadow-lg`}>
                 <span className="text-white font-bold text-lg">{stat.value}</span>
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-500">{stat.label}</p>
               </div>
             </div>
-          </div>
+          </motion.div>
         ))}
       </div>
 
       {/* Filters */}
-      <div className="card">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.5 }}
+        className="card"
+      >
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
           <div className="flex flex-col sm:flex-row sm:items-center space-y-4 sm:space-y-0 sm:space-x-4">
             <div className="relative">
@@ -176,15 +203,24 @@ export default function UserManagement() {
               </select>
             </div>
           </div>
-          <button className="btn-secondary flex items-center">
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="btn-secondary flex items-center"
+          >
             <FunnelIcon className="h-5 w-5 mr-2" />
             Advanced Filters
-          </button>
+          </motion.button>
         </div>
-      </div>
+      </motion.div>
 
       {/* Users Table */}
-      <div className="card overflow-hidden">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.6 }}
+        className="card overflow-hidden"
+      >
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
@@ -210,8 +246,16 @@ export default function UserManagement() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {filteredUsers.map((user) => (
-                <tr key={user.id} className="hover:bg-gray-50 transition-colors">
+              <AnimatePresence>
+                {filteredUsers.map((user, index) => (
+                  <motion.tr
+                    key={user.id}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 20 }}
+                    transition={{ delay: index * 0.05 }}
+                    className="hover:bg-gray-50 transition-colors"
+                  >
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <img
@@ -294,18 +338,23 @@ export default function UserManagement() {
                       </button>
                     </div>
                   </td>
-                </tr>
+                </motion.tr>
               ))}
+              </AnimatePresence>
             </tbody>
           </table>
         </div>
-        
+
         {filteredUsers.length === 0 && (
-          <div className="text-center py-12">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="text-center py-12"
+          >
             <p className="text-gray-500">No users found matching your criteria.</p>
-          </div>
+          </motion.div>
         )}
-      </div>
+      </motion.div>
     </div>
   );
 }

@@ -13,6 +13,9 @@ const RideManagement = lazy(() => import('./pages/RideManagement'));
 const PaymentManagement = lazy(() => import('./pages/PaymentManagement'));
 const SafetyManagement = lazy(() => import('./pages/SafetyManagement'));
 const Analytics = lazy(() => import('./pages/Analytics'));
+const RiderVehicleVerification = lazy(() => import('./pages/RiderVehicleVerification'));
+const DriverVehicleVerification = lazy(() => import('./pages/DriverVehicleVerification'));
+const VehicleVerificationManagement = lazy(() => import('./pages/VehicleVerificationManagement'));
 
 function App() {
   return (
@@ -30,6 +33,9 @@ function App() {
               <Route path="/payments" element={<PaymentManagement />} />
               <Route path="/safety" element={<SafetyManagement />} />
               <Route path="/analytics" element={<Analytics />} />
+              <Route path="/rider-vehicle-verification" element={<RiderVehicleVerification />} />
+              <Route path="/driver-vehicle-verification" element={<DriverVehicleVerification />} />
+              <Route path="/vehicle-verification" element={<VehicleVerificationManagement />} />
             </Routes>
           </Suspense>
         </Layout>

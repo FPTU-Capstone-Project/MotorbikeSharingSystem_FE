@@ -124,3 +124,128 @@ export interface Notification {
   userId?: string
   rideId?: string
 }
+
+export interface Vehicle {
+  id: string
+  driverId: string
+  plateNumber: string
+  model: string
+  color: string
+  year: number
+  insuranceExpiry: string
+  status: 'active' | 'inactive' | 'maintenance'
+  createdAt: string
+  updatedAt: string
+}
+
+export interface VehicleVerification {
+  id: string
+  driverId: string
+  vehicleId: string
+  driverName: string
+  driverEmail: string
+  driverPhone: string
+  plateNumber: string
+  model: string
+  color: string
+  year: number
+  insuranceExpiry: string
+  status: 'pending' | 'approved' | 'rejected'
+  verificationType: 'vehicle_registration' | 'insurance' | 'vehicle_photos'
+  documents: {
+    registrationUrl?: string
+    insuranceUrl?: string
+    frontPhotoUrl?: string
+    sidePhotoUrl?: string
+    platePhotoUrl?: string
+  }
+  submittedAt: string
+  verifiedAt?: string
+  verifiedBy?: string
+  rejectionReason?: string
+}
+
+// Backend DTOs
+export interface VerificationItem {
+  verification_id: number;
+  user_id: number;
+  type: 'STUDENT_ID' | 'DRIVER_LICENSE' | 'DRIVER_DOCUMENTS' | 'VEHICLE_REGISTRATION' | 'BACKGROUND_CHECK';
+  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'EXPIRED';
+  document_url?: string;
+  document_type?: 'IMAGE' | 'PDF';
+  metadata?: string;
+  rejection_reason?: string;
+  verified_by?: string;
+  verified_at?: string;
+  expires_at?: string;
+  created_at: string;
+}
+
+export interface DriverKycItemDTO {
+  userId: number;
+  fullName: string;
+  email: string;
+  phone: string;
+  licenseNumber?: string;
+  driverStatus: string;
+  verifications: Array<{
+    verificationId: number;
+    type: 'DRIVER_DOCUMENTS' | 'DRIVER_LICENSE' | 'VEHICLE_REGISTRATION' | 'BACKGROUND_CHECK' | 'STUDENT_ID';
+    status: 'PENDING' | 'APPROVED' | 'REJECTED';
+    documentUrl?: string;
+    documentType?: string;
+    rejectionReason?: string;
+    verifiedBy?: string;
+    verifiedAt?: string;
+    createdAt?: string;
+  }>;
+  createdAt?: string;
+}
+
+
+export interface FileUpload {
+  id: string
+  userId: string
+  fileType: 'license' | 'identity_card' | 'passport' | 'vehicle_registration' | 'insurance' | 'profile_photo'
+  fileUrl: string
+  fileName: string
+  fileSize: number
+  uploadedAt: string
+  status: 'active' | 'deleted'
+}
+
+export interface Verification {
+  id: string
+  userId: string
+  verificationType: 'STUDENT_ID' | 'DRIVER_LICENSE' | 'BACKGROUND_CHECK' | 'VEHICLE_REGISTRATION'
+  status: 'pending' | 'approved' | 'rejected'
+  documentUrls: string[]
+  submittedAt: string
+  reviewedAt?: string
+  reviewedBy?: string
+  rejectionReason?: string
+}
+
+// Transaction type (alias for Payment for backend compatibility)
+export type Transaction = Payment
+
+// Dashboard Statistics
+export interface DashboardStats {
+  totalUsers: number
+  totalDrivers: number
+  totalRides: number
+  totalRevenue: number
+  activeRides: number
+  pendingVerifications: number
+  activeSOSAlerts: number
+  recentTransactions?: Transaction[]
+  userGrowth?: {
+    period: string
+    count: number
+  }[]
+  rideStatistics?: {
+    completed: number
+    ongoing: number
+    cancelled: number
+  }
+}
