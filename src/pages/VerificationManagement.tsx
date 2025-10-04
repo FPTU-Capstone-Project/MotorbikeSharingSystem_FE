@@ -483,7 +483,7 @@ export default function VerificationManagement() {
                         if (!selected) return;
                         try {
                           setActionLoading(true);
-                          await approveVerification(selected.verification_id, selected.user_id, selected.type);
+                          await approveVerification(selected.verification_id, Number(selected.user_id), selected.type);
                           toast.success('Approved successfully');
                           setShowDetailModal(false);
                           setSelected(null);
@@ -514,7 +514,7 @@ export default function VerificationManagement() {
                         if (reason === null) return;
                         try {
                           setActionLoading(true);
-                          await rejectVerification(selected.verification_id, selected.user_id, selected.type, reason);
+                          await rejectVerification(selected.verification_id, Number(selected.user_id), selected.type, reason);
                           toast.success('Rejected successfully');
                           setShowDetailModal(false);
                           setSelected(null);
