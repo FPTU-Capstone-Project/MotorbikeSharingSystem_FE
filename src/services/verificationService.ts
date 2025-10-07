@@ -22,8 +22,11 @@ export async function approveVerification(verificationId: number, userId: number
   console.log('User info:', { verificationId, userId, type });
   try {
     let endpoint;
-    let body = { notes };
-    
+    // Backend expects VerificationDecisionRequest: { rejectionReason?: string, notes?: string }
+    const body = {
+      notes: notes || undefined  // Send undefined if empty, not empty string
+    };
+
     if (type === 'STUDENT_ID') {
       endpoint = `/verification/students/${userId}/approve`;
     } else if (type === 'DRIVER_LICENSE') {
@@ -35,18 +38,26 @@ export async function approveVerification(verificationId: number, userId: number
     } else {
       throw new Error(`Unknown verification type: ${type}`);
     }
-    
+
     console.log('Calling approve API:', endpoint);
     console.log('Request body:', body);
-    
+
     const result = await apiFetch(endpoint, {
       method: 'POST',
       body,
     });
     console.log('Approve result:', result);
     return result;
-  } catch (error) {
+  } catch (error: any) {
     console.error('Approve error:', error);
+    // Provide more detailed error message
+    if (error?.status === 500) {
+      throw new Error('Server error: ' + (error?.data?.message || 'Internal server error'));
+    } else if (error?.status === 404) {
+      throw new Error('Verification not found');
+    } else if (error?.status === 401) {
+      throw new Error('Unauthorized - Please login again');
+    }
     throw error;
   }
 }
@@ -55,8 +66,12 @@ export async function rejectVerification(verificationId: number, userId: number,
   console.log('User info:', { verificationId, userId, type });
   try {
     let endpoint;
-    let body = { rejectionReason, notes };
-    
+    // Backend expects VerificationDecisionRequest: { rejectionReason: string, notes?: string }
+    const body = {
+      rejectionReason: rejectionReason.trim() || 'Not specified', // Must not be empty
+      notes: notes || undefined  // Send undefined if empty
+    };
+
     if (type === 'STUDENT_ID') {
       endpoint = `/verification/students/${userId}/reject`;
     } else if (type === 'DRIVER_LICENSE' || type === 'DRIVER_DOCUMENTS' || type === 'VEHICLE_REGISTRATION') {
@@ -64,18 +79,28 @@ export async function rejectVerification(verificationId: number, userId: number,
     } else {
       throw new Error(`Unknown verification type: ${type}`);
     }
-    
+
     console.log('Calling reject API:', endpoint);
     console.log('Request body:', body);
-    
+
     const result = await apiFetch(endpoint, {
       method: 'POST',
       body,
     });
     console.log('Reject result:', result);
     return result;
-  } catch (error) {
+  } catch (error: any) {
     console.error('Reject error:', error);
+    // Provide more detailed error message
+    if (error?.status === 500) {
+      throw new Error('Server error: ' + (error?.data?.message || 'Internal server error'));
+    } else if (error?.status === 404) {
+      throw new Error('Verification not found');
+    } else if (error?.status === 401) {
+      throw new Error('Unauthorized - Please login again');
+    } else if (error?.status === 400) {
+      throw new Error('Bad request: ' + (error?.data?.message || 'Invalid request'));
+    }
     throw error;
   }
 }

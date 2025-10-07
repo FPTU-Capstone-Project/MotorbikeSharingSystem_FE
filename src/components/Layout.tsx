@@ -1,5 +1,5 @@
 import React, { useState, useCallback, memo } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   HomeIcon,
   UsersIcon,
@@ -12,16 +12,19 @@ import {
   XMarkIcon,
   MagnifyingGlassIcon,
   DocumentCheckIcon,
+  ArrowRightOnRectangleIcon,
 } from '@heroicons/react/24/outline';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../utils/cn';
+import { useAuth } from '../contexts/AuthContext';
+import toast from 'react-hot-toast';
 
 interface LayoutProps {
   children: React.ReactNode;
 }
 
 const navigation = [
-  { name: 'Dashboard', href: '/', icon: HomeIcon },
+  { name: 'Dashboard', href: '/dashboard', icon: HomeIcon },
   { name: 'Users', href: '/users', icon: UsersIcon },
   { name: 'Verification', href: '/verification', icon: DocumentCheckIcon },
   { name: 'Vehicle Verification', href: '/vehicle-verification', icon: DocumentCheckIcon },
@@ -34,14 +37,22 @@ const navigation = [
 const Layout = memo(({ children }: LayoutProps) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
-  
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
+
   const closeSidebar = useCallback(() => {
     setSidebarOpen(false);
   }, []);
-  
+
   const openSidebar = useCallback(() => {
     setSidebarOpen(true);
   }, []);
+
+  const handleLogout = useCallback(() => {
+    logout();
+    toast.success('Logged out successfully');
+    navigate('/login');
+  }, [logout, navigate]);
 
   return (
     <div className="flex h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
@@ -146,13 +157,27 @@ const Layout = memo(({ children }: LayoutProps) => {
               </button>
               <div className="flex items-center space-x-3 bg-gray-50/80 rounded-2xl px-4 py-2 border border-gray-200/60 hover:bg-white/80 transition-all duration-200">
                 <div className="h-10 w-10 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-                  <span className="text-sm font-bold text-white">A</span>
+                  <span className="text-sm font-bold text-white">
+                    {user?.fullName?.charAt(0)?.toUpperCase() || 'A'}
+                  </span>
                 </div>
                 <div>
-                  <span className="text-sm font-semibold text-gray-900">Admin User</span>
-                  <p className="text-xs text-gray-500">Administrator</p>
+                  <span className="text-sm font-semibold text-gray-900">
+                    {user?.fullName || 'Admin User'}
+                  </span>
+                  <p className="text-xs text-gray-500">
+                    {user?.email || 'Administrator'}
+                  </p>
                 </div>
               </div>
+              <button
+                onClick={handleLogout}
+                className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 rounded-xl transition-all duration-200"
+                title="Logout"
+              >
+                <ArrowRightOnRectangleIcon className="h-5 w-5" />
+                <span>Logout</span>
+              </button>
             </div>
           </div>
         </header>

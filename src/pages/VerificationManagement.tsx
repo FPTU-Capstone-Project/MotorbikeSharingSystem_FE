@@ -495,23 +495,27 @@ export default function VerificationManagement() {
                           setItems(res.data);
                           setTotalPages(res.pagination.total_pages);
                           setTotalRecords(res.pagination.total_records);
-                        } catch {
-                          toast.error('Approve failed');
+                        } catch (error: any) {
+                          console.error('Approve failed:', error);
+                          toast.error(error?.message || 'Approve failed');
                         } finally {
                           setActionLoading(false);
                         }
                       }}
-                      className="w-full sm:w-auto inline-flex justify-center items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg text-white bg-green-600 hover:bg-green-700 focus:outline-none"
+                      className="w-full sm:w-auto inline-flex justify-center items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg text-white bg-green-600 hover:bg-green-700 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <CheckCircleIcon className="h-5 w-5 mr-2" />
-                      Approve
+                      {actionLoading ? 'Processing...' : 'Approve'}
                     </button>
                 <button
                       disabled={actionLoading}
                       onClick={async () => {
                         if (!selected) return;
-                        const reason = window.prompt('Enter rejection reason');
-                        if (reason === null) return;
+                        const reason = window.prompt('Enter rejection reason (required):');
+                        if (reason === null || reason.trim() === '') {
+                          toast.error('Rejection reason is required');
+                          return;
+                        }
                         try {
                           setActionLoading(true);
                           await rejectVerification(selected.verification_id, Number(selected.user_id), selected.type, reason);
@@ -525,16 +529,17 @@ export default function VerificationManagement() {
                           setItems(res.data);
                           setTotalPages(res.pagination.total_pages);
                           setTotalRecords(res.pagination.total_records);
-                        } catch {
-                          toast.error('Reject failed');
+                        } catch (error: any) {
+                          console.error('Reject failed:', error);
+                          toast.error(error?.message || 'Reject failed');
                         } finally {
                           setActionLoading(false);
                         }
                       }}
-                      className="mt-3 sm:mt-0 w-full sm:w-auto inline-flex justify-center items-center px-6 py-3 border border-gray-300 text-base font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none"
+                      className="mt-3 sm:mt-0 w-full sm:w-auto inline-flex justify-center items-center px-6 py-3 border border-gray-300 text-base font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <XCircleIcon className="h-5 w-5 mr-2" />
-                      Reject
+                      {actionLoading ? 'Processing...' : 'Reject'}
                 </button>
                   </>
                 )}

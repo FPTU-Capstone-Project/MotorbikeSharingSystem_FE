@@ -10,6 +10,16 @@ export interface PageResponse<T> {
   };
 }
 
+// Get JWT token from localStorage
+function getAuthToken(): string | null {
+  // Try to get token from localStorage
+  // Common keys: 'token', 'accessToken', 'access_token', 'authToken'
+  return localStorage.getItem('token')
+    || localStorage.getItem('accessToken')
+    || localStorage.getItem('access_token')
+    || localStorage.getItem('authToken');
+}
+
 export async function apiFetch<T = any>(
   endpoint: string,
   options?: {
@@ -20,12 +30,20 @@ export async function apiFetch<T = any>(
 ): Promise<T> {
   const url = `${BASE_URL}${endpoint}`;
 
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...options?.headers,
+  };
+
+  // Add Authorization header if token exists
+  const token = getAuthToken();
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
   const config: RequestInit = {
     method: options?.method || 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-      ...options?.headers,
-    },
+    headers,
   };
 
   if (options?.body) {
@@ -35,8 +53,18 @@ export async function apiFetch<T = any>(
   const response = await fetch(url, config);
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ message: 'Request failed' }));
-    throw new Error(error.message || `HTTP ${response.status}`);
+    let errorData: any = { message: 'Request failed' };
+    try {
+      errorData = await response.json();
+    } catch (e) {
+      // If response is not JSON, use default message
+    }
+
+    // Create error object with status code for better error handling
+    const error: any = new Error(errorData.message || `HTTP ${response.status}`);
+    error.status = response.status;
+    error.data = errorData;
+    throw error;
   }
 
   return response.json();
