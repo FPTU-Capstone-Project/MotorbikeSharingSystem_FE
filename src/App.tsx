@@ -32,6 +32,9 @@ function App() {
                 {/* Public route */}
                 <Route path="/login" element={<LoginPage />} />
 
+                {/* Root redirects to login to avoid blank page */}
+                <Route path="/" element={<Navigate to="/login" replace />} />
+
                 {/* Protected routes */}
                 <Route
                   path="/dashboard"
@@ -134,8 +137,8 @@ function App() {
                   }
                 />
 
-                {/* Catch all - redirect to home */}
-                <Route path="*" element={<Navigate to="/" replace />} />
+                {/* Catch all - redirect to login */}
+                <Route path="*" element={<Navigate to="/login" replace />} />
               </Routes>
             </Suspense>
 

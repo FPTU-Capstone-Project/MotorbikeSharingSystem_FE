@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   MagnifyingGlassIcon,
   CheckCircleIcon,
@@ -16,6 +16,7 @@ import { VehicleVerification } from '../types';
 import { PageResponse } from '../utils/api';
 import { DriverKycItemDTO } from '../types';
 import { approveDriverVehicle, fetchPendingDriverKycs, rejectDriver } from '../services/verificationService';
+import { vehicleService } from '../services/apiService';
 import toast from 'react-hot-toast';
 
 // Load from backend
@@ -23,7 +24,9 @@ import toast from 'react-hot-toast';
 export default function VehicleVerificationManagement() {
   const [verifications, setVerifications] = useState<VehicleVerification[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
+  // Removed filterStatus per request; using sort-only controls
+  const [sortBy, setSortBy] = useState<'driverId' | 'plateNumber' | 'submittedAt' | 'status'>('submittedAt');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const [selectedVerification, setSelectedVerification] = useState<VehicleVerification | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [rejectionReason, setRejectionReason] = useState('');
@@ -32,65 +35,84 @@ export default function VehicleVerificationManagement() {
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(0);
   const pageSize = 10;
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalRecords, setTotalRecords] = useState(0);
 
   useEffect(() => {
-    // TODO: Backend chưa có API /verification/drivers (getAll)
-    // Hiện tại chỉ có /verification/drivers/pending
-    // Tạm thời comment để không load API
+    let ignore = false;
+    const load = async () => {
+      try {
+        setLoading(true);
+        // Use vehicles endpoint with optional status filtering
+        const res = await vehicleService.getAllVehicles(
+          page,
+          pageSize,
+          sortBy === 'submittedAt' ? 'createdAt' : (sortBy === 'status' ? 'status' : sortBy),
+          sortDir
+        );
 
-    // let ignore = false;
-    // const load = async () => {
-    //   try {
-    //     setLoading(true);
-    //     const res = await fetchPendingDriverKycs(page, pageSize);
-    //     if (ignore) return;
-    //     // Map to table rows: we show vehicle verification line per driver
-    //     const rows: VehicleVerification[] = res.data.map((d: any, idx) => {
-    //       const vehicle = d.verifications?.find((v: any) => v.type === 'VEHICLE_REGISTRATION');
-    //       return {
-    //         id: `${d.user_id || d.userId}-${idx}`,
-    //         driverId: String(d.user_id || d.userId),
-    //         vehicleId: `veh-${d.user_id || d.userId}`,
-    //         driverName: d.full_name || d.fullName || 'N/A',
-    //         driverEmail: d.email || 'N/A',
-    //         driverPhone: d.phone || 'N/A',
-    //         plateNumber: 'N/A',
-    //         model: 'N/A',
-    //         color: 'N/A',
-    //         year: new Date().getFullYear(),
-    //         insuranceExpiry: new Date().toISOString().slice(0,10),
-    //         status: (vehicle?.status || 'PENDING').toLowerCase() as any,
-    //         verificationType: 'vehicle_registration',
-    //         documents: {
-    //           registrationUrl: vehicle?.document_url || vehicle?.documentUrl,
-    //         },
-    //         submittedAt: vehicle?.created_at || vehicle?.createdAt || '',
-    //       };
-    //     });
-    //     setVerifications(rows);
-    //   } catch (e: any) {
-    //     console.error(e);
-    //   } finally {
-    //     setLoading(false);
-    //   }
-    // };
-    // load();
-    // return () => { ignore = true; };
+        if (ignore) return;
 
-    setVerifications([]); // Tạm thời set empty array
-  }, [page]);
+        const rows: VehicleVerification[] = (res.data || []).map((v: any) => ({
+          id: String(v.vehicle_id ?? v.vehicleId ?? `${v.driver_id}-${v.plate_number}`),
+          driverId: String(v.driver_id ?? v.driverId ?? ''),
+          vehicleId: String(v.vehicle_id ?? v.vehicleId ?? ''),
+          driverName: v.driver_name ?? v.driverName ?? '—',
+          driverEmail: v.driver_email ?? v.driverEmail ?? '—',
+          driverPhone: v.driver_phone ?? v.driverPhone ?? '—',
+          plateNumber: v.plate_number ?? v.plateNumber ?? '—',
+          model: v.model ?? '—',
+          color: v.color ?? '—',
+          year: v.year ?? new Date().getFullYear(),
+          insuranceExpiry: (v.insurance_expiry ?? v.insuranceExpiry ?? new Date().toISOString()).toString(),
+          status: (v.status ?? 'PENDING').toString().toLowerCase(),
+          verificationType: 'vehicle_registration',
+          documents: {},
+          submittedAt: (v.created_at ?? v.createdAt ?? new Date().toISOString()).toString(),
+          verifiedAt: v.verified_at ?? v.verifiedAt,
+          verifiedBy: v.verified_by ?? v.verifiedBy,
+          rejectionReason: v.rejection_reason ?? v.rejectionReason,
+        }));
+        setVerifications(rows);
+        const p = res.pagination || {} as any;
+        setTotalPages((p.total_pages ?? 0) as number);
+        setTotalRecords((p.total_records ?? rows.length) as number);
+      } catch (e: any) {
+        console.error(e);
+        toast.error(e?.message || 'Failed to load vehicles');
+      } finally {
+        if (!ignore) setLoading(false);
+      }
+    };
+    load();
+    return () => { ignore = true; };
+  }, [page, sortBy, sortDir]);
 
-  const filteredVerifications = verifications.filter(verification => {
-    const matchesSearch =
-      (verification.driverName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (verification.driverEmail || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (verification.plateNumber || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (verification.model || '').toLowerCase().includes(searchTerm.toLowerCase());
+  const filteredVerifications = useMemo(() => {
+    const base = verifications.filter(verification => {
+      const matchesSearch =
+        (verification.driverName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (verification.driverEmail || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (verification.plateNumber || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (verification.model || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (verification.id || '').toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesStatus = filterStatus === 'all' || verification.status === filterStatus;
+      return matchesSearch;
+    });
 
-    return matchesSearch && matchesStatus;
-  });
+    const sorted = [...base].sort((a, b) => {
+      const dir = sortDir === 'asc' ? 1 : -1;
+      if (sortBy === 'driverId') return (Number(a.driverId) - Number(b.driverId)) * dir;
+      if (sortBy === 'plateNumber') return a.plateNumber.localeCompare(b.plateNumber) * dir;
+      if (sortBy === 'status') return a.status.localeCompare(b.status) * dir;
+      // submittedAt default
+      return (new Date(a.submittedAt).getTime() - new Date(b.submittedAt).getTime()) * dir;
+    });
+
+    return sorted;
+  }, [verifications, searchTerm, sortBy, sortDir]);
+
+  
 
   const pendingCount = verifications.filter(v => v.status === 'pending').length;
   const approvedCount = verifications.filter(v => v.status === 'approved').length;
@@ -226,26 +248,37 @@ export default function VehicleVerificationManagement() {
       {/* Filters */}
       <div className="card">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
-          <div className="relative">
+          <div className="relative flex-1">
             <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
             <input
               type="text"
               placeholder="Search by driver name, email, plate number, model..."
-              className="input-field pl-10 w-full sm:w-96"
+              className="input-field pl-10 w-full"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <select
-            className="input-field"
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value as any)}
-          >
-            <option value="all">All Status</option>
-            <option value="pending">Pending</option>
-            <option value="approved">Approved</option>
-            <option value="rejected">Rejected</option>
-          </select>
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <span className="text-sm text-gray-600">Sort:</span>
+            <select
+              className="input-field w-44 sm:w-56"
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as any)}
+            >
+              <option value="submittedAt">Submitted</option>
+              <option value="driverId">Driver ID</option>
+              <option value="plateNumber">Plate</option>
+              <option value="status">Status (ACTIVE/MAINTENANCE)</option>
+            </select>
+            <select
+              className="input-field w-28 sm:w-32"
+              value={sortDir}
+              onChange={(e) => setSortDir(e.target.value as any)}
+            >
+              <option value="asc">Asc</option>
+              <option value="desc">Desc</option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -289,7 +322,7 @@ export default function VehicleVerificationManagement() {
                         </div>
                       </div>
                       <div className="ml-4">
-                        <div className="text-sm font-medium text-gray-900">{verification.driverName}</div>
+                        <div className="text-sm font-medium text-gray-900">{verification.driverName} <span className="text-xs text-gray-500">(ID: {verification.driverId || '—'})</span></div>
                         <div className="text-sm text-gray-500">{verification.driverEmail}</div>
                         <div className="text-xs text-gray-400">{verification.driverPhone}</div>
                       </div>
@@ -317,17 +350,22 @@ export default function VehicleVerificationManagement() {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${
-                      verification.status === 'approved'
+                    {(() => {
+                      const s = (verification.status || '').toUpperCase();
+                      const pill = s === 'ACTIVE'
                         ? 'bg-green-100 text-green-800'
-                        : verification.status === 'rejected'
-                        ? 'bg-red-100 text-red-800'
-                        : 'bg-yellow-100 text-yellow-800'
-                    }`}>
-                      {verification.status === 'approved' && 'Approved'}
-                      {verification.status === 'rejected' && 'Rejected'}
-                      {verification.status === 'pending' && 'Pending'}
-                    </span>
+                        : s === 'MAINTENANCE'
+                        ? 'bg-amber-100 text-amber-800'
+                        : s === 'INACTIVE'
+                        ? 'bg-gray-100 text-gray-700'
+                        : 'bg-yellow-100 text-yellow-800';
+                      const label = s || 'PENDING';
+                      return (
+                        <span className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${pill}`}>
+                          {label}
+                        </span>
+                      );
+                    })()}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {new Date(verification.submittedAt).toLocaleDateString('en-US')}
@@ -356,6 +394,26 @@ export default function VehicleVerificationManagement() {
             <p className="mt-2 text-gray-500">No vehicle verification requests found.</p>
           </div>
         )}
+        {/* Pagination */}
+        <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200">
+          <div className="text-sm text-gray-600">Page {page + 1} / {Math.max(totalPages, 1)} • Total {totalRecords}</div>
+          <div className="space-x-2">
+            <button
+              className="btn btn-secondary px-4 py-2 disabled:opacity-50"
+              disabled={page === 0 || loading}
+              onClick={() => setPage((p) => Math.max(p - 1, 0))}
+            >
+              Previous
+            </button>
+            <button
+              className="btn btn-secondary px-4 py-2 disabled:opacity-50"
+              disabled={page + 1 >= totalPages || loading}
+              onClick={() => setPage((p) => p + 1)}
+            >
+              Next
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Detail Modal */}

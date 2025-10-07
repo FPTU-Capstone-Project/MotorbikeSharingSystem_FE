@@ -27,9 +27,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Load user from localStorage on mount
   useEffect(() => {
-    const storedToken = localStorage.getItem('token')
+    const candidateToken = localStorage.getItem('token')
       || localStorage.getItem('accessToken')
       || localStorage.getItem('access_token');
+    const storedToken = candidateToken && candidateToken !== 'undefined' ? candidateToken : null;
     const storedUser = localStorage.getItem('user');
 
     if (storedToken && storedUser) {
@@ -49,14 +50,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (email: string, password: string) => {
     try {
       // Call backend login API
-      const response = await apiFetch<{
-        userId: number;
-        userType: string;
-        activeProfile?: string;
-        accessToken: string;
-        refreshToken: string;
-        expiresIn: number;
-      }>('/auth/login', {
+      const response = await apiFetch<any>('/auth/login', {
         method: 'POST',
         body: {
           email,
@@ -67,21 +61,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       // Extract user data from response
       const userData: User = {
-        userId: response.userId,
+        userId: response.userId ?? response.user_id,
         email: email,
         fullName: 'Admin User', // Backend doesn't return name in login response
-        userType: response.userType,
-        activeProfile: response.activeProfile,
+        userType: response.userType ?? response.user_type,
+        activeProfile: response.activeProfile ?? response.active_profile,
       };
 
       // Save to state and localStorage
-      setToken(response.accessToken);
+      const accessToken = response.accessToken ?? response.access_token;
+      const refreshToken = response.refreshToken ?? response.refresh_token;
+      if (!accessToken || typeof accessToken !== 'string' || accessToken === 'undefined') {
+        throw new Error('Invalid access token from server');
+      }
+      setToken(accessToken);
       setUser(userData);
 
       // Store in localStorage (multiple keys for compatibility)
-      localStorage.setItem('token', response.accessToken);
-      localStorage.setItem('accessToken', response.accessToken);
-      localStorage.setItem('refreshToken', response.refreshToken);
+      localStorage.setItem('token', accessToken);
+      localStorage.setItem('accessToken', accessToken);
+      localStorage.setItem('access_token', accessToken);
+      if (refreshToken) {
+        localStorage.setItem('refreshToken', refreshToken);
+      }
       localStorage.setItem('user', JSON.stringify(userData));
 
       // Optionally fetch full user profile after login

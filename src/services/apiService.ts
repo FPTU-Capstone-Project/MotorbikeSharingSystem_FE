@@ -221,6 +221,13 @@ export interface CreateVehicleRequest {
 }
 
 export const vehicleService = {
+  // Admin: Get all vehicles with pagination and sorting
+  getAllVehicles: (page = 0, size = 10, sortBy: string = 'createdAt', sortDir: 'asc' | 'desc' = 'desc') =>
+    apiFetch<PageResponse<any>>(`/vehicles?page=${page}&size=${size}&sortBy=${sortBy}&sortDir=${sortDir}`),
+
+  // Admin: Get vehicles by status with pagination
+  getVehiclesByStatus: (status: string, page = 0, size = 10, sortBy: string = 'createdAt', sortDir: 'asc' | 'desc' = 'desc') =>
+    apiFetch<PageResponse<any>>(`/vehicles/status/${encodeURIComponent(status)}?page=${page}&size=${size}&sortBy=${sortBy}&sortDir=${sortDir}`),
   getMyVehicles: () =>
     apiFetch<Vehicle[]>('/vehicles/my-vehicles'),
 
