@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   MagnifyingGlassIcon,
   FunnelIcon,
@@ -10,98 +10,96 @@ import {
   UserPlusIcon,
 } from '@heroicons/react/24/outline';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User } from '../types';
+import { UserManagementItem } from '../types';
+import { getAllUsers } from '../services/profileService';
 import toast from 'react-hot-toast';
 
-const mockUsers: User[] = [
-  {
-    id: '1',
-    email: 'john.doe@student.fpt.edu.vn',
-    name: 'John Doe',
-    role: 'student',
-    isVerified: true,
-    studentId: 'SE150001',
-    phoneNumber: '+84 901 234 567',
-    avatar: 'https://ui-avatars.com/api/?name=John+Doe&background=3b82f6&color=fff',
-    createdAt: '2024-01-15T08:30:00Z',
-    lastActive: '2024-01-20T14:22:00Z',
-    status: 'active',
-    emergencyContact: {
-      name: 'Jane Doe',
-      phone: '+84 901 234 568',
-    },
-  },
-  {
-    id: '2',
-    email: 'mike.driver@student.fpt.edu.vn',
-    name: 'Mike Johnson',
-    role: 'driver',
-    isVerified: false,
-    studentId: 'SE150002',
-    phoneNumber: '+84 901 234 569',
-    avatar: 'https://ui-avatars.com/api/?name=Mike+Johnson&background=10b981&color=fff',
-    createdAt: '2024-01-16T09:15:00Z',
-    lastActive: '2024-01-20T16:45:00Z',
-    status: 'active',
-  },
-  {
-    id: '3',
-    email: 'sarah.wilson@student.fpt.edu.vn',
-    name: 'Sarah Wilson',
-    role: 'student',
-    isVerified: true,
-    studentId: 'SE150003',
-    phoneNumber: '+84 901 234 570',
-    avatar: 'https://ui-avatars.com/api/?name=Sarah+Wilson&background=ef4444&color=fff',
-    createdAt: '2024-01-17T10:00:00Z',
-    lastActive: '2024-01-19T12:30:00Z',
-    status: 'inactive',
-  },
-];
-
 export default function UserManagement() {
-  const [users, setUsers] = useState<User[]>(mockUsers);
+  const [users, setUsers] = useState<UserManagementItem[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterRole, setFilterRole] = useState<'all' | 'student' | 'driver'>('all');
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive' | 'suspended'>('all');
 
+  // Load users from API
+  useEffect(() => {
+    const loadUsers = async () => {
+      try {
+        setLoading(true);
+        const response = await getAllUsers(0, 1000); // Load all users for client-side filtering
+        setUsers(response.data || []);
+      } catch (error) {
+        console.error('Failed to load users:', error);
+        toast.error('Failed to load users');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadUsers();
+  }, []);
+
   const filteredUsers = users.filter(user => {
     const matchesSearch =
-      (user.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (user.full_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       (user.email || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (user.studentId || '').toLowerCase().includes(searchTerm.toLowerCase());
+      (user.student_id || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      String(user.user_id).includes(searchTerm);
 
-    const matchesRole = filterRole === 'all' || user.role === filterRole;
-    const matchesStatus = filterStatus === 'all' || user.status === filterStatus;
+    // Determine user role based on profiles
+    const userRole = user.driver_profile ? 'driver' : 'student';
+    const matchesRole = filterRole === 'all' || userRole === filterRole;
+    
+    // Map status to match filter options
+    const userStatus = user.status.toLowerCase();
+    const matchesStatus = filterStatus === 'all' || userStatus === filterStatus;
 
     return matchesSearch && matchesRole && matchesStatus;
   });
 
-  const handleVerifyUser = (userId: string) => {
-    setUsers(prev => 
-      prev.map(user => 
-        user.id === userId 
-          ? { ...user, isVerified: true }
-          : user
-      )
-    );
-    toast.success('User verified successfully');
+  const handleVerifyUser = async (userId: string) => {
+    try {
+      // TODO: Implement verify user API call
+      setUsers(prev => 
+        prev.map(user => 
+          user.user_id === Number(userId) 
+            ? { ...user, email_verified: true, phone_verified: true }
+            : user
+        )
+      );
+      toast.success('User verified successfully');
+    } catch (error) {
+      console.error('Failed to verify user:', error);
+      toast.error('Failed to verify user');
+    }
   };
 
-  const handleSuspendUser = (userId: string) => {
-    setUsers(prev => 
-      prev.map(user => 
-        user.id === userId 
-          ? { ...user, status: 'suspended' }
-          : user
-      )
-    );
-    toast.success('User suspended successfully');
+  const handleSuspendUser = async (userId: string) => {
+    try {
+      // TODO: Implement suspend user API call
+      setUsers(prev => 
+        prev.map(user => 
+          user.user_id === Number(userId) 
+            ? { ...user, status: 'SUSPENDED' }
+            : user
+        )
+      );
+      toast.success('User suspended successfully');
+    } catch (error) {
+      console.error('Failed to suspend user:', error);
+      toast.error('Failed to suspend user');
+    }
   };
 
-  const handleDeleteUser = (userId: string) => {
-    setUsers(prev => prev.filter(user => user.id !== userId));
-    toast.success('User deleted successfully');
+  const handleDeleteUser = async (userId: string) => {
+    try {
+      // TODO: Implement delete user API call
+      setUsers(prev => prev.filter(user => user.user_id !== Number(userId)));
+      toast.success('User deleted successfully');
+    } catch (error) {
+      console.error('Failed to delete user:', error);
+      toast.error('Failed to delete user');
+    }
   };
 
   const statColors = [
@@ -139,9 +137,9 @@ export default function UserManagement() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         {[
           { label: 'Total Users', value: users.length },
-          { label: 'Students', value: users.filter(u => u.role === 'student').length },
-          { label: 'Drivers', value: users.filter(u => u.role === 'driver').length },
-          { label: 'Pending Verification', value: users.filter(u => !u.isVerified).length },
+          { label: 'Students', value: users.filter(u => !u.driver_profile).length },
+          { label: 'Drivers', value: users.filter(u => u.driver_profile).length },
+          { label: 'Active Users', value: users.filter(u => u.status === 'ACTIVE').length },
         ].map((stat, index) => (
           <motion.div
             key={stat.label}
@@ -241,105 +239,98 @@ export default function UserManagement() {
                   Last Active
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
+                  Details
                 </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               <AnimatePresence>
-                {filteredUsers.map((user, index) => (
-                  <motion.tr
-                    key={user.id}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 20 }}
-                    transition={{ delay: index * 0.05 }}
-                    className="hover:bg-gray-50 transition-colors"
-                  >
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <img
-                        className="h-10 w-10 rounded-full"
-                        src={user.avatar}
-                        alt=""
-                      />
-                      <div className="ml-4">
-                        <div className="text-sm font-medium text-gray-900">{user.name}</div>
-                        <div className="text-sm text-gray-500">{user.email}</div>
-                        <div className="text-xs text-gray-400">ID: {user.studentId}</div>
+                {loading ? (
+                  <tr>
+                    <td colSpan={6} className="px-6 py-12 text-center">
+                      <div className="flex justify-center">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
                       </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                      user.role === 'driver' 
-                        ? 'bg-purple-100 text-purple-800'
-                        : 'bg-blue-100 text-blue-800'
-                    }`}>
-                      {user.role}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                      user.status === 'active'
-                        ? 'bg-green-100 text-green-800'
-                        : user.status === 'inactive'
-                        ? 'bg-gray-100 text-gray-800'
-                        : 'bg-red-100 text-red-800'
-                    }`}>
-                      {user.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    {user.isVerified ? (
-                      <div className="flex items-center text-green-600">
-                        <CheckCircleIcon className="h-5 w-5 mr-1" />
-                        <span className="text-sm">Verified</span>
-                      </div>
-                    ) : (
-                      <div className="flex items-center text-yellow-600">
-                        <XCircleIcon className="h-5 w-5 mr-1" />
-                        <span className="text-sm">Pending</span>
-                      </div>
-                    )}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {new Date(user.lastActive).toLocaleDateString()}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <div className="flex items-center space-x-2">
-                      <button className="text-blue-600 hover:text-blue-900 p-1 rounded">
-                        <EyeIcon className="h-4 w-4" />
-                      </button>
-                      <button className="text-gray-600 hover:text-gray-900 p-1 rounded">
-                        <PencilIcon className="h-4 w-4" />
-                      </button>
-                      {!user.isVerified && (
-                        <button
-                          onClick={() => handleVerifyUser(user.id)}
-                          className="text-green-600 hover:text-green-900 p-1 rounded"
-                        >
-                          <CheckCircleIcon className="h-4 w-4" />
-                        </button>
-                      )}
-                      {user.status !== 'suspended' && (
-                        <button
-                          onClick={() => handleSuspendUser(user.id)}
-                          className="text-yellow-600 hover:text-yellow-900 p-1 rounded"
-                        >
-                          <XCircleIcon className="h-4 w-4" />
-                        </button>
-                      )}
-                      <button
-                        onClick={() => handleDeleteUser(user.id)}
-                        className="text-red-600 hover:text-red-900 p-1 rounded"
+                      <p className="mt-2 text-gray-500">Loading users...</p>
+                    </td>
+                  </tr>
+                ) : (
+                  filteredUsers.map((user, index) => {
+                    const userRole = user.driver_profile ? 'driver' : 'student';
+                    const isVerified = user.email_verified && user.phone_verified;
+                    
+                    return (
+                      <motion.tr
+                        key={user.user_id}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: 20 }}
+                        transition={{ delay: index * 0.05 }}
+                        className="hover:bg-gray-50 transition-colors"
                       >
-                        <TrashIcon className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </td>
-                </motion.tr>
-              ))}
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center">
+                            <img
+                              className="h-10 w-10 rounded-full"
+                              src={user.profile_photo_url}
+                              alt=""
+                            />
+                            <div className="ml-4">
+                              <div className="text-sm font-medium text-gray-900">{user.full_name}</div>
+                              <div className="text-sm text-gray-500">{user.email}</div>
+                              <div className="text-xs text-gray-400">ID: {user.user_id}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                            userRole === 'driver' 
+                              ? 'bg-purple-100 text-purple-800'
+                              : 'bg-blue-100 text-blue-800'
+                          }`}>
+                            {userRole}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                            user.status === 'ACTIVE'
+                              ? 'bg-green-100 text-green-800'
+                              : user.status === 'INACTIVE'
+                              ? 'bg-gray-100 text-gray-800'
+                              : 'bg-red-100 text-red-800'
+                          }`}>
+                            {user.status.toLowerCase()}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {isVerified ? (
+                            <div className="flex items-center text-green-600">
+                              <CheckCircleIcon className="h-5 w-5 mr-1" />
+                              <span className="text-sm">Verified</span>
+                            </div>
+                          ) : (
+                            <div className="flex items-center text-yellow-600">
+                              <XCircleIcon className="h-5 w-5 mr-1" />
+                              <span className="text-sm">Pending</span>
+                            </div>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {new Date(user.created_at).toLocaleDateString()}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                          <div className="flex items-center space-x-2">
+                            <button className="text-blue-600 hover:text-blue-900 p-1 rounded flex items-center">
+                              <EyeIcon className="h-4 w-4" />
+                              
+                            </button>
+
+                          </div>
+                        </td>
+                      </motion.tr>
+                    );
+                  })
+                )}
               </AnimatePresence>
             </tbody>
           </table>

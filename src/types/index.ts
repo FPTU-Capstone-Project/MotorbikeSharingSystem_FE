@@ -164,7 +164,32 @@ export interface VehicleVerification {
   verifiedBy?: string
   rejectionReason?: string
 }
-
+export interface ProfileVerification {
+  id: string
+  driverId: string
+  vehicleId: string
+  driverName: string
+  driverEmail: string
+  driverPhone: string
+  plateNumber: string
+  model: string
+  color: string
+  year: number
+  insuranceExpiry: string
+  status: 'pending' | 'approved' | 'rejected'
+  verificationType: 'vehicle_registration' | 'insurance' | 'vehicle_photos'
+  documents: {
+    registrationUrl?: string
+    insuranceUrl?: string
+    frontPhotoUrl?: string
+    sidePhotoUrl?: string
+    platePhotoUrl?: string
+  }
+  submittedAt: string
+  verifiedAt?: string
+  verifiedBy?: string
+  rejectionReason?: string
+}
 // Backend DTOs
 export interface VerificationItem {
   verification_id: number;
@@ -248,4 +273,76 @@ export interface DashboardStats {
     ongoing: number
     cancelled: number
   }
+}
+
+// Transaction Verification
+export interface TransactionVerification {
+  id: number
+  transactionId: number
+  userId: number
+  verificationType: 'PAYMENT_VERIFICATION' | 'REFUND_VERIFICATION' | 'DISPUTE_RESOLUTION'
+  status: 'PENDING' | 'APPROVED' | 'REJECTED'
+  amount: number
+  currency: string
+  paymentMethod: 'CREDIT_CARD' | 'DEBIT_CARD' | 'BANK_TRANSFER' | 'WALLET' | 'CASH'
+  transactionReference?: string
+  bankReference?: string
+  verificationNotes?: string
+  rejectionReason?: string
+  verifiedBy?: string
+  verifiedAt?: string
+  createdAt: string
+  updatedAt?: string
+  documents?: {
+    receiptUrl?: string
+    bankStatementUrl?: string
+    disputeEvidenceUrl?: string
+  }
+  metadata?: Record<string, any>
+}
+
+// User Management Types
+export interface RiderProfile {
+  status: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED'
+  rider_id: number
+  emergency_contact: string
+  total_rides: number
+  total_spent: number
+  preferred_payment_method: 'WALLET' | 'CREDIT_CARD' | 'DEBIT_CARD' | 'BANK_TRANSFER' | 'CASH'
+  created_at: string
+  suspended_at?: string
+  activated_at?: string
+}
+
+export interface DriverProfile {
+  status: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED' | 'REJECTED' | 'PENDING'
+  driver_id: number
+  license_number: string
+  license_verified_at: string
+  rating_avg: number
+  total_shared_rides: number
+  total_earned: number
+  commission_rate: number
+  is_available: boolean
+  max_passengers: number
+  created_at: string
+  suspended_at?: string
+  activated_at?: string
+}
+
+export interface UserManagementItem {
+  email: string
+  phone: string
+  status: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED'
+  user_id: number
+  full_name: string
+  student_id: string
+  user_type: 'USER' | 'ADMIN' | 'MODERATOR'
+  profile_photo_url: string
+  email_verified: boolean
+  phone_verified: boolean
+  created_at: string
+  updated_at: string
+  rider_profile?: RiderProfile
+  driver_profile?: DriverProfile
 }

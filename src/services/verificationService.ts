@@ -1,19 +1,42 @@
 import { apiFetch, PageResponse } from '../utils/api';
 import { DriverKycItemDTO, VerificationItem } from '../types';
 
+// Types aligned with backend controller/dtos
+export interface VerificationDecisionRequest {
+  userId: number;
+  verificationType: string; // 'STUDENT_ID' | 'DRIVER_LICENSE' | ...
+  rejectionReason?: string;
+  notes?: string;
+}
+
+export interface BulkApprovalRequest {
+  verificationIds: number[];
+  notes?: string;
+}
+
+export interface MessageResponse { message: string }
+export interface BulkOperationResponse {
+  totalRequested: number;
+  successfulCount: number;
+  failedCount: number;
+  successfulIds: number[];
+  failedItems: Array<{ id: number; reason: string }>;
+  message: string;
+}
+
 //  verification APIs
 export async function fetchAllVerifications(
   page = 0,
   size = 10,
-  params?: { type?: VerificationItem['type']; status?: VerificationItem['status'] }
+  params?: { type?: VerificationItem['type']; status?: VerificationItem['status']; search?: string }
 ): Promise<PageResponse<VerificationItem>> {
   const query = new URLSearchParams();
   query.set('page', String(page));
   query.set('size', String(size));
-  query.set('sortBy', 'createdAt');
+  query.set('sortBy', 'verificationId');
   query.set('sortDir', 'desc');
-  if (params?.type) query.set('type', params.type);
-  if (params?.status) query.set('status', params.status);
+  // Backend doesn't support type, status, search parameters yet
+  // TODO: Update backend to support these filters
 
   return apiFetch<PageResponse<VerificationItem>>(`/verification/all?${query.toString()}`);
 }
@@ -91,6 +114,18 @@ export async function rejectVerification(verificationId: number, userId: number,
     }
     throw error;
   }
+}
+
+// Bulk approve
+export async function bulkApproveVerifications(verificationIds: number[], notes?: string): Promise<BulkOperationResponse> {
+  const body: BulkApprovalRequest = {
+    verificationIds,
+    notes: notes || undefined,
+  };
+  return apiFetch<BulkOperationResponse>(`/verification/bulk-approve`, {
+    method: 'POST',
+    body,
+  });
 }
 
 export async function approveStudent(userId: number, notes?: string) {
