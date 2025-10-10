@@ -42,77 +42,93 @@ export async function fetchAllVerifications(
 }
 
 export async function approveVerification(verificationId: number, userId: number, type: string, notes?: string) {
-  console.log('User info:', { verificationId, userId, type });
+  console.log('Approving verification:', { verificationId, userId, type, notes });
   try {
     // Backend expects VerificationDecisionRequest { userId, verificationType, notes? }
-    const body = {
-      userId,
-      verificationType: type,
+    const body: VerificationDecisionRequest = {
+      userId: userId,
+      verificationType: type.toUpperCase(), // Ensure uppercase for enum matching
       notes: notes || undefined,
-    } as const;
+    };
 
     const endpoint = `/verification/approve`;
-    console.log('Calling approve API:', endpoint);
-    console.log('Request body:', body);
+    console.log('POST', endpoint, JSON.stringify(body, null, 2));
 
-    const result = await apiFetch(endpoint, {
+    const result = await apiFetch<MessageResponse>(endpoint, {
       method: 'POST',
       body,
     });
-    console.log('Approve result:', result);
+    console.log('✓ Approve successful:', result);
     return result;
   } catch (error: any) {
-    console.error('Approve error:', error);
+    console.error('✗ Approve failed:', {
+      status: error?.status,
+      message: error?.message,
+      data: error?.data
+    });
+
     // Provide more detailed error message
     if (error?.status === 500) {
-      throw new Error('Server error: ' + (error?.data?.message || 'Internal server error'));
+      const serverMsg = error?.data?.message || error?.data?.error || 'Internal server error';
+      throw new Error(`Server error: ${serverMsg}`);
     } else if (error?.status === 403) {
       throw new Error('Forbidden - You do not have permission to approve');
     } else if (error?.status === 404) {
-      throw new Error('Verification not found');
+      const msg = error?.data?.message || 'Verification not found';
+      throw new Error(msg);
     } else if (error?.status === 401) {
       throw new Error('Unauthorized - Please login again');
+    } else if (error?.status === 400) {
+      const msg = error?.data?.message || 'Invalid request';
+      throw new Error(`Bad request: ${msg}`);
     }
-    throw error;
+    throw new Error(error?.message || 'Unknown error occurred');
   }
 }
 
 export async function rejectVerification(verificationId: number, userId: number, type: string, rejectionReason: string, notes?: string) {
-  console.log('User info:', { verificationId, userId, type });
+  console.log('Rejecting verification:', { verificationId, userId, type, rejectionReason, notes });
   try {
     // Backend expects VerificationDecisionRequest { userId, verificationType, rejectionReason, notes? }
-    const body = {
-      userId,
-      verificationType: type,
+    const body: VerificationDecisionRequest = {
+      userId: userId,
+      verificationType: type.toUpperCase(), // Ensure uppercase for enum matching
       rejectionReason: rejectionReason.trim() || 'Not specified',
       notes: notes || undefined,
-    } as const;
+    };
 
     const endpoint = `/verification/reject`;
-    console.log('Calling reject API:', endpoint);
-    console.log('Request body:', body);
+    console.log('POST', endpoint, JSON.stringify(body, null, 2));
 
-    const result = await apiFetch(endpoint, {
+    const result = await apiFetch<MessageResponse>(endpoint, {
       method: 'POST',
       body,
     });
-    console.log('Reject result:', result);
+    console.log('✓ Reject successful:', result);
     return result;
   } catch (error: any) {
-    console.error('Reject error:', error);
+    console.error('✗ Reject failed:', {
+      status: error?.status,
+      message: error?.message,
+      data: error?.data
+    });
+
     // Provide more detailed error message
     if (error?.status === 500) {
-      throw new Error('Server error: ' + (error?.data?.message || 'Internal server error'));
+      const serverMsg = error?.data?.message || error?.data?.error || 'Internal server error';
+      throw new Error(`Server error: ${serverMsg}`);
     } else if (error?.status === 404) {
-      throw new Error('Verification not found');
+      const msg = error?.data?.message || 'Verification not found';
+      throw new Error(msg);
     } else if (error?.status === 401) {
       throw new Error('Unauthorized - Please login again');
     } else if (error?.status === 403) {
       throw new Error('Forbidden - You do not have permission to reject');
     } else if (error?.status === 400) {
-      throw new Error('Bad request: ' + (error?.data?.message || 'Invalid request'));
+      const msg = error?.data?.message || 'Invalid request';
+      throw new Error(`Bad request: ${msg}`);
     }
-    throw error;
+    throw new Error(error?.message || 'Unknown error occurred');
   }
 }
 

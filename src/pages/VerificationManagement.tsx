@@ -34,6 +34,11 @@ export default function VerificationManagement() {
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  // Approve/Reject modals state
+  const [showApproveModal, setShowApproveModal] = useState(false);
+  const [approveNotes, setApproveNotes] = useState('');
+  const [showRejectModal, setShowRejectModal] = useState(false);
+  const [rejectReason, setRejectReason] = useState('');
 
   // Use client-side filtering since backend doesn't support filters yet
   const allFilteredItems = useMemo(() => {
@@ -134,6 +139,49 @@ export default function VerificationManagement() {
       setTotalRecords(res.pagination.total_records);
     } catch (e: any) {
       toast.error('Failed to refresh data');
+    }
+  };
+
+  // Handlers
+  const handleApprove = async () => {
+    if (!selected) return;
+    try {
+      setActionLoading(true);
+      await approveVerification(selected.verification_id, Number(selected.user_id), selected.type, approveNotes || undefined);
+      toast.success('Approved successfully');
+      setShowApproveModal(false);
+      setApproveNotes('');
+      setShowDetailModal(false);
+      setSelected(null);
+      await refreshData();
+    } catch (error: any) {
+      console.error('Approve failed:', error);
+      toast.error(error?.message || 'Approve failed');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleReject = async () => {
+    if (!selected) return;
+    if (!rejectReason.trim()) {
+      toast.error('Rejection reason is required');
+      return;
+    }
+    try {
+      setActionLoading(true);
+      await rejectVerification(selected.verification_id, Number(selected.user_id), selected.type, rejectReason.trim());
+      toast.success('Rejected successfully');
+      setShowRejectModal(false);
+      setRejectReason('');
+      setShowDetailModal(false);
+      setSelected(null);
+      await refreshData();
+    } catch (error: any) {
+      console.error('Reject failed:', error);
+      toast.error(error?.message || 'Reject failed');
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -340,16 +388,52 @@ export default function VerificationManagement() {
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {new Date(v.created_at).toLocaleDateString('vi-VN')}
+                    {(() => {
+                      // Backend sends UTC with 'Z' suffix, but it's actually Vietnam time
+                      // Remove 'Z' and treat as local Vietnam time
+                      const timestamp = v.created_at.replace('Z', '');
+                      const date = new Date(timestamp);
+                      return date.toLocaleDateString('vi-VN', {
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit'
+                      });
+                    })()}
                     <div className="text-xs text-gray-400">
-                      {new Date(v.created_at).toLocaleTimeString('vi-VN')}
+                      {(() => {
+                        const timestamp = v.created_at.replace('Z', '');
+                        const date = new Date(timestamp);
+                        return date.toLocaleTimeString('vi-VN', {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                          second: '2-digit'
+                        });
+                      })()}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {v.verified_at ? (
                       <>
-                        {new Date(v.verified_at).toLocaleDateString('vi-VN')}
-                        <div className="text-xs text-gray-400">{new Date(v.verified_at).toLocaleTimeString('vi-VN')}</div>
+                        {(() => {
+                          const timestamp = v.verified_at.replace('Z', '');
+                          const date = new Date(timestamp);
+                          return date.toLocaleDateString('vi-VN', {
+                            year: 'numeric',
+                            month: '2-digit',
+                            day: '2-digit'
+                          });
+                        })()}
+                        <div className="text-xs text-gray-400">
+                          {(() => {
+                            const timestamp = v.verified_at.replace('Z', '');
+                            const date = new Date(timestamp);
+                            return date.toLocaleTimeString('vi-VN', {
+                              hour: '2-digit',
+                              minute: '2-digit',
+                              second: '2-digit'
+                            });
+                          })()}
+                        </div>
                       </>
                     ) : (
                       <span className="text-gray-400">—</span>
@@ -459,13 +543,35 @@ export default function VerificationManagement() {
                         <div>
                           <p className="text-sm text-gray-500">Created at</p>
                           <p className="text-base font-medium text-gray-900">
-                            {new Date(selected.created_at).toLocaleString('vi-VN')}
+                            {(() => {
+                              const timestamp = selected.created_at.replace('Z', '');
+                              const date = new Date(timestamp);
+                              return date.toLocaleString('vi-VN', {
+                                year: 'numeric',
+                                month: '2-digit',
+                                day: '2-digit',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                                second: '2-digit'
+                              });
+                            })()}
                           </p>
                         </div>
                         <div>
                           <p className="text-sm text-gray-500">Verified at</p>
                           <p className="text-base font-medium text-gray-900">
-                            {selected.verified_at ? new Date(selected.verified_at).toLocaleString('vi-VN') : '—'}
+                            {selected.verified_at ? (() => {
+                              const timestamp = selected.verified_at.replace('Z', '');
+                              const date = new Date(timestamp);
+                              return date.toLocaleString('vi-VN', {
+                                year: 'numeric',
+                                month: '2-digit',
+                                day: '2-digit',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                                second: '2-digit'
+                              });
+                            })() : '—'}
                           </p>
                         </div>
 
@@ -539,54 +645,91 @@ export default function VerificationManagement() {
                       <div>
                         <h4 className="text-lg font-semibold text-gray-900 mb-3 flex items-center">
                           <DocumentTextIcon className="h-5 w-5 mr-2 text-green-500" />
-                          Image document
+                          Document Images ({(() => {
+                            if (!selected.document_url) return 0;
+                            const urls = selected.document_url.split(',').filter(u => u.trim());
+                            return urls.length;
+                          })()})
                         </h4>
                         <div className="space-y-3">
-                          {selected.document_url && selected.document_type === 'IMAGE' ? (
-                            <div className="border-2 border-gray-200 rounded-lg overflow-hidden">
-                              <img
-                                src={selected.document_url}
-                                alt="Document"
-                                className="w-full h-auto object-contain max-h-96"
-                              />
-                            </div>
-                          ) : selected.document_url && selected.document_type === 'PDF' ? (
-                            <div className="border-2 border-gray-200 rounded-lg p-8 bg-gray-50 flex items-center justify-center min-h-[200px]">
-                              <div className="text-center">
-                                <DocumentTextIcon className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                                <p className="text-gray-500 text-lg font-medium">PDF Document</p>
+                          {(() => {
+                            // Parse multiple URLs from comma-separated string
+                            if (!selected.document_url) {
+                              return (
+                                <div className="border-2 border-gray-200 rounded-lg p-8 bg-gray-50 flex items-center justify-center min-h-[200px]">
+                                  <div className="text-center">
+                                    <DocumentTextIcon className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                                    <p className="text-gray-500 text-lg font-medium">No documents</p>
+                                  </div>
+                                </div>
+                              );
+                            }
+
+                            const urls = selected.document_url.split(',').map(u => u.trim()).filter(u => u);
+
+                            if (urls.length === 0) {
+                              return (
+                                <div className="border-2 border-gray-200 rounded-lg p-8 bg-gray-50 flex items-center justify-center min-h-[200px]">
+                                  <div className="text-center">
+                                    <DocumentTextIcon className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                                    <p className="text-gray-500 text-lg font-medium">No documents</p>
+                                  </div>
+                                </div>
+                              );
+                            }
+
+                            return (
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {urls.map((url, index) => (
+                                  <div key={index} className="space-y-2">
+                                    <p className="text-sm font-medium text-gray-700">
+                                      {selected.type === 'STUDENT_ID'
+                                        ? (index === 0 ? 'Front (Mặt trước)' : 'Back (Mặt sau)')
+                                        : `Document ${index + 1}`}
+                                    </p>
+                                    {selected.document_type === 'IMAGE' ? (
+                                      <div className="border-2 border-gray-200 rounded-lg overflow-hidden bg-white">
+                                        <img
+                                          src={url}
+                                          alt={`Document ${index + 1}`}
+                                          className="w-full h-auto object-contain max-h-80"
+                                          onError={(e) => {
+                                            console.error('Image load error:', url);
+                                            (e.target as HTMLImageElement).src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="300"%3E%3Crect fill="%23f3f4f6" width="400" height="300"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" fill="%236b7280" font-size="16"%3EFailed to load image%3C/text%3E%3C/svg%3E';
+                                          }}
+                                        />
+                                      </div>
+                                    ) : selected.document_type === 'PDF' ? (
+                                      <div className="border-2 border-gray-200 rounded-lg p-6 bg-gray-50 flex items-center justify-center min-h-[150px]">
+                                        <div className="text-center">
+                                          <DocumentTextIcon className="h-12 w-12 text-gray-400 mx-auto mb-2" />
+                                          <p className="text-gray-500 text-sm font-medium">PDF Document</p>
+                                        </div>
+                                      </div>
+                                    ) : (
+                                      <div className="border-2 border-gray-200 rounded-lg p-6 bg-gray-50 flex items-center justify-center min-h-[150px]">
+                                        <div className="text-center">
+                                          <DocumentTextIcon className="h-12 w-12 text-gray-400 mx-auto mb-2" />
+                                          <p className="text-gray-500 text-sm font-medium">Unknown type</p>
+                                        </div>
+                                      </div>
+                                    )}
+                                    <div className="text-center">
+                                      <a
+                                        href={url}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="inline-flex items-center px-3 py-1.5 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                                      >
+                                        <DocumentTextIcon className="h-4 w-4 mr-1.5" />
+                                        Open in new tab
+                                      </a>
+                                    </div>
+                                  </div>
+                                ))}
                               </div>
-                            </div>
-                          ) : (
-                            <div className="border-2 border-gray-200 rounded-lg p-8 bg-gray-50 flex items-center justify-center min-h-[200px]">
-                              <div className="text-center">
-                                <DocumentTextIcon className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                                <p className="text-gray-500 text-lg font-medium">Image empty</p>
-                              </div>
-                            </div>
-                          )}
-                          <div className="text-center">
-                            Debug: {JSON.stringify({url: selected.document_url, type: selected.document_type})}
-                            {selected.document_url && selected.document_url.trim() !== '' && (selected.document_type === 'IMAGE' || selected.document_type === 'PDF') ? (
-                              <a
-                                href={selected.document_url}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                              >
-                                <DocumentTextIcon className="h-4 w-4 mr-2" />
-                                Open doc
-                              </a>
-                            ) : (
-                              <button
-                                disabled
-                                className="inline-flex items-center px-4 py-2 bg-gray-400 text-white rounded-lg cursor-not-allowed opacity-50"
-                              >
-                                <DocumentTextIcon className="h-4 w-4 mr-2" />
-                                Open doc
-                              </button>
-                            )}
-                          </div>
+                            );
+                          })()}
                         </div>
                       </div>
                     </div>
@@ -598,54 +741,19 @@ export default function VerificationManagement() {
                   <>
                     <button
                       disabled={actionLoading}
-                      onClick={async () => {
-                        if (!selected) return;
-                        try {
-                          setActionLoading(true);
-                          await approveVerification(selected.verification_id, Number(selected.user_id), selected.type);
-                          toast.success('Approved successfully');
-                          setShowDetailModal(false);
-                          setSelected(null);
-                          await refreshData();
-                        } catch (error: any) {
-                          console.error('Approve failed:', error);
-                          toast.error(error?.message || 'Approve failed');
-                        } finally {
-                          setActionLoading(false);
-                        }
-                      }}
+                      onClick={() => setShowApproveModal(true)}
                       className="w-full sm:w-auto inline-flex justify-center items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg text-white bg-green-600 hover:bg-green-700 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <CheckCircleIcon className="h-5 w-5 mr-2" />
-                      {actionLoading ? 'Processing...' : 'Approve'}
+                      Approve
                     </button>
                     <button
                       disabled={actionLoading}
-                      onClick={async () => {
-                        if (!selected) return;
-                        const reason = window.prompt('Enter rejection reason (required):');
-                        if (reason === null || reason.trim() === '') {
-                          toast.error('Rejection reason is required');
-                          return;
-                        }
-                        try {
-                          setActionLoading(true);
-                          await rejectVerification(selected.verification_id, Number(selected.user_id), selected.type, reason);
-                          toast.success('Rejected successfully');
-                          setShowDetailModal(false);
-                          setSelected(null);
-                          await refreshData();
-                        } catch (error: any) {
-                          console.error('Reject failed:', error);
-                          toast.error(error?.message || 'Reject failed');
-                        } finally {
-                          setActionLoading(false);
-                        }
-                      }}
+                      onClick={() => setShowRejectModal(true)}
                       className="mt-3 sm:mt-0 w-full sm:w-auto inline-flex justify-center items-center px-6 py-3 border border-gray-300 text-base font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <XCircleIcon className="h-5 w-5 mr-2" />
-                      {actionLoading ? 'Processing...' : 'Reject'}
+                      Reject
                     </button>
                   </>
                 )}
@@ -661,6 +769,91 @@ export default function VerificationManagement() {
         </div>
       )}
       {/* Modal mặc định: chỉ hiển thị chi tiết và nút Đóng */}
+      {/* Approve Modal */}
+      {showApproveModal && selected && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+            <div className="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" onClick={() => setShowApproveModal(false)} />
+            <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+              <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <h3 className="text-lg leading-6 font-medium text-gray-900">Confirm Approve</h3>
+                <p className="mt-2 text-sm text-gray-600">Approve verification #{selected.verification_id} for user {userNames[Number(selected.user_id)] || `${selected.user_id}`}</p>
+                <div className="mt-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Notes (optional)</label>
+                  <textarea
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    rows={3}
+                    placeholder="Add notes for this approval..."
+                    value={approveNotes}
+                    onChange={(e) => setApproveNotes(e.target.value)}
+                  />
+                </div>
+              </div>
+              <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse gap-3">
+                <button
+                  disabled={actionLoading}
+                  onClick={handleApprove}
+                  className="w-full sm:w-auto inline-flex justify-center px-4 py-2 border border-transparent text-base font-medium rounded-lg text-white bg-green-600 hover:bg-green-700 disabled:opacity-50"
+                >
+                  {actionLoading ? 'Processing...' : 'Confirm'}
+                </button>
+                <button
+                  onClick={() => {
+                    setShowApproveModal(false);
+                    setApproveNotes('');
+                  }}
+                  className="mt-3 sm:mt-0 w-full sm:w-auto inline-flex justify-center px-4 py-2 border border-gray-300 text-base font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reject Modal */}
+      {showRejectModal && selected && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+            <div className="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" onClick={() => setShowRejectModal(false)} />
+            <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+              <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <h3 className="text-lg leading-6 font-medium text-gray-900">Reject Verification</h3>
+                <p className="mt-2 text-sm text-gray-600">You are rejecting verification #{selected.verification_id} for user {userNames[Number(selected.user_id)] || `${selected.user_id}`}. Please provide a reason.</p>
+                <div className="mt-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Rejection reason</label>
+                  <textarea
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                    rows={4}
+                    placeholder="Enter rejection reason..."
+                    value={rejectReason}
+                    onChange={(e) => setRejectReason(e.target.value)}
+                  />
+                </div>
+              </div>
+              <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse gap-3">
+                <button
+                  disabled={actionLoading}
+                  onClick={handleReject}
+                  className="w-full sm:w-auto inline-flex justify-center px-4 py-2 border border-transparent text-base font-medium rounded-lg text-white bg-red-600 hover:bg-red-700 disabled:opacity-50"
+                >
+                  {actionLoading ? 'Processing...' : 'Confirm Rejection'}
+                </button>
+                <button
+                  onClick={() => {
+                    setShowRejectModal(false);
+                    setRejectReason('');
+                  }}
+                  className="mt-3 sm:mt-0 w-full sm:w-auto inline-flex justify-center px-4 py-2 border border-gray-300 text-base font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
