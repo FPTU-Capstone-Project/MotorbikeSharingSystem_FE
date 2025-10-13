@@ -289,7 +289,7 @@ export default function VehicleVerificationManagement() {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Driver
+                  Driver ID
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Vehicle Info
@@ -316,15 +316,8 @@ export default function VehicleVerificationManagement() {
                 <tr key={verification.id} className="hover:bg-gray-50 transition-colors">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
-                      <div className="h-10 w-10 flex-shrink-0">
-                        <div className="h-10 w-10 rounded-full bg-purple-500 flex items-center justify-center">
-                          <UserIcon className="h-6 w-6 text-white" />
-                        </div>
-                      </div>
                       <div className="ml-4">
-                        <div className="text-sm font-medium text-gray-900">{verification.driverName} <span className="text-xs text-gray-500">(ID: {verification.driverId || '—'})</span></div>
-                        <div className="text-sm text-gray-500">{verification.driverEmail}</div>
-                        <div className="text-xs text-gray-400">{verification.driverPhone}</div>
+                        <div className="text-sm font-medium text-gray-900">{verification.driverName} <span className="text-xs text-gray-500">(ID: {verification.driverId})</span></div>
                       </div>
                     </div>
                   </td>
