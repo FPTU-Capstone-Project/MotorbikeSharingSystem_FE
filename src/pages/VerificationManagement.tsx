@@ -76,7 +76,7 @@ export default function VerificationManagement() {
         setItems(res.data);
         // fetch user names for visible rows
         // Extract names from metadata or create mock data for testing
-        const entries = res.data.map(v => {
+        const entries = res.data.map((v: any) => {
           // Try to extract name from metadata JSON
           let name = `${v.user_id}`;
           try {

@@ -68,7 +68,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     initAuthState();
-  }, []);
+  }, [user?.activeProfile, user?.email, user?.fullName, user?.userId, user?.userType]);
 
   const login = async (email: string, password: string) => {
     try {
