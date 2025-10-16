@@ -1,147 +1,152 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   MagnifyingGlassIcon,
   FunnelIcon,
   EyeIcon,
-  PencilIcon,
-  TrashIcon,
-  CheckCircleIcon,
   XCircleIcon,
-  UserPlusIcon,
+  ArrowDownOnSquareStackIcon,
+  CheckCircleIcon,
+  UsersIcon,
+  AcademicCapIcon,
 } from '@heroicons/react/24/outline';
-import { User } from '../types';
+import { Bike, Plus } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { UserManagementItem } from '../types';
+import { getAllUsers } from '../services/profileService';
 import toast from 'react-hot-toast';
 
-const mockUsers: User[] = [
-  {
-    id: '1',
-    email: 'john.doe@student.fpt.edu.vn',
-    name: 'John Doe',
-    role: 'student',
-    isVerified: true,
-    studentId: 'SE150001',
-    phoneNumber: '+84 901 234 567',
-    avatar: 'https://ui-avatars.com/api/?name=John+Doe&background=3b82f6&color=fff',
-    createdAt: '2024-01-15T08:30:00Z',
-    lastActive: '2024-01-20T14:22:00Z',
-    status: 'active',
-    emergencyContact: {
-      name: 'Jane Doe',
-      phone: '+84 901 234 568',
-    },
-  },
-  {
-    id: '2',
-    email: 'mike.driver@student.fpt.edu.vn',
-    name: 'Mike Johnson',
-    role: 'driver',
-    isVerified: false,
-    studentId: 'SE150002',
-    phoneNumber: '+84 901 234 569',
-    avatar: 'https://ui-avatars.com/api/?name=Mike+Johnson&background=10b981&color=fff',
-    createdAt: '2024-01-16T09:15:00Z',
-    lastActive: '2024-01-20T16:45:00Z',
-    status: 'active',
-  },
-  {
-    id: '3',
-    email: 'sarah.wilson@student.fpt.edu.vn',
-    name: 'Sarah Wilson',
-    role: 'student',
-    isVerified: true,
-    studentId: 'SE150003',
-    phoneNumber: '+84 901 234 570',
-    avatar: 'https://ui-avatars.com/api/?name=Sarah+Wilson&background=ef4444&color=fff',
-    createdAt: '2024-01-17T10:00:00Z',
-    lastActive: '2024-01-19T12:30:00Z',
-    status: 'inactive',
-  },
-];
-
 export default function UserManagement() {
-  const [users, setUsers] = useState<User[]>(mockUsers);
+  const [users, setUsers] = useState<UserManagementItem[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterRole, setFilterRole] = useState<'all' | 'student' | 'driver'>('all');
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive' | 'suspended'>('all');
+  const [page, setPage] = useState(0);
+  const [size, setSize] = useState(20);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalRecords, setTotalRecords] = useState(0);
+
+  // Load users from API with pagination
+  useEffect(() => {
+    const loadUsers = async () => {
+      try {
+        setLoading(true);
+        const response = await getAllUsers(page, size);
+        setUsers(response.data || []);
+        setTotalPages(response.pagination?.total_pages ?? 1);
+        setTotalRecords(response.pagination?.total_records ?? (response.data?.length || 0));
+      } catch (error) {
+        console.error('Failed to load users:', error);
+        toast.error('Failed to load users');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadUsers();
+  }, [page, size]);
 
   const filteredUsers = users.filter(user => {
-    const matchesSearch = 
-      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.studentId?.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesRole = filterRole === 'all' || user.role === filterRole;
-    const matchesStatus = filterStatus === 'all' || user.status === filterStatus;
-    
+    const matchesSearch =
+      (user.full_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (user.email || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (user.student_id || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      String(user.user_id).includes(searchTerm);
+
+    // Determine user role based on profiles
+    const userRole = user.driver_profile ? 'driver' : 'student';
+    const matchesRole = filterRole === 'all' || userRole === filterRole;
+
+    // Map status to match filter options
+    const userStatus = user.status.toLowerCase();
+    const matchesStatus = filterStatus === 'all' || userStatus === filterStatus;
+
     return matchesSearch && matchesRole && matchesStatus;
   });
 
-  const handleVerifyUser = (userId: string) => {
-    setUsers(prev => 
-      prev.map(user => 
-        user.id === userId 
-          ? { ...user, isVerified: true }
-          : user
-      )
-    );
-    toast.success('User verified successfully');
-  };
-
-  const handleSuspendUser = (userId: string) => {
-    setUsers(prev => 
-      prev.map(user => 
-        user.id === userId 
-          ? { ...user, status: 'suspended' }
-          : user
-      )
-    );
-    toast.success('User suspended successfully');
-  };
-
-  const handleDeleteUser = (userId: string) => {
-    setUsers(prev => prev.filter(user => user.id !== userId));
-    toast.success('User deleted successfully');
-  };
+  const stats = [
+    {
+      label: 'Total Users',
+      value: users.length,
+      Icon: UsersIcon,
+      bg: 'bg-blue-500',
+    },
+    {
+      label: 'Students',
+      value: users.filter(u => !u.driver_profile).length,
+      Icon: AcademicCapIcon,
+      bg: 'bg-indigo-500',
+    },
+    {
+      label: 'Drivers',
+      value: users.filter(u => u.driver_profile).length,
+      Icon: Bike,
+      bg: 'bg-purple-500',
+    },
+    {
+      label: 'Active Users',
+      value: users.filter(u => u.status === 'ACTIVE').length,
+      Icon: CheckCircleIcon,
+      bg: 'bg-green-500',
+    },
+  ];
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex flex-col sm:flex-row sm:items-center sm:justify-between"
+      >
         <div>
           <h1 className="text-3xl font-bold text-gray-900">User Management</h1>
           <p className="mt-2 text-gray-600">
             Manage student and driver accounts, verification status, and user activities
           </p>
         </div>
-        <button className="btn-primary flex items-center mt-4 sm:mt-0">
-          <UserPlusIcon className="h-5 w-5 mr-2" />
-          Add New User
-        </button>
-      </div>
+        <div className="mt-4 sm:mt-0">
+          <button
+            className="inline-flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-indigo-600 to-purple-600 shadow-lg hover:shadow-xl hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-4 focus:ring-indigo-200/50 transition-all duration-200"
+            onClick={() => toast.success('Open Create Staff modal (to be implemented)')}
+          >
+            <Plus className="h-4 w-4" />
+            Create Staff
+          </button>
+        </div>
+        {/* Removed Add New User button as requested */}
+      </motion.div>
 
-      {/* Stats Cards */}
+      {/* Stats Cards (consistent with other pages) */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        {[
-          { label: 'Total Users', value: users.length, color: 'bg-blue-500' },
-          { label: 'Students', value: users.filter(u => u.role === 'student').length, color: 'bg-green-500' },
-          { label: 'Drivers', value: users.filter(u => u.role === 'driver').length, color: 'bg-purple-500' },
-          { label: 'Pending Verification', value: users.filter(u => !u.isVerified).length, color: 'bg-yellow-500' },
-        ].map((stat, index) => (
-          <div key={stat.label} className="card">
+        {stats.map((stat, index) => (
+          <motion.div
+            key={stat.label}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: index * 0.05 }}
+            className="card"
+          >
             <div className="flex items-center">
-              <div className={`p-3 rounded-lg ${stat.color}`}>
-                <span className="text-white font-bold text-lg">{stat.value}</span>
+              <div className={`p-3 rounded-lg ${stat.bg}`}>
+                <stat.Icon className="h-6 w-6 text-white" />
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-500">{stat.label}</p>
+                <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
               </div>
             </div>
-          </div>
+          </motion.div>
         ))}
       </div>
 
       {/* Filters */}
-      <div className="card">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.5 }}
+        className="card"
+      >
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
           <div className="flex flex-col sm:flex-row sm:items-center space-y-4 sm:space-y-0 sm:space-x-4">
             <div className="relative">
@@ -176,15 +181,24 @@ export default function UserManagement() {
               </select>
             </div>
           </div>
-          <button className="btn-secondary flex items-center">
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="btn-secondary flex items-center"
+          >
             <FunnelIcon className="h-5 w-5 mr-2" />
             Advanced Filters
-          </button>
+          </motion.button>
         </div>
-      </div>
+      </motion.div>
 
       {/* Users Table */}
-      <div className="card overflow-hidden">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.6 }}
+        className="card overflow-hidden"
+      >
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
@@ -210,102 +224,148 @@ export default function UserManagement() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {filteredUsers.map((user) => (
-                <tr key={user.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <img
-                        className="h-10 w-10 rounded-full"
-                        src={user.avatar}
-                        alt=""
-                      />
-                      <div className="ml-4">
-                        <div className="text-sm font-medium text-gray-900">{user.name}</div>
-                        <div className="text-sm text-gray-500">{user.email}</div>
-                        <div className="text-xs text-gray-400">ID: {user.studentId}</div>
+              <AnimatePresence>
+                {loading ? (
+                  <tr>
+                    <td colSpan={6} className="px-6 py-12 text-center">
+                      <div className="flex justify-center">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
                       </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                      user.role === 'driver' 
-                        ? 'bg-purple-100 text-purple-800'
-                        : 'bg-blue-100 text-blue-800'
-                    }`}>
-                      {user.role}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                      user.status === 'active'
-                        ? 'bg-green-100 text-green-800'
-                        : user.status === 'inactive'
-                        ? 'bg-gray-100 text-gray-800'
-                        : 'bg-red-100 text-red-800'
-                    }`}>
-                      {user.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    {user.isVerified ? (
-                      <div className="flex items-center text-green-600">
-                        <CheckCircleIcon className="h-5 w-5 mr-1" />
-                        <span className="text-sm">Verified</span>
-                      </div>
-                    ) : (
-                      <div className="flex items-center text-yellow-600">
-                        <XCircleIcon className="h-5 w-5 mr-1" />
-                        <span className="text-sm">Pending</span>
-                      </div>
-                    )}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {new Date(user.lastActive).toLocaleDateString()}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <div className="flex items-center space-x-2">
-                      <button className="text-blue-600 hover:text-blue-900 p-1 rounded">
-                        <EyeIcon className="h-4 w-4" />
-                      </button>
-                      <button className="text-gray-600 hover:text-gray-900 p-1 rounded">
-                        <PencilIcon className="h-4 w-4" />
-                      </button>
-                      {!user.isVerified && (
-                        <button
-                          onClick={() => handleVerifyUser(user.id)}
-                          className="text-green-600 hover:text-green-900 p-1 rounded"
-                        >
-                          <CheckCircleIcon className="h-4 w-4" />
-                        </button>
-                      )}
-                      {user.status !== 'suspended' && (
-                        <button
-                          onClick={() => handleSuspendUser(user.id)}
-                          className="text-yellow-600 hover:text-yellow-900 p-1 rounded"
-                        >
-                          <XCircleIcon className="h-4 w-4" />
-                        </button>
-                      )}
-                      <button
-                        onClick={() => handleDeleteUser(user.id)}
-                        className="text-red-600 hover:text-red-900 p-1 rounded"
+                      <p className="mt-2 text-gray-500">Loading users...</p>
+                    </td>
+                  </tr>
+                ) : (
+                  filteredUsers.map((user, index) => {
+                    const userRole = user.driver_profile ? 'driver' : 'student';
+                    const isVerified = user.email_verified && user.phone_verified;
+
+                    return (
+                      <motion.tr
+                        key={user.user_id}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: 20 }}
+                        transition={{ delay: index * 0.05 }}
+                        className="hover:bg-gray-50 transition-colors"
                       >
-                        <TrashIcon className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center">
+                            <img
+                              className="h-10 w-10 rounded-full"
+                              src={user.profile_photo_url}
+                              alt=""
+                            />
+                            <div className="ml-4">
+                              <div className="text-sm font-medium text-gray-900">{user.full_name}</div>
+                              <div className="text-sm text-gray-500">{user.email}</div>
+                              <div className="text-xs text-gray-400">ID: {user.user_id}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${userRole === 'driver'
+                              ? 'bg-purple-100 text-purple-800'
+                              : 'bg-blue-100 text-blue-800'
+                            }`}>
+                            {userRole}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${user.status === 'ACTIVE'
+                              ? 'bg-green-100 text-green-800'
+                              : user.status === 'INACTIVE'
+                                ? 'bg-gray-100 text-gray-800'
+                                : 'bg-red-100 text-red-800'
+                            }`}>
+                            {user.status.toLowerCase()}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {isVerified ? (
+                            <div className="flex items-center text-green-600">
+                              <CheckCircleIcon className="h-5 w-5 mr-1" />
+                              <span className="text-sm">Verified</span>
+                            </div>
+                          ) : (
+                            <div className="flex items-center text-yellow-600">
+                              <XCircleIcon className="h-5 w-5 mr-1" />
+                              <span className="text-sm">Pending</span>
+                            </div>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {new Date(user.created_at).toLocaleDateString()}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                          <div className="flex items-center space-x-2">
+                            <button className="text-blue-600 hover:text-blue-900 p-1 rounded flex items-center">
+                              <EyeIcon className="h-4 w-4" />
+                            </button>
+                            <button className="text-green-600 hover:text-green-900 p-1 rounded flex items-center">
+                              <ArrowDownOnSquareStackIcon className="h-4 w-4" />
+                            </button><button className="text-red-600 hover:text-red-900 p-1 rounded flex items-center">
+                              <XCircleIcon className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </motion.tr>
+                    );
+                  })
+                )}
+              </AnimatePresence>
             </tbody>
           </table>
         </div>
-        
-        {filteredUsers.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-gray-500">No users found matching your criteria.</p>
+        {/* Pagination Controls */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between px-6 py-4 border-t border-gray-100 bg-gray-50">
+          <div className="text-sm text-gray-600 mb-3 sm:mb-0">
+            Showing page <span className="font-semibold">{page + 1}</span> of <span className="font-semibold">{totalPages}</span>
+            {` `}(<span className="font-semibold">{totalRecords}</span> total users)
           </div>
+          <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-2">
+              <span className="text-sm text-gray-600">Rows per page</span>
+              <select
+                className="input-field py-1"
+                value={size}
+                onChange={(e) => {
+                  setPage(0);
+                  setSize(Number(e.target.value));
+                }}
+              >
+                {[10, 20, 50, 100].map((s) => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
+              </select>
+            </div>
+            <div className="flex items-center space-x-2">
+              <button
+                className="btn-secondary px-3 py-2 disabled:opacity-50"
+                onClick={() => setPage((p) => Math.max(0, p - 1))}
+                disabled={page <= 0 || loading}
+              >
+                Prev
+              </button>
+              <button
+                className="btn-primary px-3 py-2 disabled:opacity-50"
+                onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
+                disabled={page >= totalPages - 1 || loading}
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        </div>
+        {filteredUsers.length === 0 && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="text-center py-12"
+          >
+            <p className="text-gray-500">No users found matching your criteria.</p>
+          </motion.div>
         )}
-      </div>
+      </motion.div>
     </div>
   );
 }

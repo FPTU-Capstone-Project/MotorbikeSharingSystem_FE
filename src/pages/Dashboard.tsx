@@ -5,9 +5,7 @@ import {
   ArrowTrendingUpIcon,
   ArrowTrendingDownIcon,
   SparklesIcon,
-  TruckIcon,
   ClockIcon,
-  ExclamationTriangleIcon,
 } from '@heroicons/react/24/outline';
 import {
   XAxis,
@@ -24,9 +22,7 @@ import {
   Area,
 } from 'recharts';
 import { motion } from 'framer-motion';
-import { ReportsAPI } from '../api';
-import { useApi } from '../utils/hooks';
-import DashboardSkeleton from '../components/DashboardSkeleton';
+import { Bike } from 'lucide-react';
 
 const revenueData = [
   { month: 'Jan', revenue: 4200, rides: 120, users: 850 },
@@ -91,7 +87,48 @@ const recentActivity = [
   },
 ];
 
-// Stats are now generated dynamically from API data in useMemo below
+const stats = [
+  {
+    name: 'Total Users',
+    value: '2,847',
+    change: '+12.5%',
+    changeType: 'increase' as const,
+    icon: UsersIcon,
+    gradient: 'from-blue-600 to-blue-700',
+    bgGradient: 'from-blue-50 to-blue-100',
+    details: '147 new this week',
+  },
+  {
+    name: 'Active Rides',
+    value: '156',
+    change: '+8.2%',
+    changeType: 'increase' as const,
+    icon: Bike,
+    gradient: 'from-green-600 to-emerald-700',
+    bgGradient: 'from-green-50 to-emerald-100',
+    details: '23 shared rides',
+  },
+  {
+    name: 'Total Revenue',
+    value: '$48,562',
+    change: '+23.1%',
+    changeType: 'increase' as const,
+    icon: CurrencyDollarIcon,
+    gradient: 'from-purple-600 to-indigo-700',
+    bgGradient: 'from-purple-50 to-indigo-100',
+    details: '$12.3k this week',
+  },
+  {
+    name: 'Avg. Response Time',
+    value: '2.3 min',
+    change: '-15s',
+    changeType: 'decrease' as const,
+    icon: ClockIcon,
+    gradient: 'from-orange-600 to-red-700',
+    bgGradient: 'from-orange-50 to-red-100',
+    details: 'Emergency response',
+  },
+];
 
 const rideStatusData = [
   { name: 'Completed', value: 1245, color: '#059669', percentage: 78.5 },
@@ -210,147 +247,11 @@ const ActivityItem = memo(({ activity, index }: { activity: any; index: number }
 ActivityItem.displayName = 'ActivityItem';
 
 export default function Dashboard() {
+  const memoizedStats = useMemo(() => stats, []);
   const memoizedActivity = useMemo(() => recentActivity, []);
 
-  const { data: apiData, loading, error, refetch } = useApi(
-    () => ReportsAPI.getDashboard(),
-    {
-      enabled: true,
-      refetchInterval: 30000,
-      onError: (err) => console.error('Dashboard API error:', err)
-    }
-  );
-
-  const dashboardData = apiData;
-
-  const stats = useMemo(() => {
-    if (!dashboardData) return [];
-
-    const formatCurrency = (amount: string) => {
-      const num = parseFloat(amount);
-      return `₫${num.toLocaleString('vi-VN')}`;
-    };
-
-    return [
-      {
-        name: 'Total Active Wallets',
-        value: dashboardData.totalActiveWallets.toLocaleString(),
-        change: '+12.5%',
-        changeType: 'increase' as const,
-        icon: UsersIcon,
-        gradient: 'from-blue-600 to-blue-700',
-        bgGradient: 'from-blue-50 to-blue-100',
-        details: `Avg: ${formatCurrency(dashboardData.averageWalletBalance)}`,
-      },
-      {
-        name: "Today's Top-ups",
-        value: formatCurrency(dashboardData.todayTopUps),
-        change: `${dashboardData.topUpCount} transactions`,
-        changeType: 'increase' as const,
-        icon: TruckIcon,
-        gradient: 'from-green-600 to-emerald-700',
-        bgGradient: 'from-green-50 to-emerald-100',
-        details: 'Successful deposits',
-      },
-      {
-        name: 'Total System Balance',
-        value: formatCurrency(dashboardData.totalSystemBalance),
-        change: '+23.1%',
-        changeType: 'increase' as const,
-        icon: CurrencyDollarIcon,
-        gradient: 'from-purple-600 to-indigo-700',
-        bgGradient: 'from-purple-50 to-indigo-100',
-        details: `Payouts: ${formatCurrency(dashboardData.todayPayouts)}`,
-      },
-      {
-        name: 'Pending Transactions',
-        value: dashboardData.pendingTransactions.toString(),
-        change: 'Awaiting processing',
-        changeType: dashboardData.pendingTransactions > 10 ? 'increase' as const : 'decrease' as const,
-        icon: ClockIcon,
-        gradient: dashboardData.pendingTransactions > 10 ? 'from-orange-600 to-red-700' : 'from-green-600 to-emerald-700',
-        bgGradient: dashboardData.pendingTransactions > 10 ? 'from-orange-50 to-red-100' : 'from-green-50 to-emerald-100',
-        details: `${dashboardData.payoutCount} payouts today`,
-      },
-    ];
-  }, [dashboardData]);
-
-  if (loading && !dashboardData) {
-    return <DashboardSkeleton />;
-  }
-
-  // Show error if no data available
-  if (error && !apiData) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="max-w-md w-full">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-red-50 border border-red-200 rounded-xl p-6 shadow-lg"
-          >
-            <div className="flex items-start space-x-4">
-              <div className="flex-shrink-0">
-                <ExclamationTriangleIcon className="h-10 w-10 text-red-600" />
-              </div>
-              <div className="flex-1">
-                <h3 className="text-lg font-semibold text-red-900 mb-2">
-                  Dashboard API Error
-                </h3>
-                <p className="text-sm text-red-700 mb-4">
-                  {error.message || 'Failed to load dashboard data'}
-                </p>
-                <div className="bg-red-100 rounded-lg p-3 mb-4">
-                  <p className="text-xs font-mono text-red-800">
-                    {error.message.includes('500') || error.message.includes('Internal Server')
-                      ? 'Server Error (500): The backend API is experiencing issues.' 
-                      : error.message.includes('401') || error.message.includes('Unauthorized')
-                      ? 'Unauthorized (401): Authentication required.'
-                      : `Error: ${error.message || 'Network Error'}`}
-                  </p>
-                </div>
-                <button
-                  onClick={() => refetch()}
-                  className="w-full bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
-                >
-                  Retry Loading Dashboard
-                </button>
-              </div>
-            </div>
-          </motion.div>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-8">{/* Warning banner if data might be stale */}
-      {error && apiData && (
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-lg"
-        >
-          <div className="flex items-center">
-            <ExclamationTriangleIcon className="h-5 w-5 text-amber-500 mr-3" />
-            <div className="flex-1">
-              <p className="text-sm font-medium text-amber-800">
-                Dashboard data may be outdated
-              </p>
-              <p className="text-xs text-amber-700 mt-1">
-                Failed to fetch latest data. Showing cached results.
-              </p>
-            </div>
-            <button
-              onClick={() => refetch()}
-              className="text-sm text-amber-700 hover:text-amber-800 font-medium underline"
-            >
-              Retry
-            </button>
-          </div>
-        </motion.div>
-      )}
-
+    <div className="space-y-8">
       {/* Header */}
       <div className="mb-10">
         <div className="flex items-center space-x-3 mb-3">
@@ -366,7 +267,7 @@ export default function Dashboard() {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
-        {stats.map((stat, index) => (
+        {memoizedStats.map((stat, index) => (
           <StatCard key={stat.name} stat={stat} index={index} />
         ))}
       </div>
