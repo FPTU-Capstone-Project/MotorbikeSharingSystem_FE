@@ -1,136 +1,171 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
-import { AuthAPI } from '../api/auth.api';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { apiFetch } from '../utils/api';
+import { userService } from '../services/apiService';
+
+interface User {
+  userId: number;
+  email: string;
+  fullName: string;
+  userType: string;
+  activeProfile?: string;
+}
 
 interface AuthContextType {
+  user: User | null;
+  token: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  user: {
-    user_id: string | null;
-    user_type: string | null;
-    email: string | null;
-    full_name: string | null;
-  } | null;
   login: (email: string, password: string) => Promise<void>;
-  logout: () => Promise<void>;
-  checkAuth: () => boolean;
+  logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [user, setUser] = useState<User | null>(null);
+  const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [user, setUser] = useState<AuthContextType['user']>(null);
 
-  const checkTokenExpiry = useCallback(() => {
-    const token = AuthAPI.getAccessToken();
-    if (!token) {
-      handleLogout();
-      return;
-    }
-
-    try {
-      // Decode JWT token to check expiry
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      const expiryTime = payload.exp * 1000; // Convert to milliseconds
-      const currentTime = Date.now();
-      
-      // If token expired or will expire in next 5 minutes, logout
-      if (expiryTime < currentTime + 5 * 60 * 1000) {
-        console.warn('Token expired or about to expire');
-        handleLogout();
-      }
-    } catch (error) {
-      console.error('Token expiry check error:', error);
-      handleLogout();
-    }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Check authentication on mount and set up token expiry check
+  // Load token and fetch current user profile on mount
   useEffect(() => {
-    checkAuthStatus();
-    
-    // Check token expiry every minute
-    const interval = setInterval(checkTokenExpiry, 60000);
-    
-    return () => clearInterval(interval);
-  }, [checkTokenExpiry]);
+    const initAuthState = async () => {
+      const candidateToken = localStorage.getItem('token')
+        || localStorage.getItem('accessToken')
+        || localStorage.getItem('access_token');
+      const storedToken = candidateToken && candidateToken !== 'undefined' ? candidateToken : null;
+      const storedUser = localStorage.getItem('user');
 
-  const checkAuthStatus = () => {
-    try {
-      const authenticated = AuthAPI.isAuthenticated();
-      setIsAuthenticated(authenticated);
-      
-      if (authenticated) {
-        const currentUser = AuthAPI.getCurrentUser();
-        setUser(currentUser);
+      if (storedToken) {
+        setToken(storedToken);
+        // Optimistically set stored user if available to avoid UI flash
+        if (storedUser) {
+          try {
+            setUser(JSON.parse(storedUser));
+          } catch (error) {
+            console.error('Failed to parse stored user:', error);
+            localStorage.removeItem('user');
+          }
+        }
+
+        // Always try to refresh the user profile from backend
+        try {
+          const profile = await userService.getCurrentUser();
+          const fullUserData: User = {
+            userId: (profile as any).userId ?? (profile as any).id ?? user?.userId ?? 0,
+            email: (profile as any).email ?? user?.email ?? '',
+            fullName: (profile as any).fullName ?? (profile as any).name ?? user?.fullName ?? 'User',
+            userType: (profile as any).userType ?? (profile as any).role ?? user?.userType ?? 'ADMIN',
+            activeProfile: (profile as any).activeProfile ?? user?.activeProfile,
+          };
+          setUser(fullUserData);
+          localStorage.setItem('user', JSON.stringify(fullUserData));
+        } catch (error) {
+          // If fetching profile fails (expired token, etc.), keep optimistic user or logout later when an authed request fails
+          console.warn('Failed to fetch current user profile:', error);
+        }
       }
-    } catch (error) {
-      console.error('Auth check error:', error);
-      setIsAuthenticated(false);
-      setUser(null);
-    } finally {
       setIsLoading(false);
-    }
-  };
+    };
 
-  const handleLogin = async (email: string, password: string) => {
+    initAuthState();
+  }, [user?.activeProfile, user?.email, user?.fullName, user?.userId, user?.userType]);
+
+  const login = async (email: string, password: string) => {
     try {
-      const response = await AuthAPI.login({ email, password });
-      
-      // Check if user is admin or staff
-      if (response.user_type !== 'ADMIN') {
-        AuthAPI.clearAuth();
-        throw new Error('Access denied. Admin/Staff only.');
+      // Call backend login API
+      const response = await apiFetch<any>('/auth/login', {
+        method: 'POST',
+        body: {
+          email,
+          password,
+          targetProfile: 'rider', // Admin can be any profile
+        },
+      });
+
+      // Extract token(s)
+      const accessToken = response.accessToken ?? response.access_token;
+      const refreshToken = response.refreshToken ?? response.refresh_token;
+      if (!accessToken || typeof accessToken !== 'string' || accessToken === 'undefined') {
+        throw new Error('Invalid access token from server');
       }
-      
-      const currentUser = AuthAPI.getCurrentUser();
-      setUser(currentUser);
-      setIsAuthenticated(true);
-    } catch (error) {
-      setIsAuthenticated(false);
-      setUser(null);
+      setToken(accessToken);
+
+      // Store in localStorage (multiple keys for compatibility)
+      localStorage.setItem('token', accessToken);
+      localStorage.setItem('accessToken', accessToken);
+      localStorage.setItem('access_token', accessToken);
+      if (refreshToken) {
+        localStorage.setItem('refreshToken', refreshToken);
+      }
+
+      // Fetch full user profile after login to populate UI with accurate data
+      try {
+        const profile = await userService.getCurrentUser();
+        const fullUserData: User = {
+          userId: (profile as any).userId ?? (profile as any).id,
+          email: (profile as any).email ?? email,
+          fullName: (profile as any).fullName ?? (profile as any).name ?? 'User',
+          userType: (profile as any).userType ?? (profile as any).role,
+          activeProfile: (profile as any).activeProfile,
+        };
+        setUser(fullUserData);
+        localStorage.setItem('user', JSON.stringify(fullUserData));
+      } catch (profileError) {
+        console.warn('Failed to fetch profile after login, falling back to minimal user:', profileError);
+        const minimalUser: User = {
+          userId: response.userId ?? (response as any).user_id ?? 0,
+          email,
+          fullName: 'Admin User',
+          userType: response.userType ?? (response as any).user_type ?? 'ADMIN',
+          activeProfile: response.activeProfile ?? (response as any).active_profile,
+        };
+        setUser(minimalUser);
+        localStorage.setItem('user', JSON.stringify(minimalUser));
+      }
+    } catch (error: any) {
+      console.error('Login error:', error);
       throw error;
     }
   };
 
-  const handleLogout = async () => {
+  const logout = () => {
+    // Clear state
+    setUser(null);
+    setToken(null);
+
+    // Clear localStorage
+    localStorage.removeItem('token');
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refreshToken');
+    localStorage.removeItem('user');
+
+    // Optional: Call backend logout API
     try {
-      await AuthAPI.logout();
+      apiFetch('/auth/logout', { method: 'POST' }).catch(() => {
+        // Ignore logout API errors
+      });
     } catch (error) {
-      console.error('Logout error:', error);
-    } finally {
-      setIsAuthenticated(false);
-      setUser(null);
-      // Reload page to clear any cached data
-      window.location.href = '/login';
+      console.warn('Logout API call failed:', error);
     }
   };
 
-  const checkAuth = () => {
-    return AuthAPI.isAuthenticated();
+  const value: AuthContextType = {
+    user,
+    token,
+    isAuthenticated: !!token && !!user,
+    isLoading,
+    login,
+    logout,
   };
 
-  return (
-    <AuthContext.Provider
-      value={{
-        isAuthenticated,
-        isLoading,
-        user,
-        login: handleLogin,
-        logout: handleLogout,
-        checkAuth,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
-  );
-};
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+}
 
-export const useAuth = () => {
+export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
-};
+}
