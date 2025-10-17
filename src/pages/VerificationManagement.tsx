@@ -12,7 +12,7 @@ import {
 import toast from 'react-hot-toast';
 import { fetchAllVerifications } from '../services/verificationService';
 import { VerificationItem } from '../types';
-import { approveVerification, bulkApproveVerifications, rejectVerification } from '../services/verificationService';
+import { approveVerification, rejectVerification } from '../services/verificationService';
 
 export default function VerificationManagement() {
   const [items, setItems] = useState<VerificationItem[]>([]);
@@ -29,6 +29,12 @@ export default function VerificationManagement() {
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  // Bulk review state
+  const [showBulkModal, setShowBulkModal] = useState(false);
+  const [bulkItems, setBulkItems] = useState<VerificationItem[]>([]);
+  const [bulkIndex, setBulkIndex] = useState(0);
+  const [bulkLoading, setBulkLoading] = useState(false);
+  const [bulkRejectReason, setBulkRejectReason] = useState('');
   // Approve/Reject modals state
   const [showApproveModal, setShowApproveModal] = useState(false);
   const [approveNotes, setApproveNotes] = useState('');
@@ -174,6 +180,61 @@ export default function VerificationManagement() {
     }
   };
 
+  // Bulk review handlers
+  const bulkCurrent = () => bulkItems[bulkIndex];
+  const advanceBulk = () => {
+    const next = bulkIndex + 1;
+    if (next >= bulkItems.length) {
+      setShowBulkModal(false);
+      setBulkItems([]);
+      setBulkIndex(0);
+      setBulkRejectReason('');
+      setSelectedIds([]);
+      refreshData();
+    } else {
+      setBulkIndex(next);
+      setBulkRejectReason('');
+    }
+  };
+
+  const handleBulkApprove = async () => {
+    const current = bulkCurrent();
+    if (!current) return;
+    try {
+      setBulkLoading(true);
+      await approveVerification(current.verification_id, Number(current.user_id), current.type, undefined);
+      toast.success(`Approved #${current.verification_id}`);
+      advanceBulk();
+    } catch (error: any) {
+      toast.error(error?.message || 'Approve failed');
+    } finally {
+      setBulkLoading(false);
+    }
+  };
+
+  const handleBulkReject = async () => {
+    const current = bulkCurrent();
+    if (!current) return;
+    if (!bulkRejectReason.trim()) {
+      toast.error('Rejection reason is required');
+      return;
+    }
+    try {
+      setBulkLoading(true);
+      await rejectVerification(current.verification_id, Number(current.user_id), current.type, bulkRejectReason.trim());
+      toast.success(`Rejected #${current.verification_id}`);
+      advanceBulk();
+    } catch (error: any) {
+      toast.error(error?.message || 'Reject failed');
+    } finally {
+      setBulkLoading(false);
+    }
+  };
+
+  const handleBulkSkip = () => {
+    advanceBulk();
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -289,19 +350,16 @@ export default function VerificationManagement() {
             <button
               className="ml-3 inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium text-white bg-green-600 hover:bg-green-700 disabled:opacity-50"
               disabled={selectedIds.length === 0 || actionLoading}
-              onClick={async () => {
-                if (selectedIds.length === 0) return;
-                try {
-                  setActionLoading(true);
-                  await bulkApproveVerifications(selectedIds);
-                  toast.success(`Bulk approved ${selectedIds.length} items`);
-                  await refreshData();
-                  setSelectedIds([]);
-                } catch (e: any) {
-                  toast.error(e?.message || 'Bulk approve failed');
-                } finally {
-                  setActionLoading(false);
+              onClick={() => {
+                const pending = allFilteredItems.filter(i => i.status === 'PENDING' && selectedIds.includes(i.verification_id));
+                if (pending.length === 0) {
+                  toast.error('Please select at least one PENDING item');
+                  return;
                 }
+                setBulkItems(pending);
+                setBulkIndex(0);
+                setBulkRejectReason('');
+                setShowBulkModal(true);
               }}
             >
               Bulk Approve
@@ -320,10 +378,17 @@ export default function VerificationManagement() {
                   <input
                     type="checkbox"
                     className="h-4 w-4 rounded border-gray-300"
-                    checked={selectedIds.length > 0 && filteredItems.every(i => selectedIds.includes(i.verification_id))}
+                    checked={(() => {
+                      const pending = filteredItems.filter(i => i.status === 'PENDING');
+                      return pending.length > 0 && pending.every(i => selectedIds.includes(i.verification_id));
+                    })()}
                     onChange={(e) => {
-                      if (e.target.checked) setSelectedIds(filteredItems.map(i => i.verification_id));
-                      else setSelectedIds([]);
+                      if (e.target.checked) {
+                        const pending = filteredItems.filter(i => i.status === 'PENDING');
+                        setSelectedIds(pending.map(i => i.verification_id));
+                      } else {
+                        setSelectedIds([]);
+                      }
                     }}
                   />
                 </th>
@@ -344,9 +409,11 @@ export default function VerificationManagement() {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <input
                       type="checkbox"
-                      className="h-4 w-4 rounded border-gray-300"
-                      checked={selectedIds.includes(v.verification_id)}
+                      className="h-4 w-4 rounded border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                      disabled={v.status !== 'PENDING'}
+                      checked={v.status === 'PENDING' && selectedIds.includes(v.verification_id)}
                       onChange={(e) => {
+                        if (v.status !== 'PENDING') return;
                         setSelectedIds((prev) => e.target.checked
                           ? Array.from(new Set([...prev, v.verification_id]))
                           : prev.filter(id => id !== v.verification_id));
@@ -837,6 +904,197 @@ export default function VerificationManagement() {
                   className="mt-3 sm:mt-0 w-full sm:w-auto inline-flex justify-center px-4 py-2 border border-gray-300 text-base font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50"
                 >
                   Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Review Modal */}
+      {showBulkModal && bulkItems.length > 0 && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+            <div className="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" onClick={() => setShowBulkModal(false)} />
+            <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full">
+              <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-xl font-bold text-gray-900">Bulk Review ({bulkIndex + 1}/{bulkItems.length})</h3>
+                  <button
+                    onClick={() => setShowBulkModal(false)}
+                    className="text-gray-400 hover:text-gray-500"
+                  >
+                    <XCircleIcon className="h-6 w-6" />
+                  </button>
+                </div>
+                {(() => {
+                  const cur = bulkItems[bulkIndex];
+                  if (!cur) return null;
+                  return (
+                    <div className="space-y-4">
+                      {/* Info grid */}
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-sm text-gray-500">Verification ID</p>
+                          <p className="text-base font-medium text-gray-900">#{cur.verification_id}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500">User</p>
+                          <p className="text-base font-medium text-gray-900">{userNames[Number(cur.user_id)] || `${cur.user_id}`}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500">Type</p>
+                          <p className="text-base font-medium text-gray-900">{cur.type}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500">Status</p>
+                          <span className="inline-flex px-3 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">Pending</span>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500">Created at</p>
+                          <p className="text-base font-medium text-gray-900">
+                            {(() => {
+                              const ts = (cur.created_at || '').replace?.('Z','') || cur.created_at;
+                              const d = ts ? new Date(ts) : null;
+                              return d ? d.toLocaleString('vi-VN', { year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', second:'2-digit' }) : '—';
+                            })()}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500">Verified at</p>
+                          <p className="text-base font-medium text-gray-900">
+                            {cur.verified_at ? (() => {
+                              const ts = (cur.verified_at || '').replace?.('Z','') || cur.verified_at;
+                              const d = ts ? new Date(ts) : null;
+                              return d ? d.toLocaleString('vi-VN', { year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', second:'2-digit' }) : '—';
+                            })() : '—'}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Documents */}
+                      <div>
+                        <h5 className="text-sm font-semibold text-gray-900 mb-2 flex items-center">
+                          <DocumentTextIcon className="h-4 w-4 mr-2 text-indigo-500" />
+                          Documents
+                        </h5>
+                        {(() => {
+                          try {
+                            const type = (cur as any).document_type;
+                            const url = (cur as any).document_url as string | undefined;
+                            if (!url) {
+                              return (
+                                <div className="border-2 border-gray-200 rounded-lg p-8 bg-gray-50 flex items-center justify-center min-h-[150px]">
+                                  <div className="text-center">
+                                    <DocumentTextIcon className="h-12 w-12 text-gray-400 mx-auto mb-2" />
+                                    <p className="text-gray-500 text-sm font-medium">No documents</p>
+                                  </div>
+                                </div>
+                              );
+                            }
+                            const urls = url.split(',').map(u => u.trim()).filter(Boolean);
+                            if (urls.length === 0) {
+                              return (
+                                <div className="border-2 border-gray-200 rounded-lg p-8 bg-gray-50 flex items-center justify-center min-h-[150px]">
+                                  <div className="text-center">
+                                    <DocumentTextIcon className="h-12 w-12 text-gray-400 mx-auto mb-2" />
+                                    <p className="text-gray-500 text-sm font-medium">No documents</p>
+                                  </div>
+                                </div>
+                              );
+                            }
+                            return (
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {urls.map((u, idx) => (
+                                  <div key={idx} className="space-y-2">
+                                    <p className="text-sm font-medium text-gray-700">
+                                      {cur.type === 'STUDENT_ID' ? (idx === 0 ? 'Front (Mặt trước)' : 'Back (Mặt sau)') : `Document ${idx + 1}`}
+                                    </p>
+                                    {type === 'IMAGE' ? (
+                                      <div className="border-2 border-gray-200 rounded-lg overflow-hidden bg-white">
+                                        <img
+                                          src={u}
+                                          alt={`Document ${idx + 1}`}
+                                          className="w-full h-auto object-contain max-h-80"
+                                          onError={(e) => {
+                                            (e.target as HTMLImageElement).src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="300"%3E%3Crect fill="%23f3f4f6" width="400" height="300"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" fill="%236b7280" font-size="16"%3EFailed to load image%3C/text%3E%3C/svg%3E';
+                                          }}
+                                        />
+                                      </div>
+                                    ) : type === 'PDF' ? (
+                                      <div className="border-2 border-gray-200 rounded-lg p-6 bg-gray-50 flex items-center justify-center min-h-[150px]">
+                                        <div className="text-center">
+                                          <DocumentTextIcon className="h-12 w-12 text-gray-400 mx-auto mb-2" />
+                                          <p className="text-gray-500 text-sm font-medium">PDF Document</p>
+                                        </div>
+                                      </div>
+                                    ) : (
+                                      <div className="border-2 border-gray-200 rounded-lg p-6 bg-gray-50 flex items-center justify-center min-h-[150px]">
+                                        <div className="text-center">
+                                          <DocumentTextIcon className="h-12 w-12 text-gray-400 mx-auto mb-2" />
+                                          <p className="text-gray-500 text-sm font-medium">Unknown type</p>
+                                        </div>
+                                      </div>
+                                    )}
+                                    <div className="text-center">
+                                      <a
+                                        href={u}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="inline-flex items-center px-3 py-1.5 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                                      >
+                                        <DocumentTextIcon className="h-4 w-4 mr-1.5" />
+                                        Open in new tab
+                                      </a>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            );
+                          } catch (e) {
+                            return null;
+                          }
+                        })()}
+                      </div>
+
+                      {/* Bulk reject reason */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Rejection reason (optional)</label>
+                        <textarea
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                          rows={3}
+                          placeholder="Enter reason to reject, or leave empty to approve"
+                          value={bulkRejectReason}
+                          onChange={(e) => setBulkRejectReason(e.target.value)}
+                        />
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+              <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse gap-3">
+                <button
+                  disabled={bulkLoading}
+                  onClick={handleBulkApprove}
+                  className="w-full sm:w-auto inline-flex justify-center items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg text-white bg-green-600 hover:bg-green-700 disabled:opacity-50"
+                >
+                  <CheckCircleIcon className="h-5 w-5 mr-2" />
+                  {bulkLoading ? 'Processing...' : 'Approve'}
+                </button>
+                <button
+                  disabled={bulkLoading}
+                  onClick={handleBulkReject}
+                  className="mt-3 sm:mt-0 w-full sm:w-auto inline-flex justify-center items-center px-6 py-3 border border-gray-300 text-base font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
+                >
+                  <XCircleIcon className="h-5 w-5 mr-2" />
+                  Reject
+                </button>
+                <button
+                  disabled={bulkLoading}
+                  onClick={handleBulkSkip}
+                  className="mt-3 sm:mt-0 w-full sm:w-auto inline-flex justify-center items-center px-6 py-3 border border-gray-300 text-base font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50"
+                >
+                  Skip
                 </button>
               </div>
             </div>

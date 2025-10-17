@@ -18,7 +18,7 @@ const SafetyManagement = lazy(() => import('./pages/SafetyManagement'));
 const Analytics = lazy(() => import('./pages/Analytics'));
 const RiderVehicleVerification = lazy(() => import('./pages/RiderVehicleVerification'));
 const DriverVehicleVerification = lazy(() => import('./pages/DriverVehicleVerification'));
-const VehicleVerificationManagement = lazy(() => import('./pages/VehicleVerificationManagement'));
+const VehicleManagement = lazy(() => import('./pages/VehicleManagement'));
 
 function App() {
   return (
@@ -131,7 +131,7 @@ function App() {
                   element={
                     <ProtectedRoute>
                       <Layout>
-                        <VehicleVerificationManagement />
+                        <VehicleManagement />
                       </Layout>
                     </ProtectedRoute>
                   }

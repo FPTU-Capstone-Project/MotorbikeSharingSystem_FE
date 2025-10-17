@@ -19,7 +19,7 @@ export default function UserManagement() {
   const [users, setUsers] = useState<UserManagementItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterRole, setFilterRole] = useState<'all' | 'student' | 'driver'>('all');
+  const [filterRole, setFilterRole] = useState<'all' | 'rider' | 'driver'>('all');
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive' | 'suspended'>('all');
   const [page, setPage] = useState(0);
   const [size, setSize] = useState(20);
@@ -54,7 +54,7 @@ export default function UserManagement() {
       String(user.user_id).includes(searchTerm);
 
     // Determine user role based on profiles
-    const userRole = user.driver_profile ? 'driver' : 'student';
+    const userRole = user.driver_profile ? 'driver' : 'rider';
     const matchesRole = filterRole === 'all' || userRole === filterRole;
 
     // Map status to match filter options
@@ -72,7 +72,7 @@ export default function UserManagement() {
       bg: 'bg-blue-500',
     },
     {
-      label: 'Students',
+      label: 'Riders',
       value: users.filter(u => !u.driver_profile).length,
       Icon: AcademicCapIcon,
       bg: 'bg-indigo-500',
@@ -102,7 +102,7 @@ export default function UserManagement() {
         <div>
           <h1 className="text-3xl font-bold text-gray-900">User Management</h1>
           <p className="mt-2 text-gray-600">
-            Manage student and driver accounts, verification status, and user activities
+            Manage rider and driver accounts, verification status, and user activities
           </p>
         </div>
         <div className="mt-4 sm:mt-0">
@@ -166,7 +166,7 @@ export default function UserManagement() {
                 onChange={(e) => setFilterRole(e.target.value as any)}
               >
                 <option value="all">All Roles</option>
-                <option value="student">Students</option>
+                <option value="rider">Riders</option>
                 <option value="driver">Drivers</option>
               </select>
               <select
@@ -236,7 +236,7 @@ export default function UserManagement() {
                   </tr>
                 ) : (
                   filteredUsers.map((user, index) => {
-                    const userRole = user.driver_profile ? 'driver' : 'student';
+                    const userRole = user.driver_profile ? 'driver' : 'rider';
                     const isVerified = user.email_verified && user.phone_verified;
 
                     return (

@@ -28,7 +28,7 @@ const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: HomeIcon },
   { name: 'Users', href: '/users', icon: UsersIcon },
   { name: 'Verification', href: '/verification', icon: DocumentCheckIcon },
-  { name: 'Vehicle Verification', href: '/vehicle-verification', icon: Bike },
+  { name: 'Vehicle Management', href: '/vehicle-verification', icon: Bike },
   { name: 'Rides', href: '/rides', icon: MapIcon },
   { name: 'Payments', href: '/payments', icon: CreditCardIcon },
   { name: 'Safety', href: '/safety', icon: ShieldCheckIcon },

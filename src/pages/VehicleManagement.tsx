@@ -18,12 +18,9 @@ import { approveDriverVehicle, rejectDriver } from '../services/verificationServ
 import { vehicleService } from '../services/vehicleService';
 import toast from 'react-hot-toast';
 
-// Load from backend
-
 export default function VehicleManagement() {
   const [verifications, setVerifications] = useState<VehicleVerification[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  // Removed filterStatus per request; using sort-only controls
   const [sortBy, setSortBy] = useState<'driverId' | 'model' | 'plateNumber' | 'submittedAt' | 'status'>('submittedAt');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const [selectedVerification, setSelectedVerification] = useState<VehicleVerification | null>(null);
@@ -58,7 +55,6 @@ export default function VehicleManagement() {
     const load = async () => {
       try {
         setLoading(true);
-        // Use vehicles endpoint with optional status filtering
         const res = await vehicleService.getAllVehicles(
           page,
           pageSize,
@@ -90,7 +86,7 @@ export default function VehicleManagement() {
           rejectionReason: v.rejection_reason ?? v.rejectionReason,
         }));
         setVerifications(rows);
-        const p = res.pagination || {} as any;
+        const p = res.pagination || ({} as any);
         setTotalPages((p.total_pages ?? 0) as number);
         setTotalRecords((p.total_records ?? rows.length) as number);
       } catch (e: any) {
@@ -121,14 +117,11 @@ export default function VehicleManagement() {
       if (sortBy === 'driverId') return (Number(a.driverId) - Number(b.driverId)) * dir;
       if (sortBy === 'plateNumber') return a.plateNumber.localeCompare(b.plateNumber) * dir;
       if (sortBy === 'status') return a.status.localeCompare(b.status) * dir;
-      // submittedAt default
       return (new Date(a.submittedAt).getTime() - new Date(b.submittedAt).getTime()) * dir;
     });
 
     return sorted;
   }, [verifications, searchTerm, sortBy, sortDir]);
-
-
 
   const pendingCount = verifications.filter(v => v.status === 'pending').length;
   const approvedCount = verifications.filter(v => v.status === 'approved').length;
@@ -137,7 +130,7 @@ export default function VehicleManagement() {
   const handleApprove = async (verification: VehicleVerification) => {
     try {
       await approveDriverVehicle(Number(verification.driverId), 'Approved vehicle registration');
-      toast.success(`Approved vehicle verification for ${verification.driverName}`);
+      toast.success(`Approved vehicle for ${verification.driverName}`);
       setShowDetailModal(false);
       setPage(0);
     } catch (e: any) {
@@ -153,7 +146,7 @@ export default function VehicleManagement() {
     }
     try {
       await rejectDriver(Number(verificationToReject.driverId), rejectionReason, 'Rejected by admin');
-      toast.success(`Rejected vehicle verification for ${verificationToReject.driverName}`);
+      toast.success(`Rejected vehicle for ${verificationToReject.driverName}`);
       setShowRejectModal(false);
       setShowDetailModal(false);
       setRejectionReason('');
@@ -273,7 +266,7 @@ export default function VehicleManagement() {
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Vehicle Management</h1>
           <p className="mt-2 text-gray-600">
-            Manage and approve vehicle registrations, insurance certificates, and vehicle photos
+            Manage vehicles, registrations, insurance certificates, and vehicle photos
           </p>
         </div>
         <div className="mt-4 sm:mt-0">
@@ -395,7 +388,7 @@ export default function VehicleManagement() {
         </div>
       </div>
 
-      {/* Verifications Table */}
+      {/* Vehicles Table */}
       <div className="card overflow-hidden">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
@@ -509,7 +502,7 @@ export default function VehicleManagement() {
         {filteredVerifications.length === 0 && (
           <div className="text-center py-12">
             <Bike className="mx-auto h-12 w-12 text-gray-400" />
-            <p className="mt-2 text-gray-500">No vehicle verification requests found.</p>
+            <p className="mt-2 text-gray-500">No vehicles found.</p>
           </div>
         )}
         {/* Pagination */}
@@ -661,7 +654,7 @@ export default function VehicleManagement() {
                     <div className="space-y-4">
                       <h4 className="text-lg font-semibold text-gray-900 mb-3 flex items-center">
                         <DocumentTextIcon className="h-5 w-5 mr-2 text-green-500" />
-                        Verification Documents
+                        Vehicle Documents
                       </h4>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -796,7 +789,7 @@ export default function VehicleManagement() {
                     </h3>
                     <div className="mt-2">
                       <p className="text-sm text-gray-500 mb-4">
-                        You are rejecting the vehicle verification for <span className="font-semibold">{verificationToReject.driverName}</span> ({verificationToReject.plateNumber}).
+                        You are rejecting the vehicle for <span className="font-semibold">{verificationToReject.driverName}</span> ({verificationToReject.plateNumber}).
                         Please provide a reason for rejection.
                       </p>
                       <textarea
@@ -896,7 +889,7 @@ export default function VehicleManagement() {
         <div className="fixed inset-0 z-50 overflow-y-auto">
           <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
             <div className="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" onClick={() => setShowEditModal(false)} />
-            <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+          <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
               <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Edit Vehicle</h3>
                 <div className="grid grid-cols-2 gap-4">
@@ -981,3 +974,5 @@ export default function VehicleManagement() {
     </div>
   );
 }
+
+
