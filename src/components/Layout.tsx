@@ -14,10 +14,11 @@ import {
   DocumentCheckIcon,
   ArrowRightOnRectangleIcon,
 } from '@heroicons/react/24/outline';
-import { Bike } from 'lucide-react';
+import { MotorbikeIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../utils/cn';
 import { useAuth } from '../contexts/AuthContext';
+import SessionStatus from './SessionStatus';
 import toast from 'react-hot-toast';
 
 interface LayoutProps {
@@ -28,7 +29,7 @@ const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: HomeIcon },
   { name: 'Users', href: '/users', icon: UsersIcon },
   { name: 'Verification', href: '/verification', icon: DocumentCheckIcon },
-  { name: 'Vehicle Management', href: '/vehicle-verification', icon: Bike },
+  { name: 'Vehicle Management', href: '/vehicle-verification', icon: MotorbikeIcon },
   { name: 'Rides', href: '/rides', icon: MapIcon },
   { name: 'Payments', href: '/payments', icon: CreditCardIcon },
   { name: 'Safety', href: '/safety', icon: ShieldCheckIcon },
@@ -100,6 +101,9 @@ const Layout = memo(({ children }: LayoutProps) => {
               </button>
             </div>
             <SidebarContent location={location} closeSidebar={closeSidebar} />
+            <div className="px-6 pb-6">
+              <SessionStatus showWarning={true} />
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -150,6 +154,7 @@ const Layout = memo(({ children }: LayoutProps) => {
               </div>
             </div>
             <div className="flex items-center space-x-6">
+              <SessionStatus className="hidden lg:block" />
               <button className="relative p-3 text-gray-400 hover:text-gray-600 hover:bg-gray-100/80 rounded-xl transition-all duration-200 group">
                 <BellIcon className="h-6 w-6" />
                 <span className="absolute -top-1 -right-1 h-5 w-5 bg-gradient-to-r from-red-500 to-pink-500 rounded-full flex items-center justify-center text-xs text-white font-semibold shadow-lg animate-pulse">

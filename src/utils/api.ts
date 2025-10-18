@@ -1,13 +1,8 @@
+import toast from 'react-hot-toast';
+import { tokenService } from '../services/tokenService';
+
 const BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8081/api/v1';
 let isRedirectingForAuth = false;
-// Lazy import to avoid React coupling at module load; fallback to alert if unavailable
-let toastRef: any = null;
-try {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  toastRef = require('react-hot-toast');
-} catch (_) {
-  // ignore
-}
 
 export interface PageResponse<T> {
   data: T[];
@@ -77,6 +72,10 @@ export async function apiFetch<T = any>(
     // Global auth expiry handling
     if ((response.status === 401 || response.status === 403) && !isRedirectingForAuth) {
       isRedirectingForAuth = true;
+      
+      // Stop token monitoring to prevent multiple notifications
+      tokenService.stopMonitoring();
+      
       try {
         // Best-effort clear auth data
         localStorage.removeItem('token');
@@ -84,26 +83,51 @@ export async function apiFetch<T = any>(
         localStorage.removeItem('access_token');
         localStorage.removeItem('refreshToken');
         localStorage.removeItem('user');
+        localStorage.removeItem('authToken');
       } catch (_) {}
 
       const msg = errorData?.message || 'Your session has expired. Please sign in again.';
-      if (toastRef?.toast) {
-        toastRef.toast.error(msg, { id: 'auth-expired' });
-      } else if (typeof window !== 'undefined') {
-        // Minimal fallback
-        // eslint-disable-next-line no-alert
-        alert(msg);
-      }
+      
+      // Show notification with better styling
+      toast.error(msg, { 
+        id: 'auth-expired',
+        duration: 5000,
+        style: {
+          background: 'rgba(239, 68, 68, 0.9)',
+          color: '#fff',
+          borderRadius: '12px',
+          backdropFilter: 'blur(12px)',
+        },
+      });
 
       // Redirect to login, avoid redirect loops
       if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
         setTimeout(() => {
           window.location.replace('/login');
-        }, 50);
+        }, 2000); // Give user time to read the notification
       }
     }
     throw error;
   }
 
-  return response.json();
+  // Handle empty responses (e.g., 204 No Content) safely
+  const contentLength = response.headers.get('content-length');
+  const contentType = response.headers.get('content-type') || '';
+  
+  // If it's a 204 No Content or has no content, return undefined
+  if (response.status === 204 || contentLength === '0') {
+    return undefined as T;
+  }
+  
+  // If content type is not JSON, return undefined
+  if (contentType.indexOf('application/json') === -1) {
+    return undefined as T;
+  }
+
+  // Try to parse JSON, return undefined if it fails
+  try {
+    return await response.json();
+  } catch {
+    return undefined as T;
+  }
 }

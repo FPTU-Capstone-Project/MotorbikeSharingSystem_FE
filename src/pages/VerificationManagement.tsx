@@ -13,6 +13,7 @@ import toast from 'react-hot-toast';
 import { fetchAllVerifications } from '../services/verificationService';
 import { VerificationItem } from '../types';
 import { approveVerification, rejectVerification } from '../services/verificationService';
+import Pagination from '../components/Pagination';
 
 export default function VerificationManagement() {
   const [items, setItems] = useState<VerificationItem[]>([]);
@@ -334,19 +335,6 @@ export default function VerificationManagement() {
             </select>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-600">Show:</span>
-            <select
-              className="border border-gray-300 rounded-md px-3 py-2 pr-8 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-              value={size}
-              onChange={(e) => {
-                setPage(0);
-                setSize(Number(e.target.value));
-              }}
-            >
-              <option value={10}>10</option>
-              <option value={20}>20</option>
-              <option value={50}>50</option>
-            </select>
             <button
               className="ml-3 inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium text-white bg-green-600 hover:bg-green-700 disabled:opacity-50"
               disabled={selectedIds.length === 0 || actionLoading}
@@ -517,29 +505,19 @@ export default function VerificationManagement() {
         )}
 
         {/* Pagination */}
-        <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200">
-          <div className="text-sm text-gray-600">
-            Showing {startIndex + 1}-{Math.min(endIndex, filteredTotalRecords)} of {filteredTotalRecords} results
-            <br />
-            Page {page + 1} / {Math.max(filteredTotalPages, 1)}
-          </div>
-          <div className="space-x-2">
-            <button
-              className="btn btn-secondary px-4 py-2 disabled:opacity-50"
-              disabled={page === 0 || loading}
-              onClick={() => setPage((p) => Math.max(p - 1, 0))}
-            >
-              Previous
-            </button>
-            <button
-              className="btn btn-secondary px-4 py-2 disabled:opacity-50"
-              disabled={page + 1 >= filteredTotalPages || loading}
-              onClick={() => setPage((p) => p + 1)}
-            >
-              Next
-            </button>
-          </div>
-        </div>
+        <Pagination
+          currentPage={page}
+          totalPages={filteredTotalPages}
+          totalRecords={filteredTotalRecords}
+          pageSize={size}
+          onPageChange={setPage}
+          onPageSizeChange={(newSize) => {
+            setPage(0);
+            setSize(newSize);
+          }}
+          loading={loading}
+          pageSizeOptions={[5, 10, 20, 50]}
+        />
       </motion.div>
 
       {/* Detail Modal */}

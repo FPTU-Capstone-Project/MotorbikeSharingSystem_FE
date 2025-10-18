@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { apiFetch } from '../utils/api';
 import { userService } from '../services/apiService';
+import { tokenService } from '../services/tokenService';
 
 interface User {
   userId: number;
@@ -17,6 +18,8 @@ interface AuthContextType {
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
+  getTimeUntilExpiry: () => number | null;
+  isTokenValid: () => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -37,6 +40,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (storedToken) {
         setToken(storedToken);
+        
+        // Initialize token monitoring globally
+        tokenService.initialize();
+        
         // Optimistically set stored user if available to avoid UI flash
         if (storedUser) {
           try {
@@ -63,12 +70,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           // If fetching profile fails (expired token, etc.), keep optimistic user or logout later when an authed request fails
           console.warn('Failed to fetch current user profile:', error);
         }
+      } else {
+        // No token found, ensure monitoring is stopped
+        tokenService.stopMonitoring();
       }
       setIsLoading(false);
     };
 
     initAuthState();
-  }, [user?.activeProfile, user?.email, user?.fullName, user?.userId, user?.userType]);
+    
+    // Cleanup function to stop token monitoring
+    return () => {
+      // Don't stop monitoring here as it should be global
+      // tokenService.stopMonitoring();
+    };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const login = async (email: string, password: string) => {
     try {
@@ -97,6 +113,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (refreshToken) {
         localStorage.setItem('refreshToken', refreshToken);
       }
+
+      // Initialize token monitoring after successful login
+      tokenService.initialize();
 
       // Fetch full user profile after login to populate UI with accurate data
       try {
@@ -129,6 +148,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = () => {
+    // Stop token monitoring
+    tokenService.stopMonitoring();
+    
     // Clear state
     setUser(null);
     setToken(null);
@@ -139,6 +161,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem('access_token');
     localStorage.removeItem('refreshToken');
     localStorage.removeItem('user');
+    localStorage.removeItem('authToken');
 
     // Optional: Call backend logout API
     try {
@@ -157,6 +180,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isLoading,
     login,
     logout,
+    getTimeUntilExpiry: () => tokenService.getTimeUntilExpiry(),
+    isTokenValid: () => tokenService.isTokenValid(),
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

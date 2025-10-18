@@ -12,10 +12,11 @@ import {
   ShieldCheckIcon,
 } from '@heroicons/react/24/outline';
 import { motion } from 'framer-motion';
-import { Bike, Plus } from 'lucide-react';
+import { Bike, MotorbikeIcon, Plus } from 'lucide-react';
 import { VehicleVerification } from '../types';
 import { approveDriverVehicle, rejectDriver } from '../services/verificationService';
 import { vehicleService } from '../services/vehicleService';
+import Pagination from '../components/Pagination';
 import toast from 'react-hot-toast';
 
 export default function VehicleManagement() {
@@ -30,7 +31,7 @@ export default function VehicleManagement() {
   const [verificationToReject, setVerificationToReject] = useState<VehicleVerification | null>(null);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(0);
-  const pageSize = 10;
+  const [pageSize, setPageSize] = useState(10);
   const [totalPages, setTotalPages] = useState(0);
   const [totalRecords, setTotalRecords] = useState(0);
 
@@ -98,7 +99,7 @@ export default function VehicleManagement() {
     };
     load();
     return () => { ignore = true; };
-  }, [page, sortBy, sortDir]);
+  }, [page, pageSize, sortBy, sortDir]);
 
   const filteredVerifications = useMemo(() => {
     const base = verifications.filter(verification => {
@@ -290,7 +291,7 @@ export default function VehicleManagement() {
         >
           <div className="flex items-center">
             <div className="p-3 rounded-lg bg-gradient-to-r from-blue-500 to-blue-600 shadow-lg">
-              <Bike className="h-6 w-6 text-white" />
+              <MotorbikeIcon className="h-6 w-6 text-white" />
             </div>
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-500">Total Vehicles</p>
@@ -506,25 +507,19 @@ export default function VehicleManagement() {
           </div>
         )}
         {/* Pagination */}
-        <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200">
-          <div className="text-sm text-gray-600">Page {page + 1} / {Math.max(totalPages, 1)} • Total {totalRecords}</div>
-          <div className="space-x-2">
-            <button
-              className="btn btn-secondary px-4 py-2 disabled:opacity-50"
-              disabled={page === 0 || loading}
-              onClick={() => setPage((p) => Math.max(p - 1, 0))}
-            >
-              Previous
-            </button>
-            <button
-              className="btn btn-secondary px-4 py-2 disabled:opacity-50"
-              disabled={page + 1 >= totalPages || loading}
-              onClick={() => setPage((p) => p + 1)}
-            >
-              Next
-            </button>
-          </div>
-        </div>
+        <Pagination
+          currentPage={page}
+          totalPages={totalPages}
+          totalRecords={totalRecords}
+          pageSize={pageSize}
+          onPageChange={setPage}
+          onPageSizeChange={(newSize) => {
+            setPage(0);
+            setPageSize(newSize);
+          }}
+          loading={loading}
+          pageSizeOptions={[5, 10, 20, 50]}
+        />
       </div>
 
       {/* Detail Modal */}

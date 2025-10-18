@@ -3,16 +3,19 @@ import {
   MagnifyingGlassIcon,
   FunnelIcon,
   EyeIcon,
-  XCircleIcon,
   ArrowDownOnSquareStackIcon,
   CheckCircleIcon,
   UsersIcon,
   AcademicCapIcon,
+  NoSymbolIcon,
+  ArrowPathIcon,
+  ExclamationTriangleIcon,
 } from '@heroicons/react/24/outline';
 import { Bike, Plus } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { UserManagementItem } from '../types';
-import { getAllUsers } from '../services/profileService';
+import { getAllUsers, suspendUser, activateUser } from '../services/profileService';
+import Pagination from '../components/Pagination';
 import toast from 'react-hot-toast';
 
 export default function UserManagement() {
@@ -63,6 +66,42 @@ export default function UserManagement() {
 
     return matchesSearch && matchesRole && matchesStatus;
   });
+
+  const handleSuspendUser = async (userId: number, userName: string) => {
+    if (window.confirm(`Are you sure you want to suspend user "${userName}"?`)) {
+      try {
+        await suspendUser(userId);
+        toast.success(`User "${userName}" has been suspended successfully`);
+        
+        // Reload users after suspension
+        const response = await getAllUsers(page, size);
+        setUsers(response.data || []);
+        setTotalPages(response.pagination?.total_pages ?? 1);
+        setTotalRecords(response.pagination?.total_records ?? (response.data?.length || 0));
+      } catch (error) {
+        console.error('Failed to suspend user:', error);
+        toast.error('Failed to suspend user');
+      }
+    }
+  };
+
+  const handleActivateUser = async (userId: number, userName: string) => {
+    if (window.confirm(`Are you sure you want to activate user "${userName}"?`)) {
+      try {
+        await activateUser(userId);
+        toast.success(`User "${userName}" has been activated successfully`);
+        
+        // Reload users after activation
+        const response = await getAllUsers(page, size);
+        setUsers(response.data || []);
+        setTotalPages(response.pagination?.total_pages ?? 1);
+        setTotalRecords(response.pagination?.total_records ?? (response.data?.length || 0));
+      } catch (error) {
+        console.error('Failed to activate user:', error);
+        toast.error('Failed to activate user');
+      }
+    }
+  };
 
   const stats = [
     {
@@ -288,7 +327,7 @@ export default function UserManagement() {
                             </div>
                           ) : (
                             <div className="flex items-center text-yellow-600">
-                              <XCircleIcon className="h-5 w-5 mr-1" />
+                              <ExclamationTriangleIcon className="h-5 w-5 mr-1" />
                               <span className="text-sm">Pending</span>
                             </div>
                           )}
@@ -298,14 +337,29 @@ export default function UserManagement() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                           <div className="flex items-center space-x-2">
-                            <button className="text-blue-600 hover:text-blue-900 p-1 rounded flex items-center">
+                            <button className="text-blue-600 hover:text-blue-900 p-1 rounded flex items-center"
+                              title="View user details">
                               <EyeIcon className="h-4 w-4" />
                             </button>
-                            <button className="text-green-600 hover:text-green-900 p-1 rounded flex items-center">
+                            <button className="text-green-600 hover:text-green-900 p-1 rounded flex items-center"
+                              title="Export user data">
                               <ArrowDownOnSquareStackIcon className="h-4 w-4" />
-                            </button><button className="text-red-600 hover:text-red-900 p-1 rounded flex items-center">
-                              <XCircleIcon className="h-4 w-4" />
                             </button>
+                            
+                            {/* Show suspend button for active users, activate button for suspended users */}
+                            {user.status.toLowerCase() === 'suspended' ? (
+                              <button className="text-green-600 hover:text-green-900 p-1 rounded flex items-center"
+                                onClick={() => handleActivateUser(user.user_id, user.full_name || `User ${user.user_id}`)}
+                                title="Activate user">
+                                <ArrowPathIcon className="h-4 w-4" />
+                              </button>
+                            ) : (
+                              <button className="text-yellow-600 hover:text-yellow-900 p-1 rounded flex items-center"
+                                onClick={() => handleSuspendUser(user.user_id, user.full_name || `User ${user.user_id}`)}
+                                title="Suspend user">
+                                <NoSymbolIcon className="h-4 w-4" />
+                              </button>
+                            )}
                           </div>
                         </td>
                       </motion.tr>
@@ -317,45 +371,19 @@ export default function UserManagement() {
           </table>
         </div>
         {/* Pagination Controls */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between px-6 py-4 border-t border-gray-100 bg-gray-50">
-          <div className="text-sm text-gray-600 mb-3 sm:mb-0">
-            Showing page <span className="font-semibold">{page + 1}</span> of <span className="font-semibold">{totalPages}</span>
-            {` `}(<span className="font-semibold">{totalRecords}</span> total users)
-          </div>
-          <div className="flex items-center space-x-3">
-            <div className="flex items-center space-x-2">
-              <span className="text-sm text-gray-600">Rows per page</span>
-              <select
-                className="input-field py-1"
-                value={size}
-                onChange={(e) => {
-                  setPage(0);
-                  setSize(Number(e.target.value));
-                }}
-              >
-                {[10, 20, 50, 100].map((s) => (
-                  <option key={s} value={s}>{s}</option>
-                ))}
-              </select>
-            </div>
-            <div className="flex items-center space-x-2">
-              <button
-                className="btn-secondary px-3 py-2 disabled:opacity-50"
-                onClick={() => setPage((p) => Math.max(0, p - 1))}
-                disabled={page <= 0 || loading}
-              >
-                Prev
-              </button>
-              <button
-                className="btn-primary px-3 py-2 disabled:opacity-50"
-                onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
-                disabled={page >= totalPages - 1 || loading}
-              >
-                Next
-              </button>
-            </div>
-          </div>
-        </div>
+        <Pagination
+          currentPage={page}
+          totalPages={totalPages}
+          totalRecords={totalRecords}
+          pageSize={size}
+          onPageChange={setPage}
+          onPageSizeChange={(newSize) => {
+            setPage(0);
+            setSize(newSize);
+          }}
+          loading={loading}
+          pageSizeOptions={[10, 20, 50, 100]}
+        />
         {filteredUsers.length === 0 && (
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}

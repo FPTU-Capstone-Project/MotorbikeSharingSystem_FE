@@ -6,6 +6,7 @@ import Layout from './components/Layout';
 import LoadingSpinner from './components/LoadingSpinner';
 import PerformanceOptimizer from './components/PerformanceOptimizer';
 import ProtectedRoute from './components/ProtectedRoute';
+import GlobalTokenMonitor from './components/GlobalTokenMonitor';
 
 // Lazy load all pages for optimal performance
 const LoginPage = lazy(() => import('./pages/LoginPage'));
@@ -19,6 +20,7 @@ const Analytics = lazy(() => import('./pages/Analytics'));
 const RiderVehicleVerification = lazy(() => import('./pages/RiderVehicleVerification'));
 const DriverVehicleVerification = lazy(() => import('./pages/DriverVehicleVerification'));
 const VehicleManagement = lazy(() => import('./pages/VehicleManagement'));
+const TokenExpiryTest = lazy(() => import('./pages/TokenExpiryTest'));
 
 function App() {
   return (
@@ -26,6 +28,7 @@ function App() {
       <PerformanceOptimizer />
       <Router>
         <AuthProvider>
+          <GlobalTokenMonitor />
           <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
             <Suspense fallback={<LoadingSpinner />}>
               <Routes>
@@ -132,6 +135,18 @@ function App() {
                     <ProtectedRoute>
                       <Layout>
                         <VehicleManagement />
+                      </Layout>
+                    </ProtectedRoute>
+                  }
+                />
+                
+                {/* Test route for token expiry functionality */}
+                <Route
+                  path="/token-test"
+                  element={
+                    <ProtectedRoute>
+                      <Layout>
+                        <TokenExpiryTest />
                       </Layout>
                     </ProtectedRoute>
                   }
