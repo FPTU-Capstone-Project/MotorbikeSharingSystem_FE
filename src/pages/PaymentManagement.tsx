@@ -9,11 +9,16 @@ import {
   XCircleIcon,
   EyeIcon,
   UsersIcon,
+  CheckCircleIcon,
 } from '@heroicons/react/24/outline';
 import { transactionService, TransactionResponse, TransactionStats } from '../services/transactionService';
 import { userProfileService, UserProfileMap } from '../services/userProfileService';
 import Pagination from '../components/Pagination';
 import toast from 'react-hot-toast';
+import StatSummaryCard from '../components/StatSummaryCard';
+
+const currencyFormatter = new Intl.NumberFormat('vi-VN');
+const numberFormatter = new Intl.NumberFormat();
 
 export default function PaymentManagement() {
   const [transactions, setTransactions] = useState<TransactionResponse[]>([]);
@@ -64,8 +69,8 @@ export default function PaymentManagement() {
       await loadUserProfiles(response.data);
     } catch (err) {
       console.error('Error loading transactions:', err);
-      setError('Failed to load transactions');
-      toast.error('Failed to load transactions');
+      setError('Không thể tải danh sách giao dịch');
+      toast.error('Không thể tải danh sách giao dịch');
     } finally {
       setLoading(false);
     }
@@ -115,13 +120,13 @@ export default function PaymentManagement() {
 
   const handleApproveWithdrawal = (transactionId: number) => {
     // This would typically call an API to approve the withdrawal
-    toast.success('Withdrawal approved successfully');
+    toast.success('Đã phê duyệt yêu cầu rút tiền');
     loadTransactions(); // Reload data
   };
 
   const handleRejectWithdrawal = (transactionId: number) => {
     // This would typically call an API to reject the withdrawal
-    toast.success('Withdrawal rejected');
+    toast.success('Đã từ chối yêu cầu rút tiền');
     loadTransactions(); // Reload data
   };
 
@@ -173,6 +178,29 @@ export default function PaymentManagement() {
     return styles[method] || 'bg-gray-100 text-gray-800';
   };
 
+  const transactionTypeLabels: Record<string, string> = {
+    TOPUP: 'Nạp ví',
+    RIDE_CAPTURE: 'Thanh toán chuyến',
+    PAYOUT: 'Chi trả tài xế',
+    RIDE_HOLD: 'Tạm giữ thanh toán',
+    RIDE_REFUND: 'Hoàn tiền chuyến',
+  };
+
+  const transactionStatusLabels: Record<string, string> = {
+    COMPLETED: 'Hoàn tất',
+    SUCCESS: 'Thành công',
+    PENDING: 'Đang xử lý',
+    FAILED: 'Thất bại',
+    CANCELLED: 'Đã hủy',
+  };
+
+  const paymentMethodLabels: Record<string, string> = {
+    wallet: 'Ví nội bộ',
+    card: 'Thẻ thanh toán',
+    bank_transfer: 'Chuyển khoản ngân hàng',
+    bank: 'Ngân hàng',
+  };
+
   // Calculate stats from current data
   const totalRevenue = stats?.totalRevenue || 0;
   const totalDeposits = stats?.totalDeposits || 0;
@@ -183,9 +211,9 @@ export default function PaymentManagement() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Payment Management</h1>
+          <h1 className="text-3xl font-bold text-gray-900">Quản lý thanh toán</h1>
           <p className="mt-2 text-gray-600">
-            Monitor transactions, deposits, withdrawals, and payment processing
+            Theo dõi giao dịch, nạp tiền, rút tiền và quá trình xử lý thanh toán
           </p>
         </div>
       </div>
@@ -193,33 +221,43 @@ export default function PaymentManagement() {
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         {[
-          { 
-            label: 'Total Revenue', 
-            value: `${totalRevenue.toLocaleString()}đ`, 
-            color: 'bg-green-500',
+      {
+            label: 'Tổng doanh thu',
+            value: `${currencyFormatter.format(totalRevenue)}đ`,
             icon: BanknotesIcon,
-            change: '+12.5%'
+            gradient: 'from-emerald-600 to-teal-600',
+            backgroundGradient: 'from-emerald-50 to-teal-100',
+            detail: 'Đã hoàn tất chi trả & thu cước chuyến đi',
+            change: '+12.5%',
+            changeDirection: 'increase' as const,
           },
-          { 
-            label: 'Total Deposits', 
-            value: `${totalDeposits.toLocaleString()}đ`, 
-            color: 'bg-blue-500',
+          {
+            label: 'Tổng số tiền nạp',
+            value: `${currencyFormatter.format(totalDeposits)}đ`,
             icon: ArrowDownIcon,
-            change: '+8.3%'
+            gradient: 'from-blue-600 to-indigo-600',
+            backgroundGradient: 'from-blue-50 to-indigo-100',
+            detail: 'Các lượt nạp ví đã xử lý',
+            change: '+8.3%',
+            changeDirection: 'increase' as const,
           },
-          { 
-            label: 'Pending Withdrawals', 
-            value: `${pendingWithdrawals.toLocaleString()}đ`, 
-            color: 'bg-yellow-500',
+          {
+            label: 'Rút tiền chờ duyệt',
+            value: `${currencyFormatter.format(pendingWithdrawals)}đ`,
             icon: ArrowUpIcon,
-            change: '3 requests'
+            gradient: 'from-amber-500 to-orange-500',
+            backgroundGradient: 'from-amber-50 to-orange-100',
+            detail: '3 yêu cầu đang chờ phê duyệt',
           },
-          { 
-            label: 'Failed Transactions', 
-            value: stats?.failedTransactions || 0,
-            color: 'bg-red-500',
+          {
+            label: 'Giao dịch thất bại',
+            value: numberFormatter.format(stats?.failedTransactions || 0),
             icon: XCircleIcon,
-            change: '-2 from yesterday'
+            gradient: 'from-rose-600 to-red-600',
+            backgroundGradient: 'from-rose-50 to-red-100',
+            detail: 'Trong 24 giờ gần nhất',
+            change: '-2',
+            changeDirection: 'decrease' as const,
           },
         ].map((stat, index) => (
           <motion.div
@@ -227,18 +265,17 @@ export default function PaymentManagement() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.1 }}
-            className="card hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
           >
-            <div className="flex items-center">
-              <div className={`p-3 rounded-lg ${stat.color} shadow-lg`}>
-                <stat.icon className="h-6 w-6 text-white" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">{stat.label}</p>
-                <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
-                <p className="text-xs text-gray-400">{stat.change}</p>
-              </div>
-            </div>
+            <StatSummaryCard
+              label={stat.label}
+              value={stat.value}
+              icon={stat.icon}
+              gradient={stat.gradient}
+              backgroundGradient={stat.backgroundGradient}
+              detail={stat.detail}
+              change={stat.change}
+              changeDirection={stat.changeDirection}
+            />
           </motion.div>
         ))}
       </div>
@@ -256,32 +293,32 @@ export default function PaymentManagement() {
             value={filterType}
             onChange={(e) => setFilterType(e.target.value)}
           >
-            <option value="all">All Types</option>
-            <option value="TOPUP">Wallet Top-up</option>
-            <option value="RIDE_CAPTURE">Ride Payments</option>
-            <option value="PAYOUT">Driver Payouts</option>
-            <option value="RIDE_HOLD">Payment Holds</option>
-            <option value="RIDE_REFUND">Refunds</option>
+            <option value="all">Tất cả loại giao dịch</option>
+            <option value="TOPUP">Nạp ví</option>
+            <option value="RIDE_CAPTURE">Thanh toán chuyến đi</option>
+            <option value="PAYOUT">Chi trả cho tài xế</option>
+            <option value="RIDE_HOLD">Tạm giữ thanh toán</option>
+            <option value="RIDE_REFUND">Hoàn tiền</option>
           </select>
           <select
             className="input-field"
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
           >
-            <option value="all">All Status</option>
-            <option value="COMPLETED">Completed</option>
-            <option value="PENDING">Pending</option>
-            <option value="FAILED">Failed</option>
-            <option value="CANCELLED">Cancelled</option>
+            <option value="all">Tất cả trạng thái</option>
+            <option value="COMPLETED">Hoàn tất</option>
+            <option value="PENDING">Đang xử lý</option>
+            <option value="FAILED">Thất bại</option>
+            <option value="CANCELLED">Đã hủy</option>
           </select>
           <select
             className="input-field"
             value={filterDirection}
             onChange={(e) => setFilterDirection(e.target.value as 'all' | 'IN' | 'OUT')}
           >
-            <option value="all">All Directions</option>
-            <option value="IN">Credits</option>
-            <option value="OUT">Debits</option>
+            <option value="all">Tất cả dòng tiền</option>
+            <option value="IN">Tiền vào</option>
+            <option value="OUT">Tiền ra</option>
           </select>
         </div>
       </motion.div>
@@ -294,7 +331,7 @@ export default function PaymentManagement() {
           className="card text-center py-12"
         >
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading transactions...</p>
+          <p className="mt-4 text-gray-600">Đang tải danh sách giao dịch...</p>
         </motion.div>
       )}
 
@@ -312,7 +349,7 @@ export default function PaymentManagement() {
               onClick={loadTransactions}
               className="ml-auto px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
             >
-              Retry
+              Thử lại
             </button>
           </div>
         </motion.div>
@@ -331,25 +368,25 @@ export default function PaymentManagement() {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Transaction
+                  Giao dịch
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  User
+                  Người dùng
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Type
+                  Loại
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Amount
+                  Số tiền
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Method
+                  Phương thức
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
+                  Trạng thái
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
+                  Thao tác
                 </th>
               </tr>
             </thead>
@@ -359,11 +396,13 @@ export default function PaymentManagement() {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div>
                         <div className="text-sm font-medium text-gray-900">#{transaction.txnId}</div>
-                        <div className="text-xs font-mono text-gray-600 break-all">Group: {transaction.groupId}</div>
-                        <div className="text-sm text-gray-500">{transaction.description || transactionService.getTransactionTypeDisplay(transaction.type)}</div>
+                        <div className="text-xs font-mono text-gray-600 break-all">Nhóm: {transaction.groupId}</div>
+                        <div className="text-sm text-gray-500">
+                          {transaction.description || transactionTypeLabels[transaction.type] || transactionService.getTransactionTypeDisplay(transaction.type)}
+                        </div>
                       <div className="text-xs text-gray-400">
-                          {new Date(transaction.createdAt).toLocaleDateString()} at{' '}
-                          {new Date(transaction.createdAt).toLocaleTimeString([], {
+                          {new Date(transaction.createdAt).toLocaleDateString('vi-VN')} lúc{' '}
+                          {new Date(transaction.createdAt).toLocaleTimeString('vi-VN', {
                           hour: '2-digit', 
                           minute: '2-digit' 
                         })}
@@ -375,8 +414,8 @@ export default function PaymentManagement() {
                         {(() => {
                           const userProfile = userProfiles[transaction.actorUserId];
                           const avatarUrl = userProfile?.profilePhotoUrl;
-                          const displayName = userProfile?.fullName || transaction.actorUsername || `User ${transaction.actorUserId}`;
-                          const initials = userProfile ? userProfileService.getAvatarInitials(userProfile.fullName) : (transaction.actorUsername?.split(' ').map(n => n[0]).join('') || 'U');
+                          const displayName = userProfile?.fullName || transaction.actorUsername || `Người dùng ${transaction.actorUserId}`;
+                          const initials = userProfile ? userProfileService.getAvatarInitials(userProfile.fullName) : (transaction.actorUsername?.split(' ').map(n => n[0]).join('') || 'ND');
 
                           return (
                             <>
@@ -407,7 +446,7 @@ export default function PaymentManagement() {
                                   {displayName}
                         </div>
                         <div className="text-sm text-gray-500">
-                                  ID: {transaction.actorUserId}
+                                  Mã người dùng: {transaction.actorUserId}
                                 </div>
                         </div>
                             </>
@@ -419,7 +458,7 @@ export default function PaymentManagement() {
                     <div className="flex items-center">
                         {getTypeIcon(transaction.type)}
                         <span className="ml-2 text-sm text-gray-900">
-                          {transactionService.getTransactionTypeDisplay(transaction.type)}
+                          {transactionTypeLabels[transaction.type] || transactionService.getTransactionTypeDisplay(transaction.type)}
                       </span>
                     </div>
                   </td>
@@ -432,13 +471,13 @@ export default function PaymentManagement() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getMethodBadge(transaction.pspRef ? 'card' : 'wallet')}`}>
-                        {transaction.pspRef ? 'External' : 'Wallet'}
+                        {transaction.pspRef ? paymentMethodLabels.card : paymentMethodLabels.wallet}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                         <span className={`ml-2 inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadge(transaction.status)}`}>
-                          {transaction.status}
+                          {transactionStatusLabels[transaction.status] || transaction.status}
                       </span>
                     </div>
                   </td>
@@ -447,7 +486,7 @@ export default function PaymentManagement() {
                         <button
                           onClick={() => handleViewDetails(transaction)}
                           className="text-blue-600 hover:text-blue-900 p-1 rounded"
-                          title="View transaction details"
+                          title="Xem chi tiết giao dịch"
                         >
                         <EyeIcon className="h-4 w-4" />
                       </button>
@@ -456,11 +495,14 @@ export default function PaymentManagement() {
                           <button
                               onClick={() => handleApproveWithdrawal(transaction.txnId)}
                             className="text-green-600 hover:text-green-900 p-1 rounded"
+                            title="Phê duyệt rút tiền"
                           >
+                            <CheckCircleIcon className="h-4 w-4" />
                           </button>
                           <button
                               onClick={() => handleRejectWithdrawal(transaction.txnId)}
                             className="text-red-600 hover:text-red-900 p-1 rounded"
+                            title="Từ chối rút tiền"
                           >
                             <XCircleIcon className="h-4 w-4" />
                           </button>
@@ -488,7 +530,7 @@ export default function PaymentManagement() {
 
           {filteredTransactions.length === 0 && !loading && (
           <div className="text-center py-12">
-              <p className="text-gray-500">No transactions found matching your criteria.</p>
+              <p className="text-gray-500">Không tìm thấy giao dịch phù hợp tiêu chí lọc.</p>
           </div>
         )}
       </motion.div>
@@ -506,7 +548,7 @@ export default function PaymentManagement() {
                   <div className="w-full">
                     <div className="flex items-center justify-between mb-4">
                       <h3 className="text-2xl font-bold text-gray-900">
-                        Transaction Details
+                        Chi tiết giao dịch
                       </h3>
                       <button
                         onClick={handleCloseDetailsModal}
@@ -519,61 +561,67 @@ export default function PaymentManagement() {
                     <div className="bg-gray-50 rounded-lg p-4 mb-4">
                       <h4 className="text-lg font-semibold text-gray-900 mb-3 flex items-center">
                         <CreditCardIcon className="h-5 w-5 mr-2 text-blue-500" />
-                        Transaction Information
+                        Thông tin giao dịch
                       </h4>
                       <div className="grid grid-cols-2 gap-4">
                         <div>
-                          <p className="text-sm text-gray-500">Transaction ID</p>
+                          <p className="text-sm text-gray-500">Mã giao dịch</p>
                           <p className="text-base font-medium text-gray-900">#{selectedTransaction.txnId}</p>
                         </div>
                         <div>
-                          <p className="text-sm text-gray-500">Group ID</p>
+                          <p className="text-sm text-gray-500">Mã nhóm</p>
                           <p className="text-xs font-mono text-gray-900 break-all">{selectedTransaction.groupId}</p>
                         </div>
                         <div>
-                          <p className="text-sm text-gray-500">Type</p>
-                          <p className="text-base font-medium text-gray-900">{transactionService.getTransactionTypeDisplay(selectedTransaction.type)}</p>
+                          <p className="text-sm text-gray-500">Loại</p>
+                          <p className="text-base font-medium text-gray-900">
+                            {transactionTypeLabels[selectedTransaction.type] || transactionService.getTransactionTypeDisplay(selectedTransaction.type)}
+                          </p>
                         </div>
                         <div>
-                          <p className="text-sm text-gray-500">Status</p>
+                          <p className="text-sm text-gray-500">Trạng thái</p>
                           <span className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${getStatusBadge(selectedTransaction.status)}`}>
-                            {selectedTransaction.status}
+                            {transactionStatusLabels[selectedTransaction.status] || selectedTransaction.status}
                           </span>
                         </div>
                         <div>
-                          <p className="text-sm text-gray-500">Amount</p>
+                          <p className="text-sm text-gray-500">Số tiền</p>
                           <p className={`text-lg font-bold ${selectedTransaction.direction === 'OUT' ? 'text-red-600' : 'text-green-600'}`}>
                             {selectedTransaction.direction === 'OUT' ? '-' : '+'}
                             {transactionService.formatAmount(selectedTransaction.amount, selectedTransaction.currency)}
                           </p>
                         </div>
                         <div>
-                          <p className="text-sm text-gray-500">Direction</p>
-                          <p className="text-base font-medium text-gray-900">{selectedTransaction.direction === 'IN' ? 'Credit' : 'Debit'}</p>
+                          <p className="text-sm text-gray-500">Dòng tiền</p>
+                          <p className="text-base font-medium text-gray-900">
+                            {selectedTransaction.direction === 'IN' ? 'Tiền vào' : 'Tiền ra'}
+                          </p>
                         </div>
                         <div>
-                          <p className="text-sm text-gray-500">Actor Kind</p>
+                          <p className="text-sm text-gray-500">Kiểu người thực hiện</p>
                           <p className="text-base font-medium text-gray-900">{selectedTransaction.actorKind}</p>
                         </div>
                         <div>
-                          <p className="text-sm text-gray-500">Payment Method</p>
-                          <p className="text-base font-medium text-gray-900">{selectedTransaction.pspRef ? 'External Payment' : 'Wallet'}</p>
+                          <p className="text-sm text-gray-500">Phương thức thanh toán</p>
+                          <p className="text-base font-medium text-gray-900">
+                            {selectedTransaction.pspRef ? paymentMethodLabels.card : paymentMethodLabels.wallet}
+                          </p>
                         </div>
                         {selectedTransaction.systemWallet && (
                           <div>
-                            <p className="text-sm text-gray-500">System Wallet</p>
+                            <p className="text-sm text-gray-500">Ví hệ thống</p>
                             <p className="text-base font-medium text-gray-900">{selectedTransaction.systemWallet}</p>
                           </div>
                         )}
                         {selectedTransaction.bookingId && (
                           <div>
-                            <p className="text-sm text-gray-500">Booking ID</p>
+                            <p className="text-sm text-gray-500">Mã đặt chuyến</p>
                             <p className="text-base font-medium text-gray-900">{selectedTransaction.bookingId}</p>
                           </div>
                         )}
                         {selectedTransaction.pspRef && (
                           <div>
-                            <p className="text-sm text-gray-500">PSP Reference</p>
+                            <p className="text-sm text-gray-500">Mã tham chiếu PSP</p>
                             <p className="text-xs font-mono text-gray-900 break-all">{selectedTransaction.pspRef}</p>
                           </div>
                         )}
@@ -584,17 +632,17 @@ export default function PaymentManagement() {
                     <div className="bg-gray-50 rounded-lg p-4 mb-4">
                       <h4 className="text-lg font-semibold text-gray-900 mb-3 flex items-center">
                         <UsersIcon className="h-5 w-5 mr-2 text-green-500" />
-                        User Information
+                        Thông tin người dùng
                       </h4>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                          <p className="text-sm text-gray-500">Actor User</p>
+                          <p className="text-sm text-gray-500">Người thực hiện</p>
                           <div className="flex items-center mt-1">
                             {(() => {
                               const userProfile = userProfiles[selectedTransaction.actorUserId];
                               const avatarUrl = userProfile?.profilePhotoUrl;
-                              const displayName = userProfile?.fullName || selectedTransaction.actorUsername || `User ${selectedTransaction.actorUserId}`;
-                              const initials = userProfile ? userProfileService.getAvatarInitials(userProfile.fullName) : (selectedTransaction.actorUsername?.split(' ').map(n => n[0]).join('') || 'U');
+                              const displayName = userProfile?.fullName || selectedTransaction.actorUsername || `Người dùng ${selectedTransaction.actorUserId}`;
+                              const initials = userProfile ? userProfileService.getAvatarInitials(userProfile.fullName) : (selectedTransaction.actorUsername?.split(' ').map(n => n[0]).join('') || 'ND');
 
                               return (
                                 <>
@@ -621,7 +669,7 @@ export default function PaymentManagement() {
                                   </div>
                                   <div className="ml-3">
                                     <p className="text-base font-medium text-gray-900">{displayName}</p>
-                                    <p className="text-sm text-gray-500">ID: {selectedTransaction.actorUserId}</p>
+                                    <p className="text-sm text-gray-500">Mã người dùng: {selectedTransaction.actorUserId}</p>
                                   </div>
                                 </>
                               );
@@ -631,13 +679,13 @@ export default function PaymentManagement() {
 
                         {selectedTransaction.riderUserId && (
                           <div>
-                            <p className="text-sm text-gray-500">Rider</p>
+                            <p className="text-sm text-gray-500">Hành khách</p>
                             <div className="flex items-center mt-1">
                               {(() => {
                                 const userProfile = userProfiles[selectedTransaction.riderUserId!];
                                 const avatarUrl = userProfile?.profilePhotoUrl;
-                                const displayName = userProfile?.fullName || selectedTransaction.riderUsername || `User ${selectedTransaction.riderUserId}`;
-                                const initials = userProfile ? userProfileService.getAvatarInitials(userProfile.fullName) : (selectedTransaction.riderUsername?.split(' ').map(n => n[0]).join('') || 'U');
+                                const displayName = userProfile?.fullName || selectedTransaction.riderUsername || `Người dùng ${selectedTransaction.riderUserId}`;
+                                const initials = userProfile ? userProfileService.getAvatarInitials(userProfile.fullName) : (selectedTransaction.riderUsername?.split(' ').map(n => n[0]).join('') || 'ND');
 
                                 return (
                                   <>
@@ -664,7 +712,7 @@ export default function PaymentManagement() {
                                     </div>
                                     <div className="ml-3">
                                       <p className="text-base font-medium text-gray-900">{displayName}</p>
-                                      <p className="text-sm text-gray-500">ID: {selectedTransaction.riderUserId}</p>
+                                      <p className="text-sm text-gray-500">Mã người dùng: {selectedTransaction.riderUserId}</p>
                                     </div>
                                   </>
                                 );
@@ -675,13 +723,13 @@ export default function PaymentManagement() {
 
                         {selectedTransaction.driverUserId && (
                           <div>
-                            <p className="text-sm text-gray-500">Driver</p>
+                            <p className="text-sm text-gray-500">Tài xế</p>
                             <div className="flex items-center mt-1">
                               {(() => {
                                 const userProfile = userProfiles[selectedTransaction.driverUserId!];
                                 const avatarUrl = userProfile?.profilePhotoUrl;
-                                const displayName = userProfile?.fullName || selectedTransaction.driverUsername || `User ${selectedTransaction.driverUserId}`;
-                                const initials = userProfile ? userProfileService.getAvatarInitials(userProfile.fullName) : (selectedTransaction.driverUsername?.split(' ').map(n => n[0]).join('') || 'U');
+                                const displayName = userProfile?.fullName || selectedTransaction.driverUsername || `Người dùng ${selectedTransaction.driverUserId}`;
+                                const initials = userProfile ? userProfileService.getAvatarInitials(userProfile.fullName) : (selectedTransaction.driverUsername?.split(' ').map(n => n[0]).join('') || 'ND');
 
                                 return (
                                   <>
@@ -708,7 +756,7 @@ export default function PaymentManagement() {
                                     </div>
                                     <div className="ml-3">
                                       <p className="text-base font-medium text-gray-900">{displayName}</p>
-                                      <p className="text-sm text-gray-500">ID: {selectedTransaction.driverUserId}</p>
+                                      <p className="text-sm text-gray-500">Mã người dùng: {selectedTransaction.driverUserId}</p>
                                     </div>
                                   </>
                                 );
@@ -723,30 +771,30 @@ export default function PaymentManagement() {
                     <div className="bg-gray-50 rounded-lg p-4 mb-4">
                       <h4 className="text-lg font-semibold text-gray-900 mb-3 flex items-center">
                         <BanknotesIcon className="h-5 w-5 mr-2 text-amber-600" />
-                        Balances
+                        Biến động số dư
                       </h4>
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                         {selectedTransaction.beforeAvail !== null && typeof selectedTransaction.beforeAvail !== 'undefined' && (
                           <div>
-                            <p className="text-sm text-gray-500">Before Available</p>
+                            <p className="text-sm text-gray-500">Số dư khả dụng trước</p>
                             <p className="text-base font-medium text-gray-900">{transactionService.formatAmount(selectedTransaction.beforeAvail!, selectedTransaction.currency)}</p>
                           </div>
                         )}
                         {selectedTransaction.afterAvail !== null && typeof selectedTransaction.afterAvail !== 'undefined' && (
                           <div>
-                            <p className="text-sm text-gray-500">After Available</p>
+                            <p className="text-sm text-gray-500">Số dư khả dụng sau</p>
                             <p className="text-base font-medium text-gray-900">{transactionService.formatAmount(selectedTransaction.afterAvail!, selectedTransaction.currency)}</p>
                           </div>
                         )}
                         {selectedTransaction.beforePending !== null && typeof selectedTransaction.beforePending !== 'undefined' && (
                 <div>
-                            <p className="text-sm text-gray-500">Before Pending</p>
+                            <p className="text-sm text-gray-500">Số dư treo trước</p>
                             <p className="text-base font-medium text-gray-900">{transactionService.formatAmount(selectedTransaction.beforePending!, selectedTransaction.currency)}</p>
                 </div>
                         )}
                         {selectedTransaction.afterPending !== null && typeof selectedTransaction.afterPending !== 'undefined' && (
                           <div>
-                            <p className="text-sm text-gray-500">After Pending</p>
+                            <p className="text-sm text-gray-500">Số dư treo sau</p>
                             <p className="text-base font-medium text-gray-900">{transactionService.formatAmount(selectedTransaction.afterPending!, selectedTransaction.currency)}</p>
               </div>
                         )}
@@ -757,26 +805,26 @@ export default function PaymentManagement() {
                     <div className="bg-gray-50 rounded-lg p-4 mb-4">
                       <h4 className="text-lg font-semibold text-gray-900 mb-3 flex items-center">
                         <ClockIcon className="h-5 w-5 mr-2 text-purple-500" />
-                        Timestamps
+                        Thời gian
                       </h4>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                          <p className="text-sm text-gray-500">Created At</p>
+                          <p className="text-sm text-gray-500">Tạo lúc</p>
                           <p className="text-base font-medium text-gray-900">
-                            {new Date(selectedTransaction.createdAt).toLocaleString()}
+                            {new Date(selectedTransaction.createdAt).toLocaleString('vi-VN')}
                           </p>
                         </div>
                         {selectedTransaction.updatedAt && (
                 <div>
-                            <p className="text-sm text-gray-500">Updated At</p>
+                            <p className="text-sm text-gray-500">Cập nhật lúc</p>
                             <p className="text-base font-medium text-gray-900">
-                              {new Date(selectedTransaction.updatedAt).toLocaleString()}
+                              {new Date(selectedTransaction.updatedAt).toLocaleString('vi-VN')}
                             </p>
                           </div>
                         )}
                         {(selectedTransaction.note || selectedTransaction.description) && (
                           <div className="md:col-span-2">
-                            <p className="text-sm text-gray-500">Note</p>
+                            <p className="text-sm text-gray-500">Ghi chú</p>
                             <p className="text-base font-medium text-gray-900">{selectedTransaction.note || selectedTransaction.description}</p>
                           </div>
                         )}
@@ -792,7 +840,7 @@ export default function PaymentManagement() {
                   className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm"
                   onClick={handleCloseDetailsModal}
                 >
-                  Close
+                  Đóng
                 </button>
               </div>
             </div>

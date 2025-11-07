@@ -1,0 +1,81 @@
+0 verbose cli /opt/homebrew/Cellar/node/24.3.0/bin/node /opt/homebrew/bin/npm
+1 info using npm@11.4.2
+2 info using node@v24.3.0
+3 silly config load:file:/opt/homebrew/lib/node_modules/npm/npmrc
+4 silly config load:file:/Users/techmax/Documents/GitHub/MotorbikeSystemTotalProjects/MotorbikeSharingSystem_FE/.npmrc
+5 silly config load:file:/Users/techmax/.npmrc
+6 silly config load:file:/opt/homebrew/etc/npmrc
+7 verbose title npm install i18next react-i18next i18next-browser-languagedetector
+8 verbose argv "install" "i18next" "react-i18next" "i18next-browser-languagedetector" "--cache" "./.npm-cache"
+9 verbose logfile logs-max:10 dir:/Users/techmax/Documents/GitHub/MotorbikeSystemTotalProjects/MotorbikeSharingSystem_FE/.npm-cache/_logs/2025-10-31T13_06_27_368Z-
+10 verbose logfile /Users/techmax/Documents/GitHub/MotorbikeSystemTotalProjects/MotorbikeSharingSystem_FE/.npm-cache/_logs/2025-10-31T13_06_27_368Z-debug-0.log
+11 silly logfile done cleaning log files
+12 silly packumentCache heap:4496293888 maxSize:1124073472 maxEntrySize:562036736
+13 silly idealTree buildDeps
+14 silly fetch manifest i18next@*
+15 silly packumentCache full:https://registry.npmjs.org/i18next cache-miss
+16 http fetch GET 200 https://registry.npmjs.org/npm 771ms
+17 http fetch GET 200 https://registry.npmjs.org/i18next 473ms (cache miss)
+18 silly packumentCache full:https://registry.npmjs.org/i18next set size:undefined disposed:false
+19 silly fetch manifest typescript@^4.9.5
+20 silly packumentCache full:https://registry.npmjs.org/typescript cache-miss
+21 http fetch GET 200 https://registry.npmjs.org/typescript 333ms (cache miss)
+22 silly packumentCache full:https://registry.npmjs.org/typescript set size:undefined disposed:false
+23 silly fetch manifest typescript@^5
+24 silly packumentCache full:https://registry.npmjs.org/typescript cache-miss
+25 http cache https://registry.npmjs.org/typescript 17ms (cache hit)
+26 silly packumentCache full:https://registry.npmjs.org/typescript set size:14843883 disposed:false
+27 silly fetch manifest react-i18next@*
+28 silly packumentCache full:https://registry.npmjs.org/react-i18next cache-miss
+29 http fetch GET 200 https://registry.npmjs.org/react-i18next 125ms (cache miss)
+30 silly packumentCache full:https://registry.npmjs.org/react-i18next set size:undefined disposed:false
+31 silly fetch manifest react@^19.1.1
+32 silly packumentCache full:https://registry.npmjs.org/react cache-miss
+33 http fetch GET 200 https://registry.npmjs.org/react 209ms (cache miss)
+34 silly packumentCache full:https://registry.npmjs.org/react set size:undefined disposed:false
+35 verbose stack Error: unable to resolve dependency tree
+35 verbose stack     at #failPeerConflict (/opt/homebrew/lib/node_modules/npm/node_modules/@npmcli/arborist/lib/arborist/build-ideal-tree.js:1374:25)
+35 verbose stack     at #loadPeerSet (/opt/homebrew/lib/node_modules/npm/node_modules/@npmcli/arborist/lib/arborist/build-ideal-tree.js:1367:29)
+35 verbose stack     at async #buildDepStep (/opt/homebrew/lib/node_modules/npm/node_modules/@npmcli/arborist/lib/arborist/build-ideal-tree.js:915:11)
+35 verbose stack     at async Arborist.buildIdealTree (/opt/homebrew/lib/node_modules/npm/node_modules/@npmcli/arborist/lib/arborist/build-ideal-tree.js:182:7)
+35 verbose stack     at async Promise.all (index 1)
+35 verbose stack     at async Arborist.reify (/opt/homebrew/lib/node_modules/npm/node_modules/@npmcli/arborist/lib/arborist/reify.js:131:5)
+35 verbose stack     at async Install.exec (/opt/homebrew/lib/node_modules/npm/lib/commands/install.js:149:5)
+35 verbose stack     at async Npm.exec (/opt/homebrew/lib/node_modules/npm/lib/npm.js:208:9)
+35 verbose stack     at async module.exports (/opt/homebrew/lib/node_modules/npm/lib/cli/entry.js:67:5)
+36 error code ERESOLVE
+37 error ERESOLVE unable to resolve dependency tree
+38 error
+39 error While resolving: frontend-web-capstone@0.1.0
+39 error Found: typescript@4.9.5
+39 error node_modules/typescript
+39 error   typescript@"^4.9.5" from the root project
+39 error
+39 error Could not resolve dependency:
+39 error peerOptional typescript@"^5" from react-i18next@16.2.3
+39 error node_modules/react-i18next
+39 error   react-i18next@"*" from the root project
+39 error
+39 error Fix the upstream dependency conflict, or retry
+39 error this command with --force or --legacy-peer-deps
+39 error to accept an incorrect (and potentially broken) dependency resolution.
+40 error
+40 error
+40 error For a full report see:
+40 error /Users/techmax/Documents/GitHub/MotorbikeSystemTotalProjects/MotorbikeSharingSystem_FE/.npm-cache/_logs/2025-10-31T13_06_27_368Z-eresolve-report.txt
+41 silly unfinished npm timer reify 1761915987496
+42 silly unfinished npm timer reify:loadTrees 1761915987497
+43 silly unfinished npm timer idealTree:buildDeps 1761915987791
+44 silly unfinished npm timer idealTree:#root 1761915987791
+45 verbose cwd /Users/techmax/Documents/GitHub/MotorbikeSystemTotalProjects/MotorbikeSharingSystem_FE
+46 verbose os Darwin 25.0.0
+47 verbose node v24.3.0
+48 verbose npm  v11.4.2
+49 notice
+49 notice New minor version of npm available! 11.4.2 -> 11.6.2
+49 notice Changelog: https://github.com/npm/cli/releases/tag/v11.6.2
+49 notice To update run: npm install -g npm@11.6.2
+49 notice  { force: true, Symbol(proc-log.meta): true }
+50 verbose exit 1
+51 verbose code 1
+52 error A complete log of this run can be found in: /Users/techmax/Documents/GitHub/MotorbikeSystemTotalProjects/MotorbikeSharingSystem_FE/.npm-cache/_logs/2025-10-31T13_06_27_368Z-debug-0.log

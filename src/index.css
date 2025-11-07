@@ -3,6 +3,14 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  .dark {
+    color-scheme: dark;
+  }
+
   body {
     margin: 0;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
@@ -10,7 +18,11 @@
       sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    @apply bg-gray-50;
+    @apply bg-gray-50 text-slate-900 transition-colors duration-300;
+  }
+
+  .dark body {
+    @apply bg-slate-950 text-slate-100;
   }
 
   code {
@@ -25,19 +37,24 @@
 
 @layer components {
   .card {
-    @apply bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow duration-200;
+    @apply bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-all duration-200
+      dark:bg-gradient-to-br dark:from-slate-900/85 dark:to-slate-950/70 dark:border-slate-800/80 dark:shadow-xl dark:shadow-black/40 dark:backdrop-blur-xl
+      dark:hover:border-slate-700 dark:hover:shadow-2xl dark:hover:shadow-black/50;
   }
 
   .btn-primary {
-    @apply bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 focus:ring-4 focus:ring-blue-200 transition-colors duration-200 font-medium;
+    @apply bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 focus:ring-4 focus:ring-blue-200 transition-colors duration-200 font-medium dark:bg-indigo-500 dark:hover:bg-indigo-400 dark:focus:ring-indigo-500/30;
   }
 
   .btn-secondary {
-    @apply bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 focus:ring-4 focus:ring-gray-200 transition-colors duration-200 font-medium;
+    @apply bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 focus:ring-4 focus:ring-gray-200 transition-colors duration-200 font-medium
+      dark:bg-slate-900/70 dark:text-slate-100 dark:hover:bg-slate-900/60 dark:border dark:border-slate-700 dark:focus:ring-indigo-500/30;
   }
 
   .input-field {
-    @apply w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-4 focus:ring-blue-200 focus:border-blue-500 transition-colors duration-200;
+    @apply w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-4 focus:ring-blue-200 focus:border-blue-500 transition-all duration-200
+      dark:bg-slate-950/60 dark:border-slate-700 dark:text-slate-100 dark:placeholder-slate-400 dark:focus:ring-indigo-500/40 dark:focus:border-indigo-400 dark:backdrop-blur-lg
+      dark:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.02)] hover:dark:border-slate-600;
   }
 }
 
@@ -58,6 +75,18 @@
 
 ::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
+}
+
+.dark ::-webkit-scrollbar-track {
+  background: #1e293b;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #475569;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
 }
 
 /* Enhanced focus styles */
@@ -116,3 +145,70 @@ img {
 }
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+@layer utilities {
+  /* Dark mode overrides for legacy gray classes */
+  .dark .text-gray-900 { @apply text-slate-100; }
+  .dark .text-gray-800 { @apply text-slate-100; }
+  .dark .text-gray-700 { @apply text-slate-200; }
+  .dark .text-gray-600 { @apply text-slate-300; }
+  .dark .text-gray-500 { @apply text-slate-400; }
+  .dark .text-gray-400 { @apply text-slate-500; }
+  .dark .text-gray-300 { @apply text-slate-500; }
+
+  .dark .bg-white { @apply bg-slate-900/85; }
+  .dark .bg-gray-50 { @apply bg-slate-950/50; }
+  .dark .bg-gray-100 { @apply bg-slate-950/45; }
+  .dark .bg-gray-200 { @apply bg-slate-950/40; }
+
+  .dark .border-gray-100 { @apply border-slate-800/70; }
+  .dark .border-gray-200 { @apply border-slate-800; }
+  .dark .border-gray-300 { @apply border-slate-700; }
+  .dark .divide-gray-100 > :not([hidden]) ~ :not([hidden]) { @apply border-slate-800/70; }
+  .dark .divide-gray-200 > :not([hidden]) ~ :not([hidden]) { @apply border-slate-800; }
+
+  .dark .hover\:bg-gray-50:hover { @apply bg-slate-800/60; }
+  .dark .hover\:bg-gray-100:hover { @apply bg-slate-800/70; }
+
+  .dark .shadow-lg { @apply shadow-black/40; }
+  .dark .shadow-xl { @apply shadow-black/40; }
+
+  /* Elevation layers for dark mode */
+  .dark .surface-1 { @apply bg-slate-950/60 backdrop-blur-xl border border-slate-800; }
+  .dark .surface-2 { @apply bg-slate-950/70 backdrop-blur-xl border border-slate-800/80; }
+  .dark .surface-3 { @apply bg-slate-950/80 backdrop-blur-xl border border-slate-700; }
+
+  /* Dark-only mesh gradient background */
+  .dark .mesh-gradient-dark {
+    background-image:
+      radial-gradient(1000px 600px at 15% 10%, rgba(59, 130, 246, 0.28), rgba(59, 130, 246, 0) 60%),
+      radial-gradient(900px 700px at 85% 12%, rgba(168, 85, 247, 0.28), rgba(168, 85, 247, 0) 58%),
+      radial-gradient(1100px 800px at 50% 110%, rgba(16, 185, 129, 0.22), rgba(16, 185, 129, 0) 62%);
+    filter: blur(64px);
+    opacity: 0.75;
+    pointer-events: none;
+  }
+
+  /* Subtle motion */
+  @keyframes meshDrift {
+    0% { transform: translate3d(0,0,0) scale(1); }
+    50% { transform: translate3d(0,-1.5%,0) scale(1.02); }
+    100% { transform: translate3d(0,0,0) scale(1); }
+  }
+  .animate-mesh {
+    animation: meshDrift 18s ease-in-out infinite;
+  }
+
+  /* Danger mesh for alert section (dark only) */
+  .dark .mesh-gradient-danger {
+    /* Pure red with bright orange core, matching reference */
+    background-image:
+      radial-gradient(1200px 800px at 50% 50%, rgba(255, 140, 0, 0.60), rgba(255, 140, 0, 0) 55%), /* orange core */
+      radial-gradient(1400px 1000px at 18% 18%, rgba(229, 0, 2, 0.95), rgba(229, 0, 2, 0) 60%),   /* pure red */
+      radial-gradient(1400px 1000px at 82% 28%, rgba(229, 0, 2, 0.90), rgba(229, 0, 2, 0) 60%),   /* pure red */
+      radial-gradient(1400px 1000px at 50% 120%, rgba(229, 0, 2, 0.92), rgba(229, 0, 2, 0) 60%);  /* pure red */
+    filter: blur(48px);
+    opacity: 0.96;
+    pointer-events: none;
+  }
+}

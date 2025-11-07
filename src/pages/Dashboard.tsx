@@ -23,6 +23,7 @@ import {
 } from 'recharts';
 import { motion } from 'framer-motion';
 import { Bike } from 'lucide-react';
+ 
 
 const revenueData = [
   { month: 'Jan', revenue: 4200, rides: 120, users: 850 },
@@ -40,9 +41,10 @@ const recentActivity = [
   {
     id: 1,
     type: 'ride_completed',
-    user: 'John Doe',
-    description: 'completed a ride to FPT University',
-    time: '2 minutes ago',
+    badgeLabel: 'Chuyến đi',
+    user: 'Nguyễn Văn An',
+    description: 'đã kết thúc chuyến tới Đại học FPT',
+    time: '2 phút trước',
     status: 'success',
     amount: '$12.50',
     avatar: 'JD',
@@ -50,27 +52,30 @@ const recentActivity = [
   {
     id: 2,
     type: 'user_verified',
-    user: 'Jane Smith',
-    description: 'was verified as a driver',
-    time: '5 minutes ago',
+    badgeLabel: 'Xác thực',
+    user: 'Trần Hoài Linh',
+    description: 'được phê duyệt làm tài xế',
+    time: '5 phút trước',
     status: 'info',
     avatar: 'JS',
   },
   {
     id: 3,
     type: 'sos_alert',
-    user: 'Mike Johnson',
-    description: 'triggered an SOS alert - Resolved',
-    time: '8 minutes ago',
+    badgeLabel: 'Cảnh báo SOS',
+    user: 'Lê Minh Tuấn',
+    description: 'gửi cảnh báo khẩn cấp - đã xử lý',
+    time: '8 phút trước',
     status: 'warning',
     avatar: 'MJ',
   },
   {
     id: 4,
     type: 'payment',
-    user: 'Sarah Wilson',
-    description: 'deposited to wallet',
-    time: '12 minutes ago',
+    badgeLabel: 'Nạp tiền',
+    user: 'Phạm Thu Hà',
+    description: 'nạp tiền vào ví',
+    time: '12 phút trước',
     status: 'success',
     amount: '$50.00',
     avatar: 'SW',
@@ -78,9 +83,10 @@ const recentActivity = [
   {
     id: 5,
     type: 'ride_shared',
-    user: 'David Chen',
-    description: 'joined a shared ride',
-    time: '15 minutes ago',
+    badgeLabel: 'Đi chung',
+    user: 'Đào Tấn Phát',
+    description: 'tham gia chuyến đi ghép',
+    time: '15 phút trước',
     status: 'info',
     amount: '$8.25',
     avatar: 'DC',
@@ -89,73 +95,73 @@ const recentActivity = [
 
 const stats = [
   {
-    name: 'Total Users',
+    name: 'Tổng số người dùng',
     value: '2,847',
     change: '+12.5%',
     changeType: 'increase' as const,
     icon: UsersIcon,
     gradient: 'from-blue-600 to-blue-700',
     bgGradient: 'from-blue-50 to-blue-100',
-    details: '147 new this week',
+    details: '147 người dùng mới trong tuần',
   },
   {
-    name: 'Active Rides',
+    name: 'Chuyến đi đang hoạt động',
     value: '156',
     change: '+8.2%',
     changeType: 'increase' as const,
     icon: Bike,
     gradient: 'from-green-600 to-emerald-700',
     bgGradient: 'from-green-50 to-emerald-100',
-    details: '23 shared rides',
+    details: '23 chuyến đi ghép',
   },
   {
-    name: 'Total Revenue',
+    name: 'Tổng doanh thu',
     value: '$48,562',
     change: '+23.1%',
     changeType: 'increase' as const,
     icon: CurrencyDollarIcon,
     gradient: 'from-purple-600 to-indigo-700',
     bgGradient: 'from-purple-50 to-indigo-100',
-    details: '$12.3k this week',
+    details: '$12.3k trong tuần',
   },
   {
-    name: 'Avg. Response Time',
-    value: '2.3 min',
+    name: 'Thời gian phản hồi TB',
+    value: '2.3 phút',
     change: '-15s',
     changeType: 'decrease' as const,
     icon: ClockIcon,
     gradient: 'from-orange-600 to-red-700',
     bgGradient: 'from-orange-50 to-red-100',
-    details: 'Emergency response',
+    details: 'Hỗ trợ khẩn cấp',
   },
 ];
 
 const rideStatusData = [
-  { name: 'Completed', value: 1245, color: '#059669', percentage: 78.5 },
-  { name: 'Ongoing', value: 156, color: '#2563EB', percentage: 9.8 },
-  { name: 'Cancelled', value: 89, color: '#DC2626', percentage: 5.6 },
-  { name: 'Shared', value: 98, color: '#7C3AED', percentage: 6.1 },
+  { name: 'Đã hoàn thành', value: 1245, color: '#059669', percentage: 78.5 },
+  { name: 'Đang thực hiện', value: 156, color: '#2563EB', percentage: 9.8 },
+  { name: 'Đã hủy', value: 89, color: '#DC2626', percentage: 5.6 },
+  { name: 'Đi chung', value: 98, color: '#7C3AED', percentage: 6.1 },
 ];
 
 const hourlyData = [
-  { hour: '6AM', rides: 12, revenue: 180 },
-  { hour: '7AM', rides: 45, revenue: 680 },
-  { hour: '8AM', rides: 89, revenue: 1340 },
-  { hour: '9AM', rides: 67, revenue: 1010 },
-  { hour: '10AM', rides: 34, revenue: 510 },
-  { hour: '11AM', rides: 28, revenue: 420 },
-  { hour: '12PM', rides: 56, revenue: 840 },
-  { hour: '1PM', rides: 43, revenue: 645 },
-  { hour: '2PM', rides: 38, revenue: 570 },
-  { hour: '3PM', rides: 52, revenue: 780 },
-  { hour: '4PM', rides: 71, revenue: 1065 },
-  { hour: '5PM', rides: 98, revenue: 1470 },
-  { hour: '6PM', rides: 85, revenue: 1275 },
-  { hour: '7PM', rides: 62, revenue: 930 },
-  { hour: '8PM', rides: 41, revenue: 615 },
-  { hour: '9PM', rides: 29, revenue: 435 },
-  { hour: '10PM', rides: 18, revenue: 270 },
-  { hour: '11PM', rides: 8, revenue: 120 },
+  { hour: '6h', rides: 12, revenue: 180 },
+  { hour: '7h', rides: 45, revenue: 680 },
+  { hour: '8h', rides: 89, revenue: 1340 },
+  { hour: '9h', rides: 67, revenue: 1010 },
+  { hour: '10h', rides: 34, revenue: 510 },
+  { hour: '11h', rides: 28, revenue: 420 },
+  { hour: '12h', rides: 56, revenue: 840 },
+  { hour: '13h', rides: 43, revenue: 645 },
+  { hour: '14h', rides: 38, revenue: 570 },
+  { hour: '15h', rides: 52, revenue: 780 },
+  { hour: '16h', rides: 71, revenue: 1065 },
+  { hour: '17h', rides: 98, revenue: 1470 },
+  { hour: '18h', rides: 85, revenue: 1275 },
+  { hour: '19h', rides: 62, revenue: 930 },
+  { hour: '20h', rides: 41, revenue: 615 },
+  { hour: '21h', rides: 29, revenue: 435 },
+  { hour: '22h', rides: 18, revenue: 270 },
+  { hour: '23h', rides: 8, revenue: 120 },
 ];
 
 // Memoized components for performance
@@ -191,7 +197,7 @@ const StatCard = memo(({ stat, index }: { stat: any; index: number }) => {
                 {stat.change}
               </span>
             </div>
-            <p className="text-xs text-gray-400">vs last period</p>
+            <p className="text-xs text-gray-400">{/* i18n at container-level */}</p>
           </div>
         </div>
       </div>
@@ -238,7 +244,7 @@ const ActivityItem = memo(({ activity, index }: { activity: any; index: number }
         <p className="text-xs text-gray-500 mt-1">{activity.time}</p>
       </div>
       <div className={`px-2 py-1 rounded-lg text-xs font-medium border ${statusColors[activity.status as keyof typeof statusColors]}`}>
-        {activity.type.replace('_', ' ').toUpperCase()}
+        {(activity.badgeLabel || activity.type).toUpperCase()}
       </div>
     </motion.div>
   );
@@ -256,12 +262,12 @@ export default function Dashboard() {
       <div className="mb-10">
         <div className="flex items-center space-x-3 mb-3">
           <SparklesIcon className="h-8 w-8 text-indigo-600" />
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
-            Dashboard Overview
+          <h1 className="text-4xl font-bold text-gray-900 dark:text-white">
+            Tổng quan hệ thống
           </h1>
         </div>
         <p className="text-lg text-gray-600 max-w-2xl">
-          Monitor your motorbike sharing system performance with real-time insights and analytics
+          Theo dõi hiệu suất nền tảng chia sẻ xe máy với các chỉ số cập nhật theo thời gian thực
         </p>
       </div>
 
@@ -283,17 +289,17 @@ export default function Dashboard() {
         >
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h3 className="text-xl font-bold text-gray-900">Revenue & Growth Trend</h3>
-              <p className="text-sm text-gray-500 mt-1">Monthly performance overview</p>
+              <h3 className="text-xl font-bold text-gray-900">Doanh thu & tăng trưởng</h3>
+              <p className="text-sm text-gray-500 mt-1">Hiệu suất theo tháng</p>
             </div>
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2">
                 <div className="w-3 h-3 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full"></div>
-                <span className="text-sm text-gray-600">Revenue</span>
+                <span className="text-sm text-gray-600">Doanh thu</span>
               </div>
               <div className="flex items-center space-x-2">
                 <div className="w-3 h-3 bg-gradient-to-r from-emerald-500 to-teal-600 rounded-full"></div>
-                <span className="text-sm text-gray-600">Users</span>
+                <span className="text-sm text-gray-600">Người dùng</span>
               </div>
             </div>
           </div>
@@ -360,8 +366,8 @@ export default function Dashboard() {
           transition={{ delay: 0.3, duration: 0.4 }}
           className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-lg transition-shadow duration-300"
         >
-          <h3 className="text-xl font-bold text-gray-900 mb-2">Ride Distribution</h3>
-          <p className="text-sm text-gray-500 mb-6">Current ride status breakdown</p>
+          <h3 className="text-xl font-bold text-gray-900 mb-2">Phân bổ trạng thái chuyến đi</h3>
+          <p className="text-sm text-gray-500 mb-6">Thống kê trạng thái hiện tại</p>
           <div className="h-48 mb-6">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
@@ -417,14 +423,14 @@ export default function Dashboard() {
         className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-8 hover:shadow-lg transition-shadow duration-300"
       >
         <div className="flex items-center justify-between mb-6">
-          <div>
-            <h3 className="text-xl font-bold text-gray-900">Hourly Performance</h3>
-            <p className="text-sm text-gray-500 mt-1">Today's ride activity by hour</p>
+            <div>
+            <h3 className="text-xl font-bold text-gray-900">Hiệu suất theo giờ</h3>
+            <p className="text-sm text-gray-500 mt-1">Số chuyến theo từng khung giờ trong ngày</p>
           </div>
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2">
               <div className="w-3 h-3 bg-gradient-to-r from-violet-500 to-purple-600 rounded-full"></div>
-              <span className="text-sm text-gray-600">Rides</span>
+              <span className="text-sm text-gray-600">Chuyến đi</span>
             </div>
           </div>
         </div>
@@ -481,12 +487,12 @@ export default function Dashboard() {
       >
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h3 className="text-xl font-bold text-gray-900">Live Activity Feed</h3>
-            <p className="text-sm text-gray-500 mt-1">Real-time system events and transactions</p>
+            <h3 className="text-xl font-bold text-gray-900">Hoạt động thời gian thực</h3>
+            <p className="text-sm text-gray-500 mt-1">Sự kiện và giao dịch mới nhất trên hệ thống</p>
           </div>
           <div className="flex items-center space-x-2">
             <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse"></div>
-            <span className="text-xs text-green-600 font-medium">LIVE</span>
+            <span className="text-xs text-green-600 font-medium">TRỰC TIẾP</span>
           </div>
         </div>
         <div className="space-y-3 max-h-96 overflow-y-auto">
@@ -496,7 +502,7 @@ export default function Dashboard() {
         </div>
         <div className="mt-4 pt-4 border-t border-gray-100">
           <button className="w-full text-sm text-indigo-600 hover:text-indigo-700 font-medium py-2 hover:bg-indigo-50 rounded-lg transition-colors duration-200">
-            View All Activity →
+            Xem tất cả hoạt động →
           </button>
         </div>
       </motion.div>

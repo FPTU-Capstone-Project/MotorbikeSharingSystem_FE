@@ -1,0 +1,18 @@
+'Log files:
+/Users/techmax/Documents/GitHub/MotorbikeSystemTotalProjects/MotorbikeSharingSystem_FE/.npm-cache/_logs/2025-10-31T13_06_27_368Z-debug-0.log
+
+# npm resolution error report
+
+While resolving: frontend-web-capstone@0.1.0
+Found: typescript@4.9.5
+node_modules/typescript
+  typescript@"^4.9.5" from the root project
+
+Could not resolve dependency:
+peerOptional typescript@"^5" from react-i18next@16.2.3
+node_modules/react-i18next
+  react-i18next@"*" from the root project
+
+Fix the upstream dependency conflict, or retry
+this command with --force or --legacy-peer-deps
+to accept an incorrect (and potentially broken) dependency resolution.

@@ -25,27 +25,27 @@ import {
 } from 'recharts';
 
 const monthlyData = [
-  { month: 'Jan', users: 120, rides: 450, revenue: 4200000, drivers: 25 },
-  { month: 'Feb', users: 180, rides: 680, revenue: 5800000, drivers: 35 },
-  { month: 'Mar', users: 250, rides: 920, revenue: 7200000, drivers: 48 },
-  { month: 'Apr', users: 320, rides: 1150, revenue: 6500000, drivers: 52 },
-  { month: 'May', users: 420, rides: 1480, revenue: 8900000, drivers: 68 },
-  { month: 'Jun', users: 580, rides: 1920, revenue: 10200000, drivers: 85 },
+  { month: 'Th1', users: 120, rides: 450, revenue: 4200000, drivers: 25 },
+  { month: 'Th2', users: 180, rides: 680, revenue: 5800000, drivers: 35 },
+  { month: 'Th3', users: 250, rides: 920, revenue: 7200000, drivers: 48 },
+  { month: 'Th4', users: 320, rides: 1150, revenue: 6500000, drivers: 52 },
+  { month: 'Th5', users: 420, rides: 1480, revenue: 8900000, drivers: 68 },
+  { month: 'Th6', users: 580, rides: 1920, revenue: 10200000, drivers: 85 },
 ];
 
 const dailyRidesData = [
-  { day: 'Mon', rides: 45, shared: 18 },
-  { day: 'Tue', rides: 52, shared: 22 },
-  { day: 'Wed', rides: 48, shared: 19 },
-  { day: 'Thu', rides: 61, shared: 28 },
-  { day: 'Fri', rides: 78, shared: 35 },
-  { day: 'Sat', rides: 85, shared: 42 },
-  { day: 'Sun', rides: 38, shared: 15 },
+  { day: 'Thứ 2', rides: 45, shared: 18 },
+  { day: 'Thứ 3', rides: 52, shared: 22 },
+  { day: 'Thứ 4', rides: 48, shared: 19 },
+  { day: 'Thứ 5', rides: 61, shared: 28 },
+  { day: 'Thứ 6', rides: 78, shared: 35 },
+  { day: 'Thứ 7', rides: 85, shared: 42 },
+  { day: 'CN', rides: 38, shared: 15 },
 ];
 
 const rideTypeData = [
-  { name: 'Solo Rides', value: 1245, color: '#3B82F6' },
-  { name: 'Shared Rides', value: 856, color: '#10B981' },
+  { name: 'Chuyến riêng', value: 1245, color: '#3B82F6' },
+  { name: 'Đi chung', value: 856, color: '#10B981' },
 ];
 
 const peakHoursData = [
@@ -69,11 +69,11 @@ const peakHoursData = [
 ];
 
 const topRoutes = [
-  { route: 'FPT University → Times City', count: 245, revenue: 8575000 },
-  { route: 'FPT University → Keangnam Tower', count: 189, revenue: 6615000 },
-  { route: 'FPT University → Lotte Center', count: 156, revenue: 5460000 },
-  { route: 'FPT University → Vincom Mega Mall', count: 134, revenue: 4690000 },
-  { route: 'FPT University → Big C Thang Long', count: 112, revenue: 3920000 },
+  { route: 'ĐH FPT → Times City', count: 245, revenue: 8575000 },
+  { route: 'ĐH FPT → Keangnam Tower', count: 189, revenue: 6615000 },
+  { route: 'ĐH FPT → Lotte Center', count: 156, revenue: 5460000 },
+  { route: 'ĐH FPT → Vincom Mega Mall', count: 134, revenue: 4690000 },
+  { route: 'ĐH FPT → Big C Thăng Long', count: 112, revenue: 3920000 },
 ];
 
 export default function Analytics() {
@@ -81,32 +81,32 @@ export default function Analytics() {
 
   const kpis = [
     {
-      title: 'Total Revenue',
+      title: 'Tổng doanh thu',
       value: '₫42.5M',
       change: '+23.5%',
       changeType: 'increase',
-      period: 'vs last month',
+      period: 'so với tháng trước',
     },
     {
-      title: 'Active Users',
+      title: 'Người dùng hoạt động',
       value: '2,847',
       change: '+12.8%',
       changeType: 'increase',
-      period: 'vs last month',
+      period: 'so với tháng trước',
     },
     {
-      title: 'Total Rides',
+      title: 'Tổng số chuyến',
       value: '8,654',
       change: '+18.2%',
       changeType: 'increase',
-      period: 'vs last month',
+      period: 'so với tháng trước',
     },
     {
-      title: 'Average Fare',
+      title: 'Giá cước trung bình',
       value: '₫28,500',
       change: '-2.1%',
       changeType: 'decrease',
-      period: 'vs last month',
+      period: 'so với tháng trước',
     },
   ];
 
@@ -115,9 +115,9 @@ export default function Analytics() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Analytics & Reports</h1>
+          <h1 className="text-3xl font-bold text-gray-900">Phân tích & Báo cáo</h1>
           <p className="mt-2 text-gray-600">
-            Comprehensive insights and performance metrics for your platform
+            Tổng quan chỉ số hoạt động và hiệu suất của nền tảng
           </p>
         </div>
         <div className="flex items-center space-x-3 mt-4 sm:mt-0">
@@ -126,18 +126,18 @@ export default function Analytics() {
             value={timeRange}
             onChange={(e) => setTimeRange(e.target.value as any)}
           >
-            <option value="7d">Last 7 days</option>
-            <option value="30d">Last 30 days</option>
-            <option value="90d">Last 90 days</option>
-            <option value="1y">Last year</option>
+            <option value="7d">7 ngày gần đây</option>
+            <option value="30d">30 ngày gần đây</option>
+            <option value="90d">90 ngày gần đây</option>
+            <option value="1y">1 năm gần đây</option>
           </select>
           <button className="btn-secondary flex items-center">
             <CalendarIcon className="h-5 w-5 mr-2" />
-            Custom Range
+            Chọn khoảng khác
           </button>
           <button className="btn-primary flex items-center">
             <ArrowDownTrayIcon className="h-5 w-5 mr-2" />
-            Export
+            Xuất báo cáo
           </button>
         </div>
       </div>
@@ -188,15 +188,15 @@ export default function Analytics() {
         className="card"
       >
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-lg font-semibold text-gray-900">Revenue & User Growth</h3>
+          <h3 className="text-lg font-semibold text-gray-900">Doanh thu & Tăng trưởng người dùng</h3>
           <div className="flex items-center space-x-4 text-sm">
             <div className="flex items-center">
               <div className="w-3 h-3 bg-primary-500 rounded-full mr-2"></div>
-              <span>Revenue</span>
+              <span>Doanh thu</span>
             </div>
             <div className="flex items-center">
               <div className="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
-              <span>Users</span>
+              <span>Người dùng</span>
             </div>
           </div>
         </div>
@@ -245,7 +245,7 @@ export default function Analytics() {
           transition={{ delay: 0.4 }}
           className="card"
         >
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Weekly Ride Distribution</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Phân bổ chuyến theo tuần</h3>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={dailyRidesData}>
@@ -253,8 +253,8 @@ export default function Analytics() {
                 <XAxis dataKey="day" stroke="#6b7280" />
                 <YAxis stroke="#6b7280" />
                 <Tooltip />
-                <Bar dataKey="rides" fill="#3B82F6" name="Total Rides" />
-                <Bar dataKey="shared" fill="#10B981" name="Shared Rides" />
+                <Bar dataKey="rides" fill="#3B82F6" name="Tổng chuyến" />
+                <Bar dataKey="shared" fill="#10B981" name="Đi chung" />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -267,7 +267,7 @@ export default function Analytics() {
           transition={{ delay: 0.5 }}
           className="card"
         >
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Ride Type Distribution</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Tỉ lệ loại chuyến</h3>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
@@ -312,7 +312,7 @@ export default function Analytics() {
         transition={{ delay: 0.6 }}
         className="card"
       >
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Peak Hours Analysis</h3>
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Phân tích khung giờ cao điểm</h3>
         <div className="h-64">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={peakHoursData}>
@@ -320,8 +320,8 @@ export default function Analytics() {
               <XAxis dataKey="hour" stroke="#6b7280" />
               <YAxis stroke="#6b7280" />
               <Tooltip
-                labelFormatter={(value) => `${value}:00`}
-                formatter={(value: any) => [`${value} rides`, 'Rides']}
+                labelFormatter={(value) => `${value}h`}
+                formatter={(value: any) => [`${value} chuyến`, 'Số chuyến']}
               />
               <Area
                 type="monotone"
@@ -343,24 +343,24 @@ export default function Analytics() {
         className="card"
       >
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-lg font-semibold text-gray-900">Top Routes</h3>
-          <button className="btn-secondary text-sm">View All Routes</button>
+          <h3 className="text-lg font-semibold text-gray-900">Tuyến đường nổi bật</h3>
+          <button className="btn-secondary text-sm">Xem tất cả tuyến</button>
         </div>
         <div className="overflow-x-auto">
           <table className="min-w-full">
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Route
+                  Tuyến đường
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Total Rides
+                  Tổng chuyến
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Revenue
+                  Doanh thu
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Avg. per Ride
+                  Cước bình quân
                 </th>
               </tr>
             </thead>

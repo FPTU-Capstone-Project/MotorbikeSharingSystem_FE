@@ -18,6 +18,7 @@ import { approveDriverVehicle, rejectDriver } from '../services/verificationServ
 import { vehicleService } from '../services/vehicleService';
 import Pagination from '../components/Pagination';
 import toast from 'react-hot-toast';
+import StatSummaryCard from '../components/StatSummaryCard';
 
 export default function VehicleManagement() {
   const [verifications, setVerifications] = useState<VehicleVerification[]>([]);
@@ -92,7 +93,7 @@ export default function VehicleManagement() {
         setTotalRecords((p.total_records ?? rows.length) as number);
       } catch (e: any) {
         console.error(e);
-        toast.error(e?.message || 'Failed to load vehicles');
+        toast.error(e?.message || 'Không tải được danh sách xe');
       } finally {
         if (!ignore) setLoading(false);
       }
@@ -127,34 +128,68 @@ export default function VehicleManagement() {
   const pendingCount = verifications.filter(v => v.status === 'pending').length;
   const approvedCount = verifications.filter(v => v.status === 'approved').length;
   const rejectedCount = verifications.filter(v => v.status === 'rejected').length;
+  const stats = [
+    {
+      label: 'Tổng số xe',
+      value: verifications.length,
+      icon: MotorbikeIcon,
+      gradient: 'from-blue-600 to-indigo-600',
+      backgroundGradient: 'from-blue-50 to-blue-100',
+      detail: `${totalRecords} bản ghi đã tải`,
+    },
+    {
+      label: 'Đang chờ',
+      value: pendingCount,
+      icon: ClockIcon,
+      gradient: 'from-amber-500 to-orange-500',
+      backgroundGradient: 'from-amber-50 to-orange-100',
+      detail: 'Chờ quản trị viên duyệt',
+    },
+    {
+      label: 'Đã duyệt',
+      value: approvedCount,
+      icon: CheckCircleIcon,
+      gradient: 'from-emerald-600 to-teal-600',
+      backgroundGradient: 'from-emerald-50 to-teal-100',
+      detail: 'Sẵn sàng phân công',
+    },
+    {
+      label: 'Bị từ chối',
+      value: rejectedCount,
+      icon: XCircleIcon,
+      gradient: 'from-rose-600 to-red-600',
+      backgroundGradient: 'from-rose-50 to-red-100',
+      detail: 'Cần cập nhật từ tài xế',
+    },
+  ];
 
   const handleApprove = async (verification: VehicleVerification) => {
     try {
       await approveDriverVehicle(Number(verification.driverId), 'Approved vehicle registration');
-      toast.success(`Approved vehicle for ${verification.driverName}`);
+      toast.success(`Đã phê duyệt xe cho ${verification.driverName}`);
       setShowDetailModal(false);
       setPage(0);
     } catch (e: any) {
-      toast.error(e?.message || 'Approve failed');
+      toast.error(e?.message || 'Không thể phê duyệt');
     }
   };
 
   const handleReject = async () => {
     if (!verificationToReject) return;
     if (!rejectionReason.trim()) {
-      toast.error('Please enter rejection reason');
+      toast.error('Vui lòng nhập lý do từ chối');
       return;
     }
     try {
       await rejectDriver(Number(verificationToReject.driverId), rejectionReason, 'Rejected by admin');
-      toast.success(`Rejected vehicle for ${verificationToReject.driverName}`);
+      toast.success(`Đã từ chối xe của ${verificationToReject.driverName}`);
       setShowRejectModal(false);
       setShowDetailModal(false);
       setRejectionReason('');
       setVerificationToReject(null);
       setPage(0);
     } catch (e: any) {
-      toast.error(e?.message || 'Reject failed');
+      toast.error(e?.message || 'Không thể từ chối');
     }
   };
 
@@ -175,11 +210,11 @@ export default function VehicleManagement() {
         color: form.color,
         vehicleType: form.vehicleType,
       });
-      toast.success('Vehicle created');
+      toast.success('Tạo xe thành công');
       setShowCreateModal(false);
       setPage(0);
     } catch (e: any) {
-      toast.error(e?.message || 'Create vehicle failed');
+      toast.error(e?.message || 'Không thể tạo xe');
     } finally {
       setSaving(false);
     }
@@ -211,12 +246,12 @@ export default function VehicleManagement() {
         color: form.color,
         vehicleType: form.vehicleType,
       });
-      toast.success('Vehicle updated');
+      toast.success('Cập nhật xe thành công');
       setShowEditModal(false);
       setSelectedForEdit(null);
       setPage(0);
     } catch (e: any) {
-      toast.error(e?.message || 'Update vehicle failed');
+      toast.error(e?.message || 'Không thể cập nhật xe');
     } finally {
       setSaving(false);
     }
@@ -233,12 +268,12 @@ export default function VehicleManagement() {
       setSaving(true);
       const id = Number(selectedForDelete.vehicleId || selectedForDelete.id);
       await vehicleService.deleteVehicle(id);
-      toast.success('Vehicle deleted');
+      toast.success('Xóa xe thành công');
       setShowDeleteModal(false);
       setSelectedForDelete(null);
       setPage(0);
     } catch (e: any) {
-      toast.error(e?.message || 'Delete vehicle failed');
+      toast.error(e?.message || 'Không thể xóa xe');
     } finally {
       setSaving(false);
     }
@@ -265,9 +300,9 @@ export default function VehicleManagement() {
         className="flex flex-col sm:flex-row sm:items-center sm:justify-between"
       >
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Vehicle Management</h1>
+          <h1 className="text-3xl font-bold text-gray-900">Quản lý xe</h1>
           <p className="mt-2 text-gray-600">
-            Manage vehicles, registrations, insurance certificates, and vehicle photos
+            Quản lý phương tiện, giấy tờ đăng ký, bảo hiểm và hình ảnh liên quan
           </p>
         </div>
         <div className="mt-4 sm:mt-0">
@@ -276,80 +311,30 @@ export default function VehicleManagement() {
             onClick={openCreate}
           >
             <Plus className="h-4 w-4" />
-            Create Vehicle
+            Thêm xe
           </button>
         </div>
       </motion.div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="card hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
-        >
-          <div className="flex items-center">
-            <div className="p-3 rounded-lg bg-gradient-to-r from-blue-500 to-blue-600 shadow-lg">
-              <MotorbikeIcon className="h-6 w-6 text-white" />
-            </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">Total Vehicles</p>
-              <p className="text-2xl font-bold text-gray-900">{verifications.length}</p>
-            </div>
-          </div>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="card hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
-        >
-          <div className="flex items-center">
-            <div className="p-3 rounded-lg bg-gradient-to-r from-yellow-500 to-orange-500 shadow-lg">
-              <ClockIcon className="h-6 w-6 text-white" />
-            </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">Pending</p>
-              <p className="text-2xl font-bold text-gray-900">{pendingCount}</p>
-            </div>
-          </div>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="card hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
-        >
-          <div className="flex items-center">
-            <div className="p-3 rounded-lg bg-gradient-to-r from-green-500 to-emerald-600 shadow-lg">
-              <CheckCircleIcon className="h-6 w-6 text-white" />
-            </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">Approved</p>
-              <p className="text-2xl font-bold text-gray-900">{approvedCount}</p>
-            </div>
-          </div>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-          className="card hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
-        >
-          <div className="flex items-center">
-            <div className="p-3 rounded-lg bg-gradient-to-r from-red-500 to-pink-600 shadow-lg">
-              <XCircleIcon className="h-6 w-6 text-white" />
-            </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">Rejected</p>
-              <p className="text-2xl font-bold text-gray-900">{rejectedCount}</p>
-            </div>
-          </div>
-        </motion.div>
+        {stats.map((stat, index) => (
+          <motion.div
+            key={stat.label}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.05 * index }}
+          >
+            <StatSummaryCard
+              label={stat.label}
+              value={stat.value}
+              icon={stat.icon}
+              gradient={stat.gradient}
+              backgroundGradient={stat.backgroundGradient}
+              detail={stat.detail}
+            />
+          </motion.div>
+        ))}
       </div>
 
       {/* Filters */}
@@ -359,31 +344,31 @@ export default function VehicleManagement() {
             <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
             <input
               type="text"
-              placeholder="Search by driver name, email, plate number, model..."
+              placeholder="Tìm theo tên tài xế, email, biển số, dòng xe..."
               className="input-field pl-10 w-full"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
           <div className="flex items-center gap-2 w-full sm:w-auto">
-            <span className="text-sm text-gray-600">Sort:</span>
+            <span className="text-sm text-gray-600">Sắp xếp:</span>
             <select
               className="input-field w-44 sm:w-56"
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as any)}
             >
-              <option value="submittedAt">Submitted</option>
-              <option value="driverId">Driver ID</option>
-              <option value="plateNumber">Plate</option>
-              <option value="status">Status (ACTIVE/MAINTENANCE)</option>
+              <option value="submittedAt">Ngày gửi</option>
+              <option value="driverId">ID tài xế</option>
+              <option value="plateNumber">Biển số</option>
+              <option value="status">Trạng thái (ACTIVE/MAINTENANCE)</option>
             </select>
             <select
               className="input-field w-28 sm:w-32"
               value={sortDir}
               onChange={(e) => setSortDir(e.target.value as any)}
             >
-              <option value="asc">Asc</option>
-              <option value="desc">Desc</option>
+              <option value="asc">Tăng dần</option>
+              <option value="desc">Giảm dần</option>
             </select>
           </div>
         </div>
@@ -396,28 +381,28 @@ export default function VehicleManagement() {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Driver ID
+                  ID tài xế
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Driver Name
+                  Tên tài xế
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Model
+                  Dòng xe
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Plate Number
+                  Biển số
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Insurance Expiry
+                  Hạn bảo hiểm
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
+                  Trạng thái
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Submitted
+                  Ngày gửi
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
+                  Thao tác
                 </th>
               </tr>
             </thead>
@@ -449,13 +434,13 @@ export default function VehicleManagement() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-900">
-                      {new Date(verification.insuranceExpiry).toLocaleDateString('en-US')}
+                      {new Date(verification.insuranceExpiry).toLocaleDateString('vi-VN')}
                     </div>
                     <div className={`text-xs ${new Date(verification.insuranceExpiry) < new Date()
                         ? 'text-red-600 font-semibold'
                         : 'text-green-600'
                       }`}>
-                      {new Date(verification.insuranceExpiry) < new Date() ? 'Expired' : 'Valid'}
+                      {new Date(verification.insuranceExpiry) < new Date() ? 'Hết hạn' : 'Còn hiệu lực'}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -468,7 +453,14 @@ export default function VehicleManagement() {
                           : s === 'INACTIVE'
                             ? 'bg-gray-100 text-gray-700'
                             : 'bg-yellow-100 text-yellow-800';
-                      const label = s || 'PENDING';
+                      const label =
+                        s === 'ACTIVE'
+                          ? 'Hoạt động'
+                          : s === 'MAINTENANCE'
+                            ? 'Bảo trì'
+                            : s === 'INACTIVE'
+                              ? 'Không hoạt động'
+                              : 'Đang chờ';
                       return (
                         <span className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${pill}`}>
                           {label}
@@ -477,19 +469,19 @@ export default function VehicleManagement() {
                     })()}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {new Date(verification.submittedAt).toLocaleDateString('en-US')}
+                    {new Date(verification.submittedAt).toLocaleDateString('vi-VN')}
                     <div className="text-xs text-gray-400">
-                      {new Date(verification.submittedAt).toLocaleTimeString('en-US')}
+                      {new Date(verification.submittedAt).toLocaleTimeString('vi-VN')}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div className="flex items-center space-x-2">
-                      <button onClick={() => openDetailModal(verification)} className="text-blue-600 hover:text-blue-900 p-1 rounded flex items-center">
+                      <button onClick={() => openDetailModal(verification)} className="text-blue-600 hover:text-blue-900 p-1 rounded flex items-center" title="Xem chi tiết">
                         <EyeIcon className="h-4 w-4" />
                       </button>
-                      <button onClick={() => openEdit(verification)} className="text-green-600 hover:text-green-900 p-1 rounded flex items-center">
+                      <button onClick={() => openEdit(verification)} className="text-green-600 hover:text-green-900 p-1 rounded flex items-center" title="Chỉnh sửa">
                         <ArrowDownOnSquareStackIcon className="h-4 w-4" />
-                      </button><button onClick={() => openDelete(verification)} className="text-red-600 hover:text-red-900 p-1 rounded flex items-center">
+                      </button><button onClick={() => openDelete(verification)} className="text-red-600 hover:text-red-900 p-1 rounded flex items-center" title="Xóa">
                         <XCircleIcon className="h-4 w-4" />
                       </button>
                     </div>
@@ -534,7 +526,7 @@ export default function VehicleManagement() {
                   <div className="w-full">
                     <div className="flex items-center justify-between mb-4">
                       <h3 className="text-2xl font-bold text-gray-900">
-                        Vehicle Details
+                        Chi tiết xe
                       </h3>
                       <button
                         onClick={() => setShowDetailModal(false)}
@@ -548,11 +540,11 @@ export default function VehicleManagement() {
                     <div className="bg-gray-50 rounded-lg p-4 mb-4">
                       <h4 className="text-lg font-semibold text-gray-900 mb-3 flex items-center">
                         <UserIcon className="h-5 w-5 mr-2 text-purple-500" />
-                        Driver Information
+                        Thông tin tài xế
                       </h4>
                       <div className="grid grid-cols-2 gap-4">
                         <div>
-                          <p className="text-sm text-gray-500">Full Name</p>
+                          <p className="text-sm text-gray-500">Họ và tên</p>
                           <p className="text-base font-medium text-gray-900">{selectedVerification.driverName}</p>
                         </div>
                         <div>
@@ -560,19 +552,19 @@ export default function VehicleManagement() {
                           <p className="text-base font-medium text-gray-900">{selectedVerification.driverEmail}</p>
                         </div>
                         <div>
-                          <p className="text-sm text-gray-500">Phone Number</p>
+                          <p className="text-sm text-gray-500">Số điện thoại</p>
                           <p className="text-base font-medium text-gray-900">{selectedVerification.driverPhone}</p>
                         </div>
                         <div>
-                          <p className="text-sm text-gray-500">Status</p>
+                          <p className="text-sm text-gray-500">Trạng thái</p>
                           <span className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${selectedVerification.userStatus === 'active'
                               ? 'bg-green-100 text-green-800'
                               : selectedVerification.userStatus === 'inactive'
                                 ? 'bg-red-100 text-red-800'
                                 : 'bg-yellow-100 text-yellow-800'
                             }`}>
-                            {selectedVerification.userStatus === 'active' && 'Active'}
-                            {selectedVerification.userStatus === 'inactive' && 'Inactive'}
+                            {selectedVerification.userStatus === 'active' && 'Hoạt động'}
+                            {selectedVerification.userStatus === 'inactive' && 'Không hoạt động'}
                           </span>
                         </div>
                       </div>
@@ -582,41 +574,41 @@ export default function VehicleManagement() {
                     <div className="bg-blue-50 rounded-lg p-4 mb-4">
                       <h4 className="text-lg font-semibold text-gray-900 mb-3 flex items-center">
                         <Bike className="h-5 w-5 mr-2 text-blue-500" />
-                        Vehicle Information
+                        Thông tin phương tiện
                       </h4>
                       <div className="grid grid-cols-2 gap-4">
                         <div>
-                          <p className="text-sm text-gray-500">Plate Number</p>
+                          <p className="text-sm text-gray-500">Biển số</p>
                           <p className="text-base font-bold text-gray-900 bg-yellow-100 px-3 py-1 rounded-md inline-block">
                             {selectedVerification.plateNumber}
                           </p>
                         </div>
                         <div>
-                          <p className="text-sm text-gray-500">Model</p>
+                          <p className="text-sm text-gray-500">Dòng xe</p>
                           <p className="text-base font-medium text-gray-900">{selectedVerification.model}</p>
                         </div>
                         <div>
-                          <p className="text-sm text-gray-500">Color</p>
+                          <p className="text-sm text-gray-500">Màu sắc</p>
                           <p className="text-base font-medium text-gray-900">{selectedVerification.color}</p>
                         </div>
                         <div>
-                          <p className="text-sm text-gray-500">Year</p>
+                          <p className="text-sm text-gray-500">Năm</p>
                           <p className="text-base font-medium text-gray-900">{selectedVerification.year}</p>
                         </div>
                         <div>
-                          <p className="text-sm text-gray-500">Insurance Expiry</p>
+                          <p className="text-sm text-gray-500">Hạn bảo hiểm</p>
                           <p className={`text-base font-medium ${new Date(selectedVerification.insuranceExpiry) < new Date()
                               ? 'text-red-600'
                               : 'text-green-600'
                             }`}>
-                            {new Date(selectedVerification.insuranceExpiry).toLocaleDateString('en-US')}
-                            {new Date(selectedVerification.insuranceExpiry) < new Date() && ' (Expired)'}
+                            {new Date(selectedVerification.insuranceExpiry).toLocaleDateString('vi-VN')}
+                            {new Date(selectedVerification.insuranceExpiry) < new Date() && ' (Hết hạn)'}
                           </p>
                         </div>
                         <div>
-                          <p className="text-sm text-gray-500">Submitted At</p>
+                          <p className="text-sm text-gray-500">Thời điểm gửi</p>
                           <p className="text-base font-medium text-gray-900">
-                            {new Date(selectedVerification.submittedAt).toLocaleString('en-US')}
+                            {new Date(selectedVerification.submittedAt).toLocaleString('vi-VN')}
                           </p>
                         </div>
                       </div>
@@ -625,19 +617,19 @@ export default function VehicleManagement() {
                         <div className="mt-4 pt-4 border-t border-blue-200">
                           <div className="grid grid-cols-2 gap-4">
                             <div>
-                              <p className="text-sm text-gray-500">Reviewed By</p>
+                              <p className="text-sm text-gray-500">Người duyệt</p>
                               <p className="text-base font-medium text-gray-900">{selectedVerification.verifiedBy}</p>
                             </div>
                             <div>
-                              <p className="text-sm text-gray-500">Reviewed At</p>
+                              <p className="text-sm text-gray-500">Thời điểm duyệt</p>
                               <p className="text-base font-medium text-gray-900">
-                                {selectedVerification.verifiedAt && new Date(selectedVerification.verifiedAt).toLocaleString('en-US')}
+                                {selectedVerification.verifiedAt && new Date(selectedVerification.verifiedAt).toLocaleString('vi-VN')}
                               </p>
                             </div>
                           </div>
                           {selectedVerification.rejectionReason && (
                             <div className="mt-4">
-                              <p className="text-sm text-gray-500">Rejection Reason</p>
+                              <p className="text-sm text-gray-500">Lý do từ chối</p>
                               <p className="text-base font-medium text-red-600">{selectedVerification.rejectionReason}</p>
                             </div>
                           )}
@@ -649,7 +641,7 @@ export default function VehicleManagement() {
                     <div className="space-y-4">
                       <h4 className="text-lg font-semibold text-gray-900 mb-3 flex items-center">
                         <DocumentTextIcon className="h-5 w-5 mr-2 text-green-500" />
-                        Vehicle Documents
+                        Tài liệu phương tiện
                       </h4>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -658,12 +650,12 @@ export default function VehicleManagement() {
                           <div>
                             <h5 className="text-sm font-semibold text-gray-700 mb-2 flex items-center">
                               <ShieldCheckIcon className="h-4 w-4 mr-1 text-green-500" />
-                              Vehicle Registration
+                              Giấy đăng ký xe
                             </h5>
                             <div className="border-2 border-gray-200 rounded-lg overflow-hidden">
                               <img
                                 src={selectedVerification.documents.registrationUrl}
-                                alt="Vehicle Registration"
+                                alt="Giấy đăng ký xe"
                                 className="w-full h-auto object-contain max-h-64"
                               />
                             </div>
@@ -675,12 +667,12 @@ export default function VehicleManagement() {
                           <div>
                             <h5 className="text-sm font-semibold text-gray-700 mb-2 flex items-center">
                               <ShieldCheckIcon className="h-4 w-4 mr-1 text-blue-500" />
-                              Insurance Certificate
+                              Giấy chứng nhận bảo hiểm
                             </h5>
                             <div className="border-2 border-gray-200 rounded-lg overflow-hidden">
                               <img
                                 src={selectedVerification.documents.insuranceUrl}
-                                alt="Insurance Certificate"
+                                alt="Giấy chứng nhận bảo hiểm"
                                 className="w-full h-auto object-contain max-h-64"
                               />
                             </div>
@@ -692,12 +684,12 @@ export default function VehicleManagement() {
                           <div>
                             <h5 className="text-sm font-semibold text-gray-700 mb-2 flex items-center">
                               <PhotoIcon className="h-4 w-4 mr-1 text-purple-500" />
-                              Front Photo
+                              Ảnh phía trước
                             </h5>
                             <div className="border-2 border-gray-200 rounded-lg overflow-hidden">
                               <img
                                 src={selectedVerification.documents.frontPhotoUrl}
-                                alt="Front view of vehicle"
+                                alt="Ảnh phía trước của xe"
                                 className="w-full h-auto object-contain max-h-64"
                               />
                             </div>
@@ -709,12 +701,12 @@ export default function VehicleManagement() {
                           <div>
                             <h5 className="text-sm font-semibold text-gray-700 mb-2 flex items-center">
                               <PhotoIcon className="h-4 w-4 mr-1 text-purple-500" />
-                              Side Photo
+                              Ảnh bên hông
                             </h5>
                             <div className="border-2 border-gray-200 rounded-lg overflow-hidden">
                               <img
                                 src={selectedVerification.documents.sidePhotoUrl}
-                                alt="Side view of vehicle"
+                                alt="Ảnh bên hông của xe"
                                 className="w-full h-auto object-contain max-h-64"
                               />
                             </div>
@@ -726,12 +718,12 @@ export default function VehicleManagement() {
                           <div>
                             <h5 className="text-sm font-semibold text-gray-700 mb-2 flex items-center">
                               <PhotoIcon className="h-4 w-4 mr-1 text-yellow-500" />
-                              Plate Number Closeup
+                              Ảnh cận biển số
                             </h5>
                             <div className="border-2 border-gray-200 rounded-lg overflow-hidden">
                               <img
                                 src={selectedVerification.documents.platePhotoUrl}
-                                alt="Plate Number"
+                                alt="Biển số"
                                 className="w-full h-auto object-contain max-h-64"
                               />
                             </div>
@@ -750,14 +742,14 @@ export default function VehicleManagement() {
                     className="w-full sm:w-auto inline-flex justify-center items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
                   >
                     <CheckCircleIcon className="h-5 w-5 mr-2" />
-                    Approve
+                    Phê duyệt
                   </button>
                   <button
                     onClick={() => openRejectModal(selectedVerification)}
                     className="mt-3 sm:mt-0 w-full sm:w-auto inline-flex justify-center items-center px-6 py-3 border border-gray-300 text-base font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
                   >
                     <XCircleIcon className="h-5 w-5 mr-2" />
-                    Reject
+                    Từ chối
                   </button>
                 </div>
               )}
@@ -780,17 +772,17 @@ export default function VehicleManagement() {
                   </div>
                   <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
                     <h3 className="text-lg leading-6 font-medium text-gray-900">
-                      Reject Vehicle
+                      Từ chối xe
                     </h3>
                     <div className="mt-2">
                       <p className="text-sm text-gray-500 mb-4">
-                        You are rejecting the vehicle for <span className="font-semibold">{verificationToReject.driverName}</span> ({verificationToReject.plateNumber}).
-                        Please provide a reason for rejection.
+                        Bạn sắp từ chối xe của <span className="font-semibold">{verificationToReject.driverName}</span> ({verificationToReject.plateNumber}).
+                        Vui lòng nhập lý do từ chối.
                       </p>
                       <textarea
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
                         rows={4}
-                        placeholder="Enter rejection reason..."
+                        placeholder="Nhập lý do từ chối..."
                         value={rejectionReason}
                         onChange={(e) => setRejectionReason(e.target.value)}
                       />
@@ -803,7 +795,7 @@ export default function VehicleManagement() {
                   onClick={handleReject}
                   className="w-full sm:w-auto inline-flex justify-center px-4 py-2 border border-transparent text-base font-medium rounded-lg text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
                 >
-                  Confirm Rejection
+                  Xác nhận từ chối
                 </button>
                 <button
                   onClick={() => {
@@ -813,7 +805,7 @@ export default function VehicleManagement() {
                   }}
                   className="mt-3 sm:mt-0 w-full sm:w-auto inline-flex justify-center px-4 py-2 border border-gray-300 text-base font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
                 >
-                  Cancel
+                  Hủy
                 </button>
               </div>
             </div>
@@ -828,33 +820,33 @@ export default function VehicleManagement() {
             <div className="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" onClick={() => setShowCreateModal(false)} />
             <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
               <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Create Vehicle</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Tạo xe</h3>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">License Plate</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Biển số</label>
                     <input className="input-field" value={form.licensePlate} onChange={(e) => updateForm('licensePlate', e.target.value)} />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Brand</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Hãng xe</label>
                     <input className="input-field" value={form.brand} onChange={(e) => updateForm('brand', e.target.value)} />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Model</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Dòng xe</label>
                     <input className="input-field" value={form.model} onChange={(e) => updateForm('model', e.target.value)} />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Year</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Năm</label>
                     <input className="input-field" type="number" value={form.year} onChange={(e) => updateForm('year', e.target.value)} />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Color</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Màu sắc</label>
                     <input className="input-field" value={form.color} onChange={(e) => updateForm('color', e.target.value)} />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Loại xe</label>
                     <select className="input-field" value={form.vehicleType} onChange={(e) => updateForm('vehicleType', e.target.value)}>
-                      <option value="motorbike">Motorbike</option>
-                      <option value="scooter">Scooter</option>
+                      <option value="motorbike">Xe số/côn</option>
+                      <option value="scooter">Xe tay ga</option>
                     </select>
                   </div>
                 </div>
@@ -865,13 +857,13 @@ export default function VehicleManagement() {
                   onClick={submitCreate}
                   className="w-full sm:w-auto inline-flex justify-center px-4 py-2 border border-transparent text-base font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50"
                 >
-                  {saving ? 'Creating...' : 'Create'}
+                  {saving ? 'Đang tạo...' : 'Tạo mới'}
                 </button>
                 <button
                   onClick={() => setShowCreateModal(false)}
                   className="mt-3 sm:mt-0 w-full sm:w-auto inline-flex justify-center px-4 py-2 border border-gray-300 text-base font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50"
                 >
-                  Cancel
+                  Hủy
                 </button>
               </div>
             </div>
@@ -886,33 +878,33 @@ export default function VehicleManagement() {
             <div className="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" onClick={() => setShowEditModal(false)} />
           <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
               <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Edit Vehicle</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Chỉnh sửa xe</h3>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">License Plate</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Biển số</label>
                     <input className="input-field" value={form.licensePlate} onChange={(e) => updateForm('licensePlate', e.target.value)} />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Brand</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Hãng xe</label>
                     <input className="input-field" value={form.brand} onChange={(e) => updateForm('brand', e.target.value)} />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Model</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Dòng xe</label>
                     <input className="input-field" value={form.model} onChange={(e) => updateForm('model', e.target.value)} />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Year</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Năm</label>
                     <input className="input-field" type="number" value={form.year} onChange={(e) => updateForm('year', e.target.value)} />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Color</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Màu sắc</label>
                     <input className="input-field" value={form.color} onChange={(e) => updateForm('color', e.target.value)} />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Loại xe</label>
                     <select className="input-field" value={form.vehicleType} onChange={(e) => updateForm('vehicleType', e.target.value)}>
-                      <option value="motorbike">Motorbike</option>
-                      <option value="scooter">Scooter</option>
+                      <option value="motorbike">Xe số/côn</option>
+                      <option value="scooter">Xe tay ga</option>
                     </select>
                   </div>
                 </div>
@@ -923,13 +915,13 @@ export default function VehicleManagement() {
                   onClick={submitEdit}
                   className="w-full sm:w-auto inline-flex justify-center px-4 py-2 border border-transparent text-base font-medium rounded-lg text-white bg-green-600 hover:bg-green-700 disabled:opacity-50"
                 >
-                  {saving ? 'Saving...' : 'Save Changes'}
+                  {saving ? 'Đang lưu...' : 'Lưu thay đổi'}
                 </button>
                 <button
                   onClick={() => setShowEditModal(false)}
                   className="mt-3 sm:mt-0 w-full sm:w-auto inline-flex justify-center px-4 py-2 border border-gray-300 text-base font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50"
                 >
-                  Cancel
+                  Hủy
                 </button>
               </div>
             </div>
@@ -969,5 +961,3 @@ export default function VehicleManagement() {
     </div>
   );
 }
-
-

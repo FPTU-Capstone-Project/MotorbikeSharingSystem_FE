@@ -13,27 +13,31 @@ import {
   MagnifyingGlassIcon,
   DocumentCheckIcon,
   ArrowRightOnRectangleIcon,
+  ChatBubbleLeftRightIcon,
 } from '@heroicons/react/24/outline';
 import { MotorbikeIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../utils/cn';
 import { useAuth } from '../contexts/AuthContext';
 import SessionStatus from './SessionStatus';
+import ThemeToggle from './ThemeToggle';
 import toast from 'react-hot-toast';
+ 
 
 interface LayoutProps {
   children: React.ReactNode;
 }
 
 const navigation = [
-  { name: 'Dashboard', href: '/dashboard', icon: HomeIcon },
-  { name: 'Users', href: '/users', icon: UsersIcon },
-  { name: 'Verification', href: '/verification', icon: DocumentCheckIcon },
-  { name: 'Vehicle Management', href: '/vehicle-verification', icon: MotorbikeIcon },
-  { name: 'Rides', href: '/rides', icon: MapIcon },
-  { name: 'Payments', href: '/payments', icon: CreditCardIcon },
-  { name: 'Safety', href: '/safety', icon: ShieldCheckIcon },
-  { name: 'Analytics', href: '/analytics', icon: ChartBarIcon },
+  { name: 'Tổng quan', href: '/dashboard', icon: HomeIcon },
+  { name: 'Người dùng', href: '/users', icon: UsersIcon },
+  { name: 'Trò chuyện', href: '/chat', icon: ChatBubbleLeftRightIcon },
+  { name: 'Quản lý xác minh', href: '/verification', icon: DocumentCheckIcon },
+  { name: 'Quản lý xe', href: '/vehicle-verification', icon: MotorbikeIcon },
+  { name: 'Chuyến đi', href: '/rides', icon: MapIcon },
+  { name: 'Thanh toán', href: '/payments', icon: CreditCardIcon },
+  { name: 'An toàn', href: '/safety', icon: ShieldCheckIcon },
+  { name: 'Phân tích', href: '/analytics', icon: ChartBarIcon },
 ];
 
 const Layout = memo(({ children }: LayoutProps) => {
@@ -52,12 +56,14 @@ const Layout = memo(({ children }: LayoutProps) => {
 
   const handleLogout = useCallback(() => {
     logout();
-    toast.success('Logged out successfully');
+    toast.success('Đăng xuất thành công');
     navigate('/login');
   }, [logout, navigate]);
 
   return (
-    <div className="flex h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+    <div className="flex h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-950 dark:via-indigo-950/40 dark:to-slate-950 transition-colors duration-500">
+      {/* Dark-mode mesh gradient background */}
+      <div className="hidden dark:block fixed inset-0 -z-10 mesh-gradient-dark animate-mesh" />
       {/* Mobile sidebar overlay */}
       <AnimatePresence>
         {sidebarOpen && (
@@ -81,28 +87,31 @@ const Layout = memo(({ children }: LayoutProps) => {
             animate={{ x: 0 }}
             exit={{ x: '-100%' }}
             transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-            className="fixed inset-y-0 left-0 z-50 w-72 bg-white/95 backdrop-blur-xl shadow-2xl lg:hidden border-r border-white/20"
+            className="fixed inset-y-0 left-0 z-50 w-72 bg-white/95 backdrop-blur-xl shadow-2xl lg:hidden border-r border-white/20 dark:bg-slate-900/95 dark:border-slate-800/80 dark:shadow-black/40"
           >
-            <div className="flex items-center justify-between h-20 px-6 border-b border-gray-100">
+            <div className="flex items-center justify-between h-20 px-6 border-b border-gray-100 dark:border-slate-800/80">
               <div className="flex items-center space-x-3">
-                <div className="h-10 w-10 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl flex items-center justify-center">
+                <div className="h-10 w-10 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-900/30">
                   <span className="text-white font-bold text-lg">M</span>
                 </div>
                 <div>
-                  <h1 className="text-xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">MSSUS</h1>
-                  <p className="text-xs text-gray-500 font-medium">Admin Portal</p>
+                  <h1 className="text-xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent dark:from-white dark:to-slate-200">MSSUS</h1>
+                  <p className="text-xs text-gray-500 font-medium dark:text-slate-400">Cổng quản trị</p>
                 </div>
               </div>
               <button
                 onClick={closeSidebar}
-                className="p-2 rounded-xl text-gray-400 hover:text-gray-600 hover:bg-gray-100/80 transition-all duration-200"
+                className="p-2 rounded-xl text-gray-400 hover:text-gray-600 hover:bg-gray-100/80 transition-all duration-200 dark:text-slate-400 dark:hover:text-slate-100 dark:hover:bg-slate-800/80"
               >
                 <XMarkIcon className="h-5 w-5" />
               </button>
             </div>
             <SidebarContent location={location} closeSidebar={closeSidebar} />
             <div className="px-6 pb-6">
-              <SessionStatus showWarning={true} />
+              <div className="flex items-center justify-between">
+                <SessionStatus showWarning={true} />
+                <ThemeToggle />
+              </div>
             </div>
           </motion.div>
         )}
@@ -111,15 +120,15 @@ const Layout = memo(({ children }: LayoutProps) => {
       {/* Desktop sidebar */}
       <div className="hidden lg:flex lg:flex-shrink-0">
         <div className="flex flex-col w-72">
-          <div className="flex flex-col flex-grow bg-white/80 backdrop-blur-xl border-r border-white/20 shadow-xl">
-            <div className="flex items-center h-20 px-6 border-b border-gray-100">
+          <div className="flex flex-col flex-grow bg-white/80 backdrop-blur-xl border-r border-white/20 shadow-xl dark:bg-slate-950/70 dark:border-slate-800 dark:shadow-black/40">
+            <div className="flex items-center h-20 px-6 border-b border-gray-100 dark:border-slate-800/80">
               <div className="flex items-center space-x-3">
-                <div className="h-12 w-12 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                <div className="h-12 w-12 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-900/30">
                   <span className="text-white font-bold text-xl">M</span>
                 </div>
                 <div>
-                  <h1 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">MSSUS</h1>
-                  <p className="text-sm text-gray-500 font-medium">Admin Portal</p>
+                  <h1 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent dark:from-white dark:to-slate-200">MSSUS</h1>
+                  <p className="text-sm text-gray-500 font-medium dark:text-slate-400">Cổng quản trị</p>
                 </div>
               </div>
             </div>
@@ -131,58 +140,59 @@ const Layout = memo(({ children }: LayoutProps) => {
       {/* Main content */}
       <div className="flex flex-col flex-1 overflow-hidden">
         {/* Top bar */}
-        <header className="bg-white/80 backdrop-blur-xl border-b border-white/20 shadow-sm">
+        <header className="bg-white/80 backdrop-blur-xl border-b border-white/20 shadow-sm dark:bg-slate-950/60 dark:border-slate-800 dark:shadow-black/30 transition-colors duration-500">
           <div className="flex items-center justify-between h-20 px-6">
             <div className="flex items-center">
               <button
                 onClick={openSidebar}
-                className="p-3 rounded-xl text-gray-400 hover:text-gray-600 hover:bg-gray-100/80 transition-all duration-200 lg:hidden"
+                className="p-3 rounded-xl text-gray-400 hover:text-gray-600 hover:bg-gray-100/80 transition-all duration-200 lg:hidden dark:text-slate-400 dark:hover:text-slate-100 dark:hover:bg-slate-800/80"
               >
                 <Bars3Icon className="h-6 w-6" />
               </button>
               <div className="ml-4 lg:ml-0">
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
+                    <MagnifyingGlassIcon className="h-5 w-5 text-gray-400 dark:text-slate-400" />
                   </div>
                   <input
-                    className="w-80 pl-12 pr-4 py-3 bg-gray-50/80 border border-gray-200/60 rounded-2xl focus:ring-4 focus:ring-indigo-200/50 focus:border-indigo-300 transition-all duration-200 text-sm placeholder-gray-400 backdrop-blur-sm"
-                    placeholder="Search users, rides, or transactions..."
+                    className="w-80 pl-12 pr-4 py-3 bg-gray-50/80 border border-gray-200/60 rounded-2xl focus:ring-4 focus:ring-indigo-200/50 focus:border-indigo-300 transition-all duration-200 text-sm placeholder-gray-400 backdrop-blur-sm dark:bg-slate-900/60 dark:border-slate-700/60 dark:text-slate-100 dark:placeholder-slate-400 dark:focus:ring-indigo-500/40 dark:focus:border-indigo-400"
+                    placeholder="Tìm kiếm người dùng, chuyến đi hoặc giao dịch..."
                     type="search"
                   />
                 </div>
               </div>
             </div>
             <div className="flex items-center space-x-6">
-              <SessionStatus className="hidden lg:block" />
-              <button className="relative p-3 text-gray-400 hover:text-gray-600 hover:bg-gray-100/80 rounded-xl transition-all duration-200 group">
+              <SessionStatus className="hidden lg:block text-sm" />
+              <ThemeToggle className="hidden lg:inline-flex" />
+              <button className="relative p-3 text-gray-400 hover:text-gray-600 hover:bg-gray-100/80 rounded-xl transition-all duration-200 group dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-800/80">
                 <BellIcon className="h-6 w-6" />
                 <span className="absolute -top-1 -right-1 h-5 w-5 bg-gradient-to-r from-red-500 to-pink-500 rounded-full flex items-center justify-center text-xs text-white font-semibold shadow-lg animate-pulse">
                   3
                 </span>
               </button>
-              <div className="flex items-center space-x-3 bg-gray-50/80 rounded-2xl px-4 py-2 border border-gray-200/60 hover:bg-white/80 transition-all duration-200">
-                <div className="h-10 w-10 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+              <div className="flex items-center space-x-3 bg-gray-50/80 rounded-2xl px-4 py-2 border border-gray-200/60 hover:bg-white/80 transition-all duration-200 dark:bg-slate-900/70 dark:border-slate-700/80 dark:hover:bg-slate-800/80">
+                <div className="h-10 w-10 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-900/30">
                   <span className="text-sm font-bold text-white">
                     {user?.fullName?.charAt(0)?.toUpperCase() || 'A'}
                   </span>
                 </div>
                 <div>
-                  <span className="text-sm font-semibold text-gray-900">
-                    {user?.fullName || 'Admin User'}
+                  <span className="text-sm font-semibold text-gray-900 dark:text-slate-100">
+                    {user?.fullName || 'Quản trị viên'}
                   </span>
-                  <p className="text-xs text-gray-500">
-                    {user?.email || 'Administrator'}
+                  <p className="text-xs text-gray-500 dark:text-slate-400">
+                    {user?.email || 'Tài khoản quản trị'}
                   </p>
                 </div>
               </div>
               <button
                 onClick={handleLogout}
-                className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 rounded-xl transition-all duration-200"
-                title="Logout"
+                className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 rounded-xl transition-all duration-200 dark:hover:bg-red-500/10"
+                title="Đăng xuất"
               >
                 <ArrowRightOnRectangleIcon className="h-5 w-5" />
-                <span>Logout</span>
+                <span>Đăng xuất</span>
               </button>
             </div>
           </div>
@@ -190,7 +200,7 @@ const Layout = memo(({ children }: LayoutProps) => {
 
         {/* Page content */}
         <main className="flex-1 overflow-y-auto">
-          <div className="p-8">
+          <div className="p-8 text-slate-900 dark:text-slate-100">
             {children}
           </div>
         </main>
@@ -203,7 +213,7 @@ Layout.displayName = 'Layout';
 
 const SidebarContent = memo(({ location, closeSidebar }: { location: any; closeSidebar?: () => void }) => {
   return (
-    <nav className="flex-1 px-6 py-8 space-y-3">
+    <nav className="flex-1 px-6 py-8 space-y-3 text-slate-600 dark:text-slate-300 transition-colors duration-300">
       {navigation.map((item, index) => {
         const isActive = location.pathname === item.href;
         return (
@@ -220,7 +230,7 @@ const SidebarContent = memo(({ location, closeSidebar }: { location: any; closeS
                 'group flex items-center px-4 py-3 text-sm font-semibold rounded-2xl transition-all duration-300 relative overflow-hidden',
                 isActive
                   ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg transform scale-105'
-                  : 'text-gray-600 hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-100 hover:text-gray-900 hover:scale-105'
+                  : 'text-gray-600 hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-100 hover:text-gray-900 hover:scale-105 dark:text-slate-300 dark:hover:from-slate-800 dark:hover:to-slate-900 dark:hover:text-white'
               )}
             >
               {isActive && (
@@ -236,7 +246,7 @@ const SidebarContent = memo(({ location, closeSidebar }: { location: any; closeS
                   'relative mr-4 h-5 w-5 transition-all duration-300',
                   isActive 
                     ? 'text-white drop-shadow-sm' 
-                    : 'text-gray-400 group-hover:text-indigo-600 group-hover:scale-110'
+                    : 'text-gray-400 group-hover:text-indigo-600 group-hover:scale-110 dark:text-slate-400 dark:group-hover:text-indigo-400'
                 )}
                 aria-hidden="true"
               />
@@ -253,13 +263,13 @@ const SidebarContent = memo(({ location, closeSidebar }: { location: any; closeS
         );
       })}
       
-      <div className="pt-8 mt-8 border-t border-gray-100">
+      <div className="pt-8 mt-8 border-t border-gray-100 dark:border-slate-800/80">
         <div className="px-4 py-3">
-          <div className="flex items-center space-x-3 text-xs text-gray-500">
-            <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse"></div>
-            <span>System Status: Operational</span>
+          <div className="flex items-center space-x-3 text-xs text-gray-500 dark:text-slate-400">
+            <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse shadow-green-500/50"></div>
+            <span>Trạng thái hệ thống: Hoạt động</span>
           </div>
-          <p className="text-xs text-gray-400 mt-2">v2.1.0 • Updated 2 hours ago</p>
+          <p className="text-xs text-gray-400 mt-2 dark:text-slate-500">v2.1.0 • Cập nhật 2 giờ trước</p>
         </div>
       </div>
     </nav>
