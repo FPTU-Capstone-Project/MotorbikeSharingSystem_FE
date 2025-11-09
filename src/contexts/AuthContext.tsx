@@ -110,8 +110,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.setItem('token', accessToken);
       localStorage.setItem('accessToken', accessToken);
       localStorage.setItem('access_token', accessToken);
+      localStorage.setItem('authToken', accessToken);
+      
+      // Store refresh token (multiple keys for compatibility)
       if (refreshToken) {
         localStorage.setItem('refreshToken', refreshToken);
+        localStorage.setItem('refresh_token', refreshToken);
       }
 
       // Initialize token monitoring after successful login
@@ -160,6 +164,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem('accessToken');
     localStorage.removeItem('access_token');
     localStorage.removeItem('refreshToken');
+    localStorage.removeItem('refresh_token');
     localStorage.removeItem('user');
     localStorage.removeItem('authToken');
 

@@ -58,11 +58,15 @@ export class TokenService {
 
     // Check token every 30 seconds
     this.tokenCheckInterval = setInterval(() => {
-      this.checkTokenExpiration();
+      this.checkTokenExpiration().catch(error => {
+        console.error('Error in token expiration check:', error);
+      });
     }, 30000);
 
     // Also check immediately
-    this.checkTokenExpiration();
+    this.checkTokenExpiration().catch(error => {
+      console.error('Error in initial token expiration check:', error);
+    });
   }
 
   /**
@@ -95,7 +99,7 @@ export class TokenService {
   /**
    * Check if token is expired or about to expire
    */
-  private checkTokenExpiration(): void {
+  private async checkTokenExpiration(): Promise<void> {
     const token = this.getStoredToken();
     if (!token) {
       return;
@@ -112,20 +116,17 @@ export class TokenService {
       const expiresAt = tokenData.exp;
       const timeUntilExpiry = expiresAt - now;
 
-      // If token expires in less than 5 minutes, try to refresh (only if refresh token exists)
+      // If token expires in less than 5 minutes OR already expired, try to refresh (only if refresh token exists)
       if (timeUntilExpiry < 300) {
-        const refreshToken = localStorage.getItem('refresh_token');
+        const refreshToken = localStorage.getItem('refreshToken') || 
+                             localStorage.getItem('refresh_token');
         if (refreshToken) {
-          this.attemptTokenRefresh();
+          // Try to refresh token - this will handle both expired and about-to-expire tokens
+          await this.attemptTokenRefresh();
         } else {
           // No refresh token available, handle expiration
           this.handleTokenExpiration('No refresh token available');
         }
-      }
-
-      // If token is already expired
-      if (timeUntilExpiry <= 0) {
-        this.handleTokenExpiration('Token has expired');
       }
     } catch (error) {
       console.error('Error checking token expiration:', error);
@@ -138,13 +139,22 @@ export class TokenService {
    */
   private async attemptTokenRefresh(): Promise<void> {
     if (this.isRefreshing) {
+      // If already refreshing, wait for the existing promise
+      if (this.refreshPromise) {
+        try {
+          await this.refreshPromise;
+        } catch (error) {
+          // Ignore errors, will be handled by the original refresh attempt
+        }
+      }
       return;
     }
 
     this.isRefreshing = true;
 
     try {
-      const refreshToken = localStorage.getItem('refresh_token');
+      const refreshToken = localStorage.getItem('refreshToken') || 
+                           localStorage.getItem('refresh_token');
       if (!refreshToken) {
         throw new Error('No refresh token available');
       }
@@ -178,8 +188,16 @@ export class TokenService {
    * Perform the actual token refresh
    */
   private async performTokenRefresh(refreshToken: string): Promise<string> {
-    const response = await AuthAPI.refreshToken();
-    return response.access_token;
+    try {
+      const response = await AuthAPI.refreshToken();
+      if (!response.access_token) {
+        throw new Error('No access token in refresh response');
+      }
+      return response.access_token;
+    } catch (error) {
+      console.error('Token refresh API call failed:', error);
+      throw error;
+    }
   }
 
   /**
