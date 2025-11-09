@@ -113,6 +113,7 @@ export interface SOSAlert {
   createdAt: string
   resolvedAt?: string
   resolvedBy?: string
+  userName?: string // User name from backend
 }
 
 export interface Analytics {

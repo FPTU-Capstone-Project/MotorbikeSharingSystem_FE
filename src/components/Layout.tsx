@@ -63,7 +63,7 @@ const Layout = memo(({ children }: LayoutProps) => {
   }, [logout, navigate]);
 
   return (
-    <div className="flex h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-950 dark:via-indigo-950/40 dark:to-slate-950 transition-colors duration-500">
+    <div className="flex h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-950 dark:via-indigo-950/40 dark:to-slate-950 transition-all ease-in-out" style={{ willChange: 'background-color', transform: 'translateZ(0)', transitionDuration: '400ms' }}>
       {/* Dark-mode mesh gradient background */}
       <div className="hidden dark:block fixed inset-0 -z-10 mesh-gradient-dark animate-mesh" />
       {/* Mobile sidebar overlay */}
@@ -142,7 +142,7 @@ const Layout = memo(({ children }: LayoutProps) => {
       {/* Main content */}
       <div className="flex flex-col flex-1 overflow-hidden">
         {/* Top bar */}
-        <header className="bg-white/80 backdrop-blur-xl border-b border-white/20 shadow-sm dark:bg-slate-950/60 dark:border-slate-800 dark:shadow-black/30 transition-colors duration-500">
+        <header className="bg-white/80 backdrop-blur-xl border-b border-white/20 shadow-sm dark:bg-slate-950/60 dark:border-slate-800 dark:shadow-black/30 transition-all ease-in-out" style={{ willChange: 'background-color, border-color', transform: 'translateZ(0)', transitionDuration: '400ms' }}>
           <div className="flex items-center justify-between h-20 px-6">
             <div className="flex items-center">
               <button

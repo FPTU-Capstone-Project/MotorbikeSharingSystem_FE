@@ -219,7 +219,7 @@ export default function PaymentManagement() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-stretch">
         {[
       {
             label: 'Tổng doanh thu',
@@ -265,6 +265,7 @@ export default function PaymentManagement() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.1 }}
+            className="h-full"
           >
             <StatSummaryCard
               label={stat.label}

@@ -143,16 +143,16 @@ export default function Analytics() {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch">
         {kpis.map((kpi, index) => (
           <motion.div
             key={kpi.title}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.1 }}
-            className="card"
+            className="card h-full flex flex-col"
           >
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between flex-1">
               <div>
                 <p className="text-sm font-medium text-gray-500">{kpi.title}</p>
                 <p className="text-3xl font-bold text-gray-900 mt-1">{kpi.value}</p>

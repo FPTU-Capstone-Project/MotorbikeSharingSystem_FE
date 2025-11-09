@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback, memo, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
   ExclamationTriangleIcon,
@@ -14,97 +14,129 @@ import {
 import { SOSAlert } from '../types';
 import toast from 'react-hot-toast';
 import StatSummaryCard from '../components/StatSummaryCard';
-
-const mockSOSAlerts: SOSAlert[] = [
-  {
-    id: 'sos_001',
-    userId: 'user_001',
-    rideId: 'ride_001',
-    location: {
-      lat: 21.0285,
-      lng: 105.8542,
-      address: 'Gần Đại học FPT Hà Nội, Hòa Lạc',
-    },
-    status: 'active',
-    description: 'Báo tai nạn - cần hỗ trợ khẩn cấp',
-    createdAt: '2024-01-20T08:30:00Z',
-  },
-  {
-    id: 'sos_002',
-    userId: 'user_002',
-    location: {
-      lat: 21.0245,
-      lng: 105.8412,
-      address: 'Khu vực tòa Keangnam Landmark, Hà Nội',
-    },
-    status: 'resolved',
-    description: 'Xe gặp sự cố - đã hỗ trợ xong',
-    createdAt: '2024-01-19T15:45:00Z',
-    resolvedAt: '2024-01-19T16:20:00Z',
-    resolvedBy: 'admin_001',
-  },
-  {
-    id: 'sos_003',
-    userId: 'driver_001',
-    rideId: 'ride_003',
-    location: {
-      lat: 21.0278,
-      lng: 105.8342,
-      address: 'Times City, Hà Nội - Cổng chính',
-    },
-    status: 'false_alarm',
-    description: 'Kích hoạt nhầm - báo động giả',
-    createdAt: '2024-01-19T12:15:00Z',
-    resolvedAt: '2024-01-19T12:25:00Z',
-    resolvedBy: 'admin_002',
-  },
-];
-
-const userNames: { [key: string]: string } = {
-  user_001: 'Nguyễn Anh Tuấn',
-  user_002: 'Trần Gia Hân',
-  driver_001: 'Phạm Đức Minh',
-};
+import {
+  getSafetyDashboardStats,
+  getSafetyAlertsList,
+  markAlertAsResolved,
+  markAlertAsFalseAlarm,
+  SafetyDashboardStats,
+  SafetyAlertsListParams,
+} from '../services/safetyService';
+import Pagination from '../components/Pagination';
 
 export default function SafetyManagement() {
-  const [sosAlerts, setSOSAlerts] = useState<SOSAlert[]>(mockSOSAlerts);
+  const [sosAlerts, setSOSAlerts] = useState<SOSAlert[]>([]);
+  const [dashboardStats, setDashboardStats] = useState<SafetyDashboardStats | null>(null);
   const [filterStatus, setFilterStatus] = useState<'all' | SOSAlert['status']>('all');
   const [selectedAlert, setSelectedAlert] = useState<SOSAlert | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [loadingAlerts, setLoadingAlerts] = useState(false);
+  const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalRecords, setTotalRecords] = useState(0);
+  const [userNames, setUserNames] = useState<{ [key: string]: string }>({});
 
-  const filteredAlerts = sosAlerts.filter(alert => 
-    filterStatus === 'all' || alert.status === filterStatus
-  );
+  // Load dashboard stats
+  const loadDashboardStats = useCallback(async () => {
+    try {
+      const stats = await getSafetyDashboardStats();
+      setDashboardStats(stats);
+    } catch (error: any) {
+      console.error('Failed to load dashboard stats:', error);
+      toast.error(error?.message || 'Không tải được thống kê dashboard');
+    }
+  }, []);
 
-  const handleResolveAlert = (alertId: string) => {
-    setSOSAlerts(prev => 
-      prev.map(alert => 
-        alert.id === alertId 
-          ? { 
-              ...alert, 
-              status: 'resolved',
-              resolvedAt: new Date().toISOString(),
-              resolvedBy: 'admin_current'
-            }
-          : alert
-      )
-    );
-    toast.success('Đã đánh dấu báo động SOS là đã xử lý');
+  // Load alerts list
+  const loadAlerts = useCallback(async () => {
+    try {
+      setLoadingAlerts(true);
+      const statusMap: Record<string, 'ACTIVE' | 'RESOLVED' | 'FALSE_ALARM' | 'ACKNOWLEDGED' | 'ESCALATED' | undefined> = {
+        'all': undefined,
+        'active': 'ACTIVE',
+        'resolved': 'RESOLVED',
+        'false_alarm': 'FALSE_ALARM',
+      };
+
+      const params: SafetyAlertsListParams = {
+        status: statusMap[filterStatus],
+        page,
+        pageSize,
+        sortBy: 'createdAt',
+        sortDir: 'desc',
+      };
+
+      const response = await getSafetyAlertsList(params);
+      setSOSAlerts(response.alerts);
+      setTotalPages(response.totalPages);
+      setTotalRecords(response.totalRecords);
+
+      // Extract user names from alerts
+      const names: { [key: string]: string } = {};
+      response.alerts.forEach(alert => {
+        // Use userName from backend if available, otherwise use userId as fallback
+        names[alert.userId] = alert.userName || `User ${alert.userId}`;
+      });
+      setUserNames(names);
+    } catch (error: any) {
+      console.error('Failed to load alerts:', error);
+      toast.error(error?.message || 'Không tải được danh sách báo động');
+    } finally {
+      setLoadingAlerts(false);
+    }
+  }, [filterStatus, page, pageSize]);
+
+  // Initial load
+  useEffect(() => {
+    const loadData = async () => {
+      setLoading(true);
+      await Promise.all([loadDashboardStats(), loadAlerts()]);
+      setLoading(false);
+    };
+    loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Reload alerts when filter/page changes
+  useEffect(() => {
+    if (!loading) {
+      loadAlerts();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filterStatus, page, pageSize]);
+
+  const filteredAlerts = useMemo(() => sosAlerts, [sosAlerts]); // Already filtered by backend
+  const activeAlerts = useMemo(() => sosAlerts.filter(alert => alert.status === 'active'), [sosAlerts]);
+
+  const handleResolveAlert = async (alertId: string) => {
+    try {
+      await markAlertAsResolved(Number(alertId));
+      toast.success('Đã đánh dấu báo động SOS là đã xử lý');
+      // Reload data
+      await Promise.all([loadDashboardStats(), loadAlerts()]);
+      if (selectedAlert?.id === alertId) {
+        setSelectedAlert(null);
+      }
+    } catch (error: any) {
+      console.error('Failed to resolve alert:', error);
+      toast.error(error?.message || 'Không thể đánh dấu đã xử lý');
+    }
   };
 
-  const handleMarkFalseAlarm = (alertId: string) => {
-    setSOSAlerts(prev => 
-      prev.map(alert => 
-        alert.id === alertId 
-          ? { 
-              ...alert, 
-              status: 'false_alarm',
-              resolvedAt: new Date().toISOString(),
-              resolvedBy: 'admin_current'
-            }
-          : alert
-      )
-    );
-    toast.success('Đã đánh dấu báo động là báo giả');
+  const handleMarkFalseAlarm = async (alertId: string) => {
+    try {
+      await markAlertAsFalseAlarm(Number(alertId));
+      toast.success('Đã đánh dấu báo động là báo giả');
+      // Reload data
+      await Promise.all([loadDashboardStats(), loadAlerts()]);
+      if (selectedAlert?.id === alertId) {
+        setSelectedAlert(null);
+      }
+    } catch (error: any) {
+      console.error('Failed to mark false alarm:', error);
+      toast.error(error?.message || 'Không thể đánh dấu báo giả');
+    }
   };
 
   const getStatusBadge = (status: SOSAlert['status']) => {
@@ -129,32 +161,16 @@ export default function SafetyManagement() {
     }
   };
 
-  const activeAlertsCount = sosAlerts.filter(alert => alert.status === 'active').length;
-  const resolvedTodayCount = sosAlerts.filter(alert =>
-    alert.status === 'resolved' &&
-    alert.resolvedAt &&
-    new Date(alert.resolvedAt).toDateString() === new Date().toDateString()
-  ).length;
-  const resolvedAlertsWithTime = sosAlerts.filter(alert => alert.resolvedAt);
-  const averageResponseMinutes = resolvedAlertsWithTime.length
-    ? resolvedAlertsWithTime.reduce((total, alert) => {
-        const created = new Date(alert.createdAt).getTime();
-        const resolved = new Date(alert.resolvedAt!).getTime();
-        return total + Math.max(resolved - created, 0);
-      }, 0) /
-      resolvedAlertsWithTime.length /
-      60000
-    : 0;
   const statusLabels: Record<SOSAlert['status'], string> = {
     active: 'Đang khẩn cấp',
     resolved: 'Đã xử lý',
     false_alarm: 'Báo giả',
   };
 
-  const summaryCards = [
+  const summaryCards = useMemo(() => dashboardStats ? [
     {
       title: 'Báo động đang mở',
-      value: activeAlertsCount,
+      value: dashboardStats.activeAlertsCount,
       icon: ExclamationTriangleIcon,
       iconGradient: 'from-rose-600 to-red-600',
       backgroundGradient: 'from-rose-50 to-red-100',
@@ -162,7 +178,7 @@ export default function SafetyManagement() {
     },
     {
       title: 'Đã xử lý hôm nay',
-      value: resolvedTodayCount,
+      value: dashboardStats.resolvedTodayCount,
       icon: CheckCircleIcon,
       iconGradient: 'from-emerald-600 to-teal-600',
       backgroundGradient: 'from-emerald-50 to-teal-100',
@@ -170,21 +186,25 @@ export default function SafetyManagement() {
     },
     {
       title: 'Thời gian phản hồi TB',
-      value: resolvedAlertsWithTime.length ? `${averageResponseMinutes.toFixed(1)} phút` : '—',
+      value: dashboardStats.averageResponseTimeMinutes > 0 
+        ? `${dashboardStats.averageResponseTimeMinutes.toFixed(1)} phút` 
+        : '—',
       icon: ClockIcon,
       iconGradient: 'from-blue-600 to-indigo-600',
       backgroundGradient: 'from-blue-50 to-indigo-100',
-      description: resolvedAlertsWithTime.length ? 'Tính theo các sự cố gần nhất' : 'Chưa có báo động nào xử lý',
+      description: dashboardStats.averageResponseTimeMinutes > 0 
+        ? 'Tính theo các sự cố gần nhất' 
+        : 'Chưa có báo động nào xử lý',
     },
     {
       title: 'Tài xế đã kiểm duyệt',
-      value: '85%',
+      value: `${dashboardStats.driverVerificationPercentage.toFixed(0)}%`,
       icon: ShieldCheckIcon,
       iconGradient: 'from-purple-600 to-fuchsia-600',
       backgroundGradient: 'from-purple-50 to-fuchsia-100',
       description: 'Đã hoàn tất kiểm tra an toàn',
     },
-  ];
+  ] : [], [dashboardStats]);
 
   return (
     <div className="space-y-6">
@@ -203,28 +223,39 @@ export default function SafetyManagement() {
       </div>
 
       {/* Safety Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        {summaryCards.map((card, index) => (
-          <motion.div
-            key={card.title}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.1 }}
-          >
-            <StatSummaryCard
-              label={card.title}
-              value={card.value}
-              icon={card.icon}
-              gradient={card.iconGradient}
-              backgroundGradient={card.backgroundGradient}
-              detail={card.description}
-            />
-          </motion.div>
-        ))}
-      </div>
+      {loading ? (
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-stretch">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="card animate-pulse h-full">
+              <div className="h-24 bg-gray-200 rounded"></div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-stretch">
+          {summaryCards.map((card, index) => (
+            <motion.div
+              key={card.title}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.1 }}
+              className="h-full"
+            >
+              <StatSummaryCard
+                label={card.title}
+                value={card.value}
+                icon={card.icon}
+                gradient={card.iconGradient}
+                backgroundGradient={card.backgroundGradient}
+                detail={card.description}
+              />
+            </motion.div>
+          ))}
+        </div>
+      )}
 
       {/* Active Alerts - Priority Section */}
-      {sosAlerts.filter(alert => alert.status === 'active').length > 0 && (
+      {activeAlerts.length > 0 && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -238,7 +269,7 @@ export default function SafetyManagement() {
             <h2 className="text-lg font-semibold text-red-800 dark:text-white">Báo động khẩn cấp đang mở</h2>
           </div>
           <div className="space-y-3">
-            {sosAlerts.filter(alert => alert.status === 'active').map(alert => (
+            {activeAlerts.map(alert => (
               <div key={alert.id} className="bg-white dark:surface-1 rounded-lg p-4 shadow-sm">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
@@ -347,7 +378,7 @@ export default function SafetyManagement() {
                       </div>
                       <div className="ml-3">
                         <div className="text-sm font-medium text-gray-900">
-                          {userNames[alert.userId]}
+                          {userNames[alert.userId] || `User ${alert.userId}`}
                         </div>
                         <div className="text-sm text-gray-500">ID: {alert.userId}</div>
                       </div>
@@ -427,9 +458,33 @@ export default function SafetyManagement() {
           </table>
         </div>
         
-        {filteredAlerts.length === 0 && (
+        {loadingAlerts ? (
+          <div className="text-center py-12">
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+            <p className="mt-2 text-gray-500">Đang tải...</p>
+          </div>
+        ) : filteredAlerts.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-gray-500">Không tìm thấy báo động SOS phù hợp tiêu chí lọc.</p>
+          </div>
+        ) : null}
+        
+        {/* Pagination */}
+        {!loadingAlerts && totalPages > 0 && (
+          <div className="px-6 py-4 border-t border-gray-200">
+            <Pagination
+              currentPage={page}
+              totalPages={totalPages}
+              totalRecords={totalRecords}
+              pageSize={pageSize}
+              onPageChange={setPage}
+              onPageSizeChange={(newSize) => {
+                setPage(0);
+                setPageSize(newSize);
+              }}
+              loading={loadingAlerts}
+              pageSizeOptions={[5, 10, 20, 50]}
+            />
           </div>
         )}
       </motion.div>
@@ -447,17 +502,23 @@ export default function SafetyManagement() {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="text-center p-6 bg-green-50 dark:bg-green-900/30 rounded-lg border border-green-200 dark:border-green-800">
-            <div className="text-3xl font-bold text-green-600 dark:text-green-400">127</div>
+            <div className="text-3xl font-bold text-green-600 dark:text-green-400">
+              {dashboardStats?.approvedDriversCount ?? '—'}
+            </div>
             <div className="text-sm text-gray-600 dark:text-gray-300 mt-1">Tài xế đã duyệt</div>
             <div className="text-xs text-green-600 dark:text-green-400 mt-2">Đã kiểm tra lý lịch</div>
           </div>
           <div className="text-center p-6 bg-yellow-50 dark:bg-yellow-900/30 rounded-lg border border-yellow-200 dark:border-yellow-800">
-            <div className="text-3xl font-bold text-yellow-600 dark:text-yellow-400">23</div>
+            <div className="text-3xl font-bold text-yellow-600 dark:text-yellow-400">
+              {dashboardStats?.pendingDriversCount ?? '—'}
+            </div>
             <div className="text-sm text-gray-600 dark:text-gray-300 mt-1">Đang chờ duyệt</div>
             <div className="text-xs text-yellow-600 dark:text-yellow-400 mt-2">Chờ xét duyệt hồ sơ</div>
           </div>
           <div className="text-center p-6 bg-red-50 dark:bg-red-900/30 rounded-lg border border-red-200 dark:border-red-800">
-            <div className="text-3xl font-bold text-red-600 dark:text-red-400">5</div>
+            <div className="text-3xl font-bold text-red-600 dark:text-red-400">
+              {dashboardStats?.rejectedDriversCount ?? '—'}
+            </div>
             <div className="text-sm text-gray-600 dark:text-gray-300 mt-1">Bị từ chối</div>
             <div className="text-xs text-red-600 dark:text-red-400 mt-2">Không đạt yêu cầu</div>
           </div>
@@ -517,7 +578,7 @@ export default function SafetyManagement() {
               <div>
                 <h4 className="font-medium text-gray-900 mb-3">Thông tin người gửi</h4>
                 <div className="p-4 bg-gray-50 rounded-lg">
-                  <p className="font-semibold text-gray-900">{userNames[selectedAlert.userId]}</p>
+                  <p className="font-semibold text-gray-900">{userNames[selectedAlert.userId] || `User ${selectedAlert.userId}`}</p>
                   <p className="text-sm text-gray-600">Mã người dùng: {selectedAlert.userId}</p>
                   {selectedAlert.rideId && (
                     <p className="text-sm text-blue-600">Chuyến liên quan: {selectedAlert.rideId}</p>
