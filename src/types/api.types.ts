@@ -51,3 +51,74 @@ export interface PaginationParams {
   sortBy?: string;
   sortDir?: 'asc' | 'desc';
 }
+
+// User Report Types
+export type ReportType = 'SAFETY' | 'BEHAVIOR' | 'RIDE_EXPERIENCE' | 'PAYMENT' | 'ROUTE' | 'TECHNICAL' | 'OTHER';
+export type ReportStatus = 'PENDING' | 'OPEN' | 'IN_PROGRESS' | 'RESOLVED' | 'DISMISSED';
+export type ReportPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+
+export interface UserReportSummary {
+  reportId: number;
+  reportType: ReportType;
+  status: ReportStatus;
+  priority: ReportPriority;
+  description: string;
+  reporterId: number;
+  reporterName: string;
+  sharedRideId?: number;
+  driverId?: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface UserReportDetails extends UserReportSummary {
+  reporterEmail: string;
+  resolverId?: number;
+  resolverName?: string;
+  resolutionMessage?: string;
+  driverName?: string;
+  adminNotes?: string;
+  driverResponse?: string;
+  driverRespondedAt?: string;
+  escalatedAt?: string;
+  escalationReason?: string;
+  resolvedAt?: string;
+}
+
+export interface ReportAnalytics {
+  totalReports: number;
+  pendingReports: number;
+  openReports: number;
+  inProgressReports: number;
+  resolvedReports: number;
+  dismissedReports: number;
+  escalatedReports: number;
+  reportsByType: Record<string, number>;
+  reportsByPriority: Record<string, number>;
+  reportsByStatus: Record<string, number>;
+  averageResolutionTimeHours: number;
+  reportsToday: number;
+  reportsThisWeek: number;
+  reportsThisMonth: number;
+  topReportedDrivers: DriverReportStats[];
+}
+
+export interface DriverReportStats {
+  driverId: number;
+  driverName: string;
+  reportCount: number;
+  criticalReports: number;
+}
+
+export interface UpdateReportStatusRequest {
+  status: ReportStatus;
+  adminNotes?: string;
+}
+
+export interface ResolveReportRequest {
+  resolutionMessage: string;
+}
+
+export interface DriverResponseRequest {
+  driverResponse: string;
+}

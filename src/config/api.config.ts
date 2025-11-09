@@ -39,6 +39,15 @@ export const API_ENDPOINTS = {
     TOPUP_TRENDS: '/reports/wallet/topup-trends',
     COMMISSION: '/reports/wallet/commission',
   },
+  USER_REPORTS: {
+    LIST: '/user-reports',
+    DETAILS: (id: number) => `/user-reports/${id}`,
+    UPDATE_STATUS: (id: number) => `/user-reports/${id}`,
+    RESOLVE: (id: number) => `/user-reports/${id}/resolve`,
+    ANALYTICS: '/user-reports/analytics',
+    MY_REPORTS: '/user-reports/my-reports',
+    DRIVER_RESPONSE: (id: number) => `/user-reports/${id}/driver-response`,
+  },
   VERIFICATION: {
     STUDENTS: {
       PENDING: '/verification/students/pending',

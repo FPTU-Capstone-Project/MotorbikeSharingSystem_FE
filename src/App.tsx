@@ -24,6 +24,7 @@ const DriverVehicleVerification = lazy(() => import('./pages/DriverVehicleVerifi
 const VehicleManagement = lazy(() => import('./pages/VehicleManagement'));
 const TokenExpiryTest = lazy(() => import('./pages/TokenExpiryTest'));
 const UserChat = lazy(() => import('./pages/UserChat'));
+const ReportManagement = lazy(() => import('./pages/ReportManagement'));
 
 function App() {
   return (
@@ -110,6 +111,16 @@ function App() {
                       <ProtectedRoute>
                         <Layout>
                           <SafetyManagement />
+                        </Layout>
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/reports"
+                    element={
+                      <ProtectedRoute>
+                        <Layout>
+                          <ReportManagement />
                         </Layout>
                       </ProtectedRoute>
                     }

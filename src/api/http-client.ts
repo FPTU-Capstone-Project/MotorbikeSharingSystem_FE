@@ -300,6 +300,10 @@ class HttpClient {
     return this.request<T>(endpoint, { ...config, method: 'PUT', body: JSON.stringify(data) });
   }
 
+  async patch<T>(endpoint: string, data?: any, config?: RequestConfig): Promise<T> {
+    return this.request<T>(endpoint, { ...config, method: 'PATCH', body: JSON.stringify(data) });
+  }
+
   async delete<T>(endpoint: string, config?: RequestConfig): Promise<T> {
     return this.request<T>(endpoint, { ...config, method: 'DELETE' });
   }
