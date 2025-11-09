@@ -442,24 +442,24 @@ export default function SafetyManagement() {
         className="card"
       >
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-lg font-semibold text-gray-900">Xác thực an toàn tài xế</h3>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Xác thực an toàn tài xế</h3>
           <button className="btn-secondary">Quản lý kiểm duyệt</button>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="text-center p-6 bg-green-50 rounded-lg">
-            <div className="text-3xl font-bold text-green-600">127</div>
-            <div className="text-sm text-gray-600 mt-1">Tài xế đã duyệt</div>
-            <div className="text-xs text-green-600 mt-2">Đã kiểm tra lý lịch</div>
+          <div className="text-center p-6 bg-green-50 dark:bg-green-900/30 rounded-lg border border-green-200 dark:border-green-800">
+            <div className="text-3xl font-bold text-green-600 dark:text-green-400">127</div>
+            <div className="text-sm text-gray-600 dark:text-gray-300 mt-1">Tài xế đã duyệt</div>
+            <div className="text-xs text-green-600 dark:text-green-400 mt-2">Đã kiểm tra lý lịch</div>
           </div>
-          <div className="text-center p-6 bg-yellow-50 rounded-lg">
-            <div className="text-3xl font-bold text-yellow-600">23</div>
-            <div className="text-sm text-gray-600 mt-1">Đang chờ duyệt</div>
-            <div className="text-xs text-yellow-600 mt-2">Chờ xét duyệt hồ sơ</div>
+          <div className="text-center p-6 bg-yellow-50 dark:bg-yellow-900/30 rounded-lg border border-yellow-200 dark:border-yellow-800">
+            <div className="text-3xl font-bold text-yellow-600 dark:text-yellow-400">23</div>
+            <div className="text-sm text-gray-600 dark:text-gray-300 mt-1">Đang chờ duyệt</div>
+            <div className="text-xs text-yellow-600 dark:text-yellow-400 mt-2">Chờ xét duyệt hồ sơ</div>
           </div>
-          <div className="text-center p-6 bg-red-50 rounded-lg">
-            <div className="text-3xl font-bold text-red-600">5</div>
-            <div className="text-sm text-gray-600 mt-1">Bị từ chối</div>
-            <div className="text-xs text-red-600 mt-2">Không đạt yêu cầu</div>
+          <div className="text-center p-6 bg-red-50 dark:bg-red-900/30 rounded-lg border border-red-200 dark:border-red-800">
+            <div className="text-3xl font-bold text-red-600 dark:text-red-400">5</div>
+            <div className="text-sm text-gray-600 dark:text-gray-300 mt-1">Bị từ chối</div>
+            <div className="text-xs text-red-600 dark:text-red-400 mt-2">Không đạt yêu cầu</div>
           </div>
         </div>
       </motion.div>
