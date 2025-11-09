@@ -16,6 +16,38 @@ import { approveVerification, rejectVerification } from '../services/verificatio
 import Pagination from '../components/Pagination';
 import StatSummaryCard from '../components/StatSummaryCard';
 
+// Helper functions to format IDs
+const formatVerificationId = (id: number): string => {
+  return `VR${String(id).padStart(5, '0')}`;
+};
+
+const formatUserId = (id: number): string => {
+  return `U${String(id).padStart(4, '0')}`;
+};
+
+// Helper function to translate verification type to Vietnamese
+const translateType = (type: string): string => {
+  const typeMap: Record<string, string> = {
+    'STUDENT_ID': 'Thẻ sinh viên',
+    'DRIVER_LICENSE': 'Bằng lái xe',
+    'DRIVER_DOCUMENTS': 'Tài liệu tài xế',
+    'VEHICLE_REGISTRATION': 'Đăng ký xe',
+    'BACKGROUND_CHECK': 'Kiểm tra lý lịch',
+  };
+  return typeMap[type] || type;
+};
+
+// Helper function to translate status to Vietnamese
+const translateStatus = (status: string): string => {
+  const statusMap: Record<string, string> = {
+    'PENDING': 'Đang chờ',
+    'APPROVED': 'Đã duyệt',
+    'REJECTED': 'Bị từ chối',
+    'EXPIRED': 'Hết hạn',
+  };
+  return statusMap[status] || status;
+};
+
 export default function VerificationManagement() {
   const [items, setItems] = useState<VerificationItem[]>([]);
   const [page, setPage] = useState(0);
@@ -86,7 +118,7 @@ export default function VerificationManagement() {
         // Extract names from metadata or create mock data for testing
         const entries = res.data.map((v: any) => {
           // Try to extract name from metadata JSON
-          let name = `${v.user_id}`;
+          let name: string | null = null;
           try {
             if (v.metadata) {
               const meta = JSON.parse(v.metadata);
@@ -97,6 +129,7 @@ export default function VerificationManagement() {
           } catch (e) {
             console.log('Failed to parse metadata:', v.metadata);
           }
+          // Only store actual names, not user IDs
           return [v.user_id, name] as const;
         });
 
@@ -145,7 +178,7 @@ export default function VerificationManagement() {
     try {
       setActionLoading(true);
       await approveVerification(selected.verification_id, Number(selected.user_id), selected.type, approveNotes || undefined);
-      toast.success('Phê duyệt thành công');
+      toast.success(`Đã phê duyệt ${formatVerificationId(selected.verification_id)}`);
       setShowApproveModal(false);
       setApproveNotes('');
       setShowDetailModal(false);
@@ -168,7 +201,7 @@ export default function VerificationManagement() {
     try {
       setActionLoading(true);
       await rejectVerification(selected.verification_id, Number(selected.user_id), selected.type, rejectReason.trim());
-      toast.success('Từ chối thành công');
+      toast.success(`Đã từ chối ${formatVerificationId(selected.verification_id)}`);
       setShowRejectModal(false);
       setRejectReason('');
       setShowDetailModal(false);
@@ -205,7 +238,7 @@ export default function VerificationManagement() {
     try {
       setBulkLoading(true);
       await approveVerification(current.verification_id, Number(current.user_id), current.type, undefined);
-      toast.success(`Đã phê duyệt #${current.verification_id}`);
+      toast.success(`Đã phê duyệt ${formatVerificationId(current.verification_id)}`);
       advanceBulk();
     } catch (error: any) {
       toast.error(error?.message || 'Phê duyệt thất bại');
@@ -224,7 +257,7 @@ export default function VerificationManagement() {
     try {
       setBulkLoading(true);
       await rejectVerification(current.verification_id, Number(current.user_id), current.type, bulkRejectReason.trim());
-      toast.success(`Đã từ chối #${current.verification_id}`);
+      toast.success(`Đã từ chối ${formatVerificationId(current.verification_id)}`);
       advanceBulk();
     } catch (error: any) {
       toast.error(error?.message || 'Từ chối thất bại');
@@ -323,11 +356,11 @@ export default function VerificationManagement() {
               onChange={(e) => setFilterType(e.target.value as any)}
             >
               <option value="ALL">Tất cả loại</option>
-              <option value="STUDENT_ID">STUDENT_ID</option>
-              <option value="DRIVER_LICENSE">DRIVER_LICENSE</option>
-              <option value="DRIVER_DOCUMENTS">DRIVER_DOCUMENTS</option>
-              <option value="VEHICLE_REGISTRATION">VEHICLE_REGISTRATION</option>
-              <option value="BACKGROUND_CHECK">BACKGROUND_CHECK</option>
+              <option value="STUDENT_ID">Thẻ sinh viên</option>
+              <option value="DRIVER_LICENSE">Bằng lái xe</option>
+              <option value="DRIVER_DOCUMENTS">Tài liệu tài xế</option>
+              <option value="VEHICLE_REGISTRATION">Đăng ký xe</option>
+              <option value="BACKGROUND_CHECK">Kiểm tra lý lịch</option>
             </select>
             <select
               className="input-field"
@@ -415,15 +448,17 @@ export default function VerificationManagement() {
                     />
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900 font-medium">{v.verification_id}</div>
+                    <div className="text-sm text-gray-900 font-medium">{formatVerificationId(v.verification_id)}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="ml-4">
-                      <div className="text-sm font-medium text-gray-900">{userNames[Number(v.user_id)] || ` ${v.user_id}`}</div>
+                      <div className="text-sm font-medium text-gray-900">
+                        {userNames[Number(v.user_id)] ? `${userNames[Number(v.user_id)]} (${formatUserId(Number(v.user_id))})` : formatUserId(Number(v.user_id))}
+                      </div>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{v.type}</div>
+                    <div className="text-sm text-gray-900">{translateType(v.type)}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${v.status === 'APPROVED'
@@ -432,9 +467,7 @@ export default function VerificationManagement() {
                           ? 'bg-red-100 text-red-800'
                           : 'bg-yellow-100 text-yellow-800'
                       }`}>
-                      {v.status === 'APPROVED' && 'Đã duyệt'}
-                      {v.status === 'REJECTED' && 'Bị từ chối'}
-                      {v.status === 'PENDING' && 'Đang chờ'}
+                      {translateStatus(v.status)}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -557,15 +590,17 @@ export default function VerificationManagement() {
                       <div className="grid grid-cols-2 gap-4">
                         <div>
                           <p className="text-sm text-gray-500">Mã xác minh</p>
-                          <p className="text-base font-medium text-gray-900">#{selected.verification_id}</p>
+                          <p className="text-base font-medium text-gray-900">{formatVerificationId(selected.verification_id)}</p>
                         </div>
                         <div>
                           <p className="text-sm text-gray-500">Người dùng</p>
-                          <p className="text-base font-medium text-gray-900">{userNames[Number(selected.user_id)] || `${selected.user_id}`}</p>
+                          <p className="text-base font-medium text-gray-900">
+                            {userNames[Number(selected.user_id)] ? `${userNames[Number(selected.user_id)]} (${formatUserId(Number(selected.user_id))})` : formatUserId(Number(selected.user_id))}
+                          </p>
                         </div>
                         <div>
                           <p className="text-sm text-gray-500">Loại</p>
-                          <p className="text-base font-medium text-gray-900">{selected.type}</p>
+                          <p className="text-base font-medium text-gray-900">{translateType(selected.type)}</p>
                         </div>
                         <div>
                           <p className="text-sm text-gray-500">Trạng thái</p>
@@ -575,9 +610,7 @@ export default function VerificationManagement() {
                                 ? 'bg-red-100 text-red-800'
                                 : 'bg-yellow-100 text-yellow-800'
                             }`}>
-                            {selected.status === 'APPROVED' && 'Đã duyệt'}
-                            {selected.status === 'REJECTED' && 'Bị từ chối'}
-                            {selected.status === 'PENDING' && 'Đang chờ'}
+                            {translateStatus(selected.status)}
                           </span>
                         </div>
                         <div>
@@ -817,7 +850,7 @@ export default function VerificationManagement() {
             <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
               <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                 <h3 className="text-lg leading-6 font-medium text-gray-900">Xác nhận phê duyệt</h3>
-                <p className="mt-2 text-sm text-gray-600">Phê duyệt yêu cầu #{selected.verification_id} cho người dùng {userNames[Number(selected.user_id)] || `${selected.user_id}`}</p>
+                <p className="mt-2 text-sm text-gray-600">Phê duyệt yêu cầu {formatVerificationId(selected.verification_id)} cho người dùng {userNames[Number(selected.user_id)] ? `${userNames[Number(selected.user_id)]} (${formatUserId(Number(selected.user_id))})` : formatUserId(Number(selected.user_id))}</p>
                 <div className="mt-4">
                   <label className="block text-sm font-medium text-gray-700 mb-1">Ghi chú (tuỳ chọn)</label>
                   <textarea
@@ -860,7 +893,7 @@ export default function VerificationManagement() {
             <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
               <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                 <h3 className="text-lg leading-6 font-medium text-gray-900">Từ chối xác minh</h3>
-                <p className="mt-2 text-sm text-gray-600">Bạn đang từ chối yêu cầu #{selected.verification_id} của người dùng {userNames[Number(selected.user_id)] || `${selected.user_id}`}. Vui lòng nhập lý do.</p>
+                <p className="mt-2 text-sm text-gray-600">Bạn đang từ chối yêu cầu {formatVerificationId(selected.verification_id)} của người dùng {userNames[Number(selected.user_id)] ? `${userNames[Number(selected.user_id)]} (${formatUserId(Number(selected.user_id))})` : formatUserId(Number(selected.user_id))}. Vui lòng nhập lý do.</p>
                 <div className="mt-4">
                   <label className="block text-sm font-medium text-gray-700 mb-1">Lý do từ chối</label>
                   <textarea
@@ -920,19 +953,21 @@ export default function VerificationManagement() {
                       <div className="grid grid-cols-2 gap-4">
                         <div>
                           <p className="text-sm text-gray-500">Mã xác minh</p>
-                          <p className="text-base font-medium text-gray-900">#{cur.verification_id}</p>
+                          <p className="text-base font-medium text-gray-900">{formatVerificationId(cur.verification_id)}</p>
                         </div>
                         <div>
                           <p className="text-sm text-gray-500">Người dùng</p>
-                          <p className="text-base font-medium text-gray-900">{userNames[Number(cur.user_id)] || `${cur.user_id}`}</p>
+                          <p className="text-base font-medium text-gray-900">
+                            {userNames[Number(cur.user_id)] ? `${userNames[Number(cur.user_id)]} (${formatUserId(Number(cur.user_id))})` : formatUserId(Number(cur.user_id))}
+                          </p>
                         </div>
                         <div>
                           <p className="text-sm text-gray-500">Loại</p>
-                          <p className="text-base font-medium text-gray-900">{cur.type}</p>
+                          <p className="text-base font-medium text-gray-900">{translateType(cur.type)}</p>
                         </div>
                         <div>
                           <p className="text-sm text-gray-500">Trạng thái</p>
-                          <span className="inline-flex px-3 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">Đang chờ</span>
+                          <span className="inline-flex px-3 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">{translateStatus(cur.status)}</span>
                         </div>
                         <div>
                           <p className="text-sm text-gray-500">Tạo lúc</p>
