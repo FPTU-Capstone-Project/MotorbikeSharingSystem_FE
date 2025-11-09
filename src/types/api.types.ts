@@ -1,12 +1,20 @@
 export interface PageResponse<T> {
-  content: T[];
-  pageNumber: number;
-  pageSize: number;
-  totalElements: number;
-  totalPages: number;
-  last: boolean;
-  first: boolean;
-  empty: boolean;
+  data: T[];
+  pagination: {
+    page: number;
+    page_size: number;
+    total_pages: number;
+    total_records: number;
+  };
+  // Legacy support (for backward compatibility)
+  content?: T[];
+  pageNumber?: number;
+  pageSize?: number;
+  totalElements?: number;
+  totalPages?: number;
+  last?: boolean;
+  first?: boolean;
+  empty?: boolean;
 }
 
 export interface MessageResponse {

@@ -142,11 +142,19 @@ export default function ReportManagement() {
       if (filterType !== 'ALL') params.reportType = filterType;
 
       const response = await UserReportsAPI.getReports(params);
-      // Handle PageResponse format
-      const reportsList = response.content || [];
+      console.log('Reports API Response:', response);
+      // Handle PageResponse format - backend returns { data, pagination }
+      const reportsList = response.data || response.content || [];
+      console.log('Reports List:', reportsList);
       setReports(reportsList);
-      setTotalPages(response.totalPages || 0);
-      setTotalElements(response.totalElements || reportsList.length);
+      // Use pagination object if available, otherwise fall back to legacy fields
+      if (response.pagination) {
+        setTotalPages(response.pagination.total_pages || 0);
+        setTotalElements(response.pagination.total_records || reportsList.length);
+      } else {
+        setTotalPages(response.totalPages || 0);
+        setTotalElements(response.totalElements || reportsList.length);
+      }
     } catch (error: any) {
       console.error('Error loading reports:', error);
       toast.error(error.message || 'Không thể tải danh sách báo cáo');
