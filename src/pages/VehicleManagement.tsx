@@ -428,7 +428,7 @@ export default function VehicleManagement() {
                     <div className="text-sm text-gray-500">{verification.color} - {verification.year}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-bold text-gray-900 bg-yellow-100 px-3 py-1 rounded-md inline-block">
+                    <div className="text-sm font-bold text-black bg-yellow-100 px-3 py-1 rounded-md inline-block">
                       {verification.plateNumber}
                     </div>
                   </td>
@@ -579,7 +579,7 @@ export default function VehicleManagement() {
                       <div className="grid grid-cols-2 gap-4">
                         <div>
                           <p className="text-sm text-gray-500">Biển số</p>
-                          <p className="text-base font-bold text-gray-900 bg-yellow-100 px-3 py-1 rounded-md inline-block">
+                          <p className="text-base font-bold text-black bg-yellow-100 px-3 py-1 rounded-md inline-block">
                             {selectedVerification.plateNumber}
                           </p>
                         </div>
