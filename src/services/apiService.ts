@@ -1,4 +1,5 @@
 import { apiFetch, PageResponse } from '../utils/api';
+import { MessageResponse } from '../types/api.types';
 import {
   User,
   Ride,
@@ -22,6 +23,10 @@ export interface RegisterRequest {
   phoneNumber: string;
   fullName: string;
   studentId?: string;
+}
+
+export interface ForgotPasswordRequest {
+  emailOrPhone: string;
 }
 
 export interface AuthResponse {
@@ -50,6 +55,9 @@ export const authService = {
 
   verifyEmail: (token: string) =>
     apiFetch('/auth/verify-email', { method: 'POST', body: { token } }),
+
+  forgotPassword: (data: ForgotPasswordRequest) =>
+    apiFetch<MessageResponse>('/auth/forgot-password', { method: 'POST', body: data }),
 };
 
 // =====================

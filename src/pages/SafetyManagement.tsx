@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback, memo, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
   ExclamationTriangleIcon,
@@ -13,127 +13,130 @@ import {
 } from '@heroicons/react/24/outline';
 import { SOSAlert } from '../types';
 import toast from 'react-hot-toast';
-
-const mockSOSAlerts: SOSAlert[] = [
-  {
-    id: 'sos_001',
-    userId: 'user_001',
-    rideId: 'ride_001',
-    location: {
-      lat: 21.0285,
-      lng: 105.8542,
-      address: 'Near FPT University Hanoi, Hoa Lac',
-    },
-    status: 'active',
-    description: 'Accident reported - need immediate assistance',
-    createdAt: '2024-01-20T08:30:00Z',
-  },
-  {
-    id: 'sos_002',
-    userId: 'user_002',
-    location: {
-      lat: 21.0245,
-      lng: 105.8412,
-      address: 'Keangnam Hanoi Landmark Tower area',
-    },
-    status: 'resolved',
-    description: 'Vehicle breakdown - assistance provided',
-    createdAt: '2024-01-19T15:45:00Z',
-    resolvedAt: '2024-01-19T16:20:00Z',
-    resolvedBy: 'admin_001',
-  },
-  {
-    id: 'sos_003',
-    userId: 'driver_001',
-    rideId: 'ride_003',
-    location: {
-      lat: 21.0278,
-      lng: 105.8342,
-      address: 'Times City, Hanoi - Main Gate',
-    },
-    status: 'false_alarm',
-    description: 'False alarm - accidental activation',
-    createdAt: '2024-01-19T12:15:00Z',
-    resolvedAt: '2024-01-19T12:25:00Z',
-    resolvedBy: 'admin_002',
-  },
-];
-
-const userNames: { [key: string]: string } = {
-  user_001: 'John Doe',
-  user_002: 'Jane Smith',
-  driver_001: 'David Lee',
-};
-
-const safetyMetrics = [
-  {
-    title: 'Active Alerts',
-    value: mockSOSAlerts.filter(alert => alert.status === 'active').length,
-    color: 'bg-red-500',
-    icon: ExclamationTriangleIcon,
-  },
-  {
-    title: 'Resolved Today',
-    value: mockSOSAlerts.filter(alert => 
-      alert.status === 'resolved' && 
-      new Date(alert.createdAt).toDateString() === new Date().toDateString()
-    ).length,
-    color: 'bg-green-500',
-    icon: CheckCircleIcon,
-  },
-  {
-    title: 'Avg Response Time',
-    value: '4.2 min',
-    color: 'bg-blue-500',
-    icon: ClockIcon,
-  },
-  {
-    title: 'Verified Drivers',
-    value: '85%',
-    color: 'bg-purple-500',
-    icon: ShieldCheckIcon,
-  },
-];
+import StatSummaryCard from '../components/StatSummaryCard';
+import {
+  getSafetyDashboardStats,
+  getSafetyAlertsList,
+  markAlertAsResolved,
+  markAlertAsFalseAlarm,
+  SafetyDashboardStats,
+  SafetyAlertsListParams,
+} from '../services/safetyService';
+import Pagination from '../components/Pagination';
 
 export default function SafetyManagement() {
-  const [sosAlerts, setSOSAlerts] = useState<SOSAlert[]>(mockSOSAlerts);
+  const [sosAlerts, setSOSAlerts] = useState<SOSAlert[]>([]);
+  const [dashboardStats, setDashboardStats] = useState<SafetyDashboardStats | null>(null);
   const [filterStatus, setFilterStatus] = useState<'all' | SOSAlert['status']>('all');
   const [selectedAlert, setSelectedAlert] = useState<SOSAlert | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [loadingAlerts, setLoadingAlerts] = useState(false);
+  const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalRecords, setTotalRecords] = useState(0);
+  const [userNames, setUserNames] = useState<{ [key: string]: string }>({});
 
-  const filteredAlerts = sosAlerts.filter(alert => 
-    filterStatus === 'all' || alert.status === filterStatus
-  );
+  // Load dashboard stats
+  const loadDashboardStats = useCallback(async () => {
+    try {
+      const stats = await getSafetyDashboardStats();
+      setDashboardStats(stats);
+    } catch (error: any) {
+      console.error('Failed to load dashboard stats:', error);
+      toast.error(error?.message || 'Không tải được thống kê dashboard');
+    }
+  }, []);
 
-  const handleResolveAlert = (alertId: string) => {
-    setSOSAlerts(prev => 
-      prev.map(alert => 
-        alert.id === alertId 
-          ? { 
-              ...alert, 
-              status: 'resolved',
-              resolvedAt: new Date().toISOString(),
-              resolvedBy: 'admin_current'
-            }
-          : alert
-      )
-    );
-    toast.success('SOS alert resolved successfully');
+  // Load alerts list
+  const loadAlerts = useCallback(async () => {
+    try {
+      setLoadingAlerts(true);
+      const statusMap: Record<string, 'ACTIVE' | 'RESOLVED' | 'FALSE_ALARM' | 'ACKNOWLEDGED' | 'ESCALATED' | undefined> = {
+        'all': undefined,
+        'active': 'ACTIVE',
+        'resolved': 'RESOLVED',
+        'false_alarm': 'FALSE_ALARM',
+      };
+
+      const params: SafetyAlertsListParams = {
+        status: statusMap[filterStatus],
+        page,
+        pageSize,
+        sortBy: 'createdAt',
+        sortDir: 'desc',
+      };
+
+      const response = await getSafetyAlertsList(params);
+      setSOSAlerts(response.alerts);
+      setTotalPages(response.totalPages);
+      setTotalRecords(response.totalRecords);
+
+      // Extract user names from alerts
+      const names: { [key: string]: string } = {};
+      response.alerts.forEach(alert => {
+        // Use userName from backend if available, otherwise use userId as fallback
+        names[alert.userId] = alert.userName || `User ${alert.userId}`;
+      });
+      setUserNames(names);
+    } catch (error: any) {
+      console.error('Failed to load alerts:', error);
+      toast.error(error?.message || 'Không tải được danh sách báo động');
+    } finally {
+      setLoadingAlerts(false);
+    }
+  }, [filterStatus, page, pageSize]);
+
+  // Initial load
+  useEffect(() => {
+    const loadData = async () => {
+      setLoading(true);
+      await Promise.all([loadDashboardStats(), loadAlerts()]);
+      setLoading(false);
+    };
+    loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Reload alerts when filter/page changes
+  useEffect(() => {
+    if (!loading) {
+      loadAlerts();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filterStatus, page, pageSize]);
+
+  const filteredAlerts = useMemo(() => sosAlerts, [sosAlerts]); // Already filtered by backend
+  const activeAlerts = useMemo(() => sosAlerts.filter(alert => alert.status === 'active'), [sosAlerts]);
+
+  const handleResolveAlert = async (alertId: string) => {
+    try {
+      await markAlertAsResolved(Number(alertId));
+      toast.success('Đã đánh dấu báo động SOS là đã xử lý');
+      // Reload data
+      await Promise.all([loadDashboardStats(), loadAlerts()]);
+      if (selectedAlert?.id === alertId) {
+        setSelectedAlert(null);
+      }
+    } catch (error: any) {
+      console.error('Failed to resolve alert:', error);
+      toast.error(error?.message || 'Không thể đánh dấu đã xử lý');
+    }
   };
 
-  const handleMarkFalseAlarm = (alertId: string) => {
-    setSOSAlerts(prev => 
-      prev.map(alert => 
-        alert.id === alertId 
-          ? { 
-              ...alert, 
-              status: 'false_alarm',
-              resolvedAt: new Date().toISOString(),
-              resolvedBy: 'admin_current'
-            }
-          : alert
-      )
-    );
-    toast.success('Alert marked as false alarm');
+  const handleMarkFalseAlarm = async (alertId: string) => {
+    try {
+      await markAlertAsFalseAlarm(Number(alertId));
+      toast.success('Đã đánh dấu báo động là báo giả');
+      // Reload data
+      await Promise.all([loadDashboardStats(), loadAlerts()]);
+      if (selectedAlert?.id === alertId) {
+        setSelectedAlert(null);
+      }
+    } catch (error: any) {
+      console.error('Failed to mark false alarm:', error);
+      toast.error(error?.message || 'Không thể đánh dấu báo giả');
+    }
   };
 
   const getStatusBadge = (status: SOSAlert['status']) => {
@@ -158,85 +161,141 @@ export default function SafetyManagement() {
     }
   };
 
+  const statusLabels: Record<SOSAlert['status'], string> = {
+    active: 'Đang khẩn cấp',
+    resolved: 'Đã xử lý',
+    false_alarm: 'Báo giả',
+  };
+
+  const summaryCards = useMemo(() => dashboardStats ? [
+    {
+      title: 'Báo động đang mở',
+      value: dashboardStats.activeAlertsCount,
+      icon: ExclamationTriangleIcon,
+      iconGradient: 'from-rose-600 to-red-600',
+      backgroundGradient: 'from-rose-50 to-red-100',
+      description: 'Cần điều phối xử lý ngay',
+    },
+    {
+      title: 'Đã xử lý hôm nay',
+      value: dashboardStats.resolvedTodayCount,
+      icon: CheckCircleIcon,
+      iconGradient: 'from-emerald-600 to-teal-600',
+      backgroundGradient: 'from-emerald-50 to-teal-100',
+      description: 'Hoàn tất trong 24 giờ qua',
+    },
+    {
+      title: 'Thời gian phản hồi TB',
+      value: dashboardStats.averageResponseTimeMinutes > 0 
+        ? `${dashboardStats.averageResponseTimeMinutes.toFixed(1)} phút` 
+        : '—',
+      icon: ClockIcon,
+      iconGradient: 'from-blue-600 to-indigo-600',
+      backgroundGradient: 'from-blue-50 to-indigo-100',
+      description: dashboardStats.averageResponseTimeMinutes > 0 
+        ? 'Tính theo các sự cố gần nhất' 
+        : 'Chưa có báo động nào xử lý',
+    },
+    {
+      title: 'Tài xế đã kiểm duyệt',
+      value: `${dashboardStats.driverVerificationPercentage.toFixed(0)}%`,
+      icon: ShieldCheckIcon,
+      iconGradient: 'from-purple-600 to-fuchsia-600',
+      backgroundGradient: 'from-purple-50 to-fuchsia-100',
+      description: 'Đã hoàn tất kiểm tra an toàn',
+    },
+  ] : [], [dashboardStats]);
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Safety Management</h1>
+          <h1 className="text-3xl font-bold text-gray-900">Quản lý an toàn</h1>
           <p className="mt-2 text-gray-600">
-            Monitor SOS alerts, driver verification status, and safety incidents
+            Theo dõi báo động SOS, trạng thái xác thực tài xế và sự cố an toàn
           </p>
         </div>
         <button className="btn-primary flex items-center mt-4 sm:mt-0">
           <PhoneIcon className="h-5 w-5 mr-2" />
-          Emergency Contacts
+          Danh bạ khẩn cấp
         </button>
       </div>
 
       {/* Safety Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        {safetyMetrics.map((metric, index) => (
-          <motion.div
-            key={metric.title}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.1 }}
-            className="card"
-          >
-            <div className="flex items-center">
-              <div className={`p-3 rounded-lg ${metric.color}`}>
-                <metric.icon className="h-6 w-6 text-white" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">{metric.title}</p>
-                <p className="text-2xl font-bold text-gray-900">{metric.value}</p>
-              </div>
+      {loading ? (
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-stretch">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="card animate-pulse h-full">
+              <div className="h-24 bg-gray-200 rounded"></div>
             </div>
-          </motion.div>
-        ))}
-      </div>
+          ))}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-stretch">
+          {summaryCards.map((card, index) => (
+            <motion.div
+              key={card.title}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.1 }}
+              className="h-full"
+            >
+              <StatSummaryCard
+                label={card.title}
+                value={card.value}
+                icon={card.icon}
+                gradient={card.iconGradient}
+                backgroundGradient={card.backgroundGradient}
+                detail={card.description}
+              />
+            </motion.div>
+          ))}
+        </div>
+      )}
 
       {/* Active Alerts - Priority Section */}
-      {sosAlerts.filter(alert => alert.status === 'active').length > 0 && (
+      {activeAlerts.length > 0 && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="bg-red-50 border-l-4 border-red-400 rounded-lg p-6"
+          className="relative rounded-lg p-6 border border-red-200 bg-red-50 dark:border-transparent dark:bg-transparent overflow-hidden"
         >
-          <div className="flex items-center mb-4">
-            <ExclamationTriangleIcon className="h-6 w-6 text-red-500 mr-3" />
-            <h2 className="text-lg font-semibold text-red-800">Active Emergency Alerts</h2>
+          {/* Dark-only mesh red gradient background */}
+          <div className="hidden dark:block absolute inset-0 -z-0 mesh-gradient-danger animate-mesh" />
+          <div className="relative flex items-center mb-4">
+            <ExclamationTriangleIcon className="h-6 w-6 text-red-600 dark:text-white mr-3" />
+            <h2 className="text-lg font-semibold text-red-800 dark:text-white">Báo động khẩn cấp đang mở</h2>
           </div>
           <div className="space-y-3">
-            {sosAlerts.filter(alert => alert.status === 'active').map(alert => (
-              <div key={alert.id} className="bg-white rounded-lg p-4 shadow-sm">
+            {activeAlerts.map(alert => (
+              <div key={alert.id} className="bg-white dark:surface-1 rounded-lg p-4 shadow-sm">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
                     <div className="h-3 w-3 bg-red-500 rounded-full animate-pulse"></div>
                     <div>
-                      <p className="font-medium text-gray-900">{userNames[alert.userId]}</p>
-                      <p className="text-sm text-gray-600">{alert.location.address}</p>
-                      <p className="text-sm text-red-600">{alert.description}</p>
+                      <p className="font-medium text-gray-900 dark:text-slate-100">{userNames[alert.userId]}</p>
+                      <p className="text-sm text-gray-600 dark:text-slate-300">{alert.location.address}</p>
+                      <p className="text-sm text-red-600 dark:text-rose-200">{alert.description}</p>
                     </div>
                   </div>
                   <div className="flex items-center space-x-2">
                     <button className="btn-secondary text-sm">
                       <MapPinIcon className="h-4 w-4 mr-1" />
-                      View Map
+                      Xem bản đồ
                     </button>
                     <button
                       onClick={() => handleResolveAlert(alert.id)}
                       className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700"
                     >
-                      Resolve
+                      Đã xử lý
                     </button>
                     <button
                       onClick={() => handleMarkFalseAlarm(alert.id)}
                       className="bg-gray-600 text-white px-3 py-1 rounded text-sm hover:bg-gray-700"
                     >
-                      False Alarm
+                      Báo giả
                     </button>
                   </div>
                 </div>
@@ -259,10 +318,10 @@ export default function SafetyManagement() {
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value as any)}
           >
-            <option value="all">All Status</option>
-            <option value="active">Active</option>
-            <option value="resolved">Resolved</option>
-            <option value="false_alarm">False Alarms</option>
+            <option value="all">Tất cả trạng thái</option>
+            <option value="active">Đang khẩn cấp</option>
+            <option value="resolved">Đã xử lý</option>
+            <option value="false_alarm">Báo giả</option>
           </select>
         </div>
       </motion.div>
@@ -279,22 +338,22 @@ export default function SafetyManagement() {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Alert Details
+                  Thông tin báo động
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  User
+                  Người gửi
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Location
+                  Vị trí
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
+                  Trạng thái
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Time
+                  Thời gian
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
+                  Thao tác
                 </th>
               </tr>
             </thead>
@@ -308,7 +367,7 @@ export default function SafetyManagement() {
                         {alert.description}
                       </div>
                       {alert.rideId && (
-                        <div className="text-xs text-blue-600">Ride: {alert.rideId}</div>
+                        <div className="text-xs text-blue-600">Chuyến: {alert.rideId}</div>
                       )}
                     </div>
                   </td>
@@ -319,7 +378,7 @@ export default function SafetyManagement() {
                       </div>
                       <div className="ml-3">
                         <div className="text-sm font-medium text-gray-900">
-                          {userNames[alert.userId]}
+                          {userNames[alert.userId] || `User ${alert.userId}`}
                         </div>
                         <div className="text-sm text-gray-500">ID: {alert.userId}</div>
                       </div>
@@ -342,24 +401,24 @@ export default function SafetyManagement() {
                     <div className="flex items-center">
                       {getStatusIcon(alert.status)}
                       <span className={`ml-2 inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadge(alert.status)}`}>
-                        {alert.status.replace('_', ' ')}
+                        {statusLabels[alert.status]}
                       </span>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div>
                       <div className="text-sm text-gray-900">
-                        {new Date(alert.createdAt).toLocaleDateString()}
+                        {new Date(alert.createdAt).toLocaleDateString('vi-VN')}
                       </div>
                       <div className="text-xs text-gray-500">
-                        {new Date(alert.createdAt).toLocaleTimeString([], {
+                        {new Date(alert.createdAt).toLocaleTimeString('vi-VN', {
                           hour: '2-digit',
                           minute: '2-digit',
                         })}
                       </div>
                       {alert.resolvedAt && (
                         <div className="text-xs text-green-600 mt-1">
-                          Resolved: {new Date(alert.resolvedAt).toLocaleTimeString([], {
+                          Đã xử lý lúc: {new Date(alert.resolvedAt).toLocaleTimeString('vi-VN', {
                             hour: '2-digit',
                             minute: '2-digit',
                           })}
@@ -399,9 +458,33 @@ export default function SafetyManagement() {
           </table>
         </div>
         
-        {filteredAlerts.length === 0 && (
+        {loadingAlerts ? (
           <div className="text-center py-12">
-            <p className="text-gray-500">No SOS alerts found matching your criteria.</p>
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+            <p className="mt-2 text-gray-500">Đang tải...</p>
+          </div>
+        ) : filteredAlerts.length === 0 ? (
+          <div className="text-center py-12">
+            <p className="text-gray-500">Không tìm thấy báo động SOS phù hợp tiêu chí lọc.</p>
+          </div>
+        ) : null}
+        
+        {/* Pagination */}
+        {!loadingAlerts && totalPages > 0 && (
+          <div className="px-6 py-4 border-t border-gray-200">
+            <Pagination
+              currentPage={page}
+              totalPages={totalPages}
+              totalRecords={totalRecords}
+              pageSize={pageSize}
+              onPageChange={setPage}
+              onPageSizeChange={(newSize) => {
+                setPage(0);
+                setPageSize(newSize);
+              }}
+              loading={loadingAlerts}
+              pageSizeOptions={[5, 10, 20, 50]}
+            />
           </div>
         )}
       </motion.div>
@@ -414,24 +497,30 @@ export default function SafetyManagement() {
         className="card"
       >
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-lg font-semibold text-gray-900">Driver Safety Verification</h3>
-          <button className="btn-secondary">Manage Verifications</button>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Xác thực an toàn tài xế</h3>
+          <button className="btn-secondary">Quản lý kiểm duyệt</button>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="text-center p-6 bg-green-50 rounded-lg">
-            <div className="text-3xl font-bold text-green-600">127</div>
-            <div className="text-sm text-gray-600 mt-1">Verified Drivers</div>
-            <div className="text-xs text-green-600 mt-2">Background checked</div>
+          <div className="text-center p-6 bg-green-50 dark:bg-green-900/30 rounded-lg border border-green-200 dark:border-green-800">
+            <div className="text-3xl font-bold text-green-600 dark:text-green-400">
+              {dashboardStats?.approvedDriversCount ?? '—'}
+            </div>
+            <div className="text-sm text-gray-600 dark:text-gray-300 mt-1">Tài xế đã duyệt</div>
+            <div className="text-xs text-green-600 dark:text-green-400 mt-2">Đã kiểm tra lý lịch</div>
           </div>
-          <div className="text-center p-6 bg-yellow-50 rounded-lg">
-            <div className="text-3xl font-bold text-yellow-600">23</div>
-            <div className="text-sm text-gray-600 mt-1">Pending Verification</div>
-            <div className="text-xs text-yellow-600 mt-2">Awaiting review</div>
+          <div className="text-center p-6 bg-yellow-50 dark:bg-yellow-900/30 rounded-lg border border-yellow-200 dark:border-yellow-800">
+            <div className="text-3xl font-bold text-yellow-600 dark:text-yellow-400">
+              {dashboardStats?.pendingDriversCount ?? '—'}
+            </div>
+            <div className="text-sm text-gray-600 dark:text-gray-300 mt-1">Đang chờ duyệt</div>
+            <div className="text-xs text-yellow-600 dark:text-yellow-400 mt-2">Chờ xét duyệt hồ sơ</div>
           </div>
-          <div className="text-center p-6 bg-red-50 rounded-lg">
-            <div className="text-3xl font-bold text-red-600">5</div>
-            <div className="text-sm text-gray-600 mt-1">Rejected</div>
-            <div className="text-xs text-red-600 mt-2">Failed verification</div>
+          <div className="text-center p-6 bg-red-50 dark:bg-red-900/30 rounded-lg border border-red-200 dark:border-red-800">
+            <div className="text-3xl font-bold text-red-600 dark:text-red-400">
+              {dashboardStats?.rejectedDriversCount ?? '—'}
+            </div>
+            <div className="text-sm text-gray-600 dark:text-gray-300 mt-1">Bị từ chối</div>
+            <div className="text-xs text-red-600 dark:text-red-400 mt-2">Không đạt yêu cầu</div>
           </div>
         </div>
       </motion.div>
@@ -447,7 +536,7 @@ export default function SafetyManagement() {
             <div className="px-6 py-4 border-b border-gray-200">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold text-gray-900">
-                  SOS Alert Details - #{selectedAlert.id}
+                  Chi tiết báo động SOS - #{selectedAlert.id}
                 </h3>
                 <button
                   onClick={() => setSelectedAlert(null)}
@@ -461,53 +550,53 @@ export default function SafetyManagement() {
             <div className="px-6 py-4 space-y-6">
               {/* Alert Info */}
               <div>
-                <h4 className="font-medium text-gray-900 mb-3">Alert Information</h4>
+                <h4 className="font-medium text-gray-900 mb-3">Thông tin báo động</h4>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <p className="text-sm text-gray-500">Status</p>
+                    <p className="text-sm text-gray-500">Trạng thái</p>
                     <div className="flex items-center mt-1">
                       {getStatusIcon(selectedAlert.status)}
-                      <span className="ml-2 font-semibold capitalize">
-                        {selectedAlert.status.replace('_', ' ')}
+                      <span className="ml-2 font-semibold">
+                        {statusLabels[selectedAlert.status]}
                       </span>
                     </div>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500">Created</p>
+                    <p className="text-sm text-gray-500">Khởi tạo</p>
                     <p className="font-semibold">
-                      {new Date(selectedAlert.createdAt).toLocaleString()}
+                      {new Date(selectedAlert.createdAt).toLocaleString('vi-VN')}
                     </p>
                   </div>
                 </div>
                 <div className="mt-4">
-                  <p className="text-sm text-gray-500">Description</p>
+                  <p className="text-sm text-gray-500">Mô tả</p>
                   <p className="font-medium text-gray-900 mt-1">{selectedAlert.description}</p>
                 </div>
               </div>
 
               {/* User Info */}
               <div>
-                <h4 className="font-medium text-gray-900 mb-3">User Information</h4>
+                <h4 className="font-medium text-gray-900 mb-3">Thông tin người gửi</h4>
                 <div className="p-4 bg-gray-50 rounded-lg">
-                  <p className="font-semibold text-gray-900">{userNames[selectedAlert.userId]}</p>
-                  <p className="text-sm text-gray-600">User ID: {selectedAlert.userId}</p>
+                  <p className="font-semibold text-gray-900">{userNames[selectedAlert.userId] || `User ${selectedAlert.userId}`}</p>
+                  <p className="text-sm text-gray-600">Mã người dùng: {selectedAlert.userId}</p>
                   {selectedAlert.rideId && (
-                    <p className="text-sm text-blue-600">Associated Ride: {selectedAlert.rideId}</p>
+                    <p className="text-sm text-blue-600">Chuyến liên quan: {selectedAlert.rideId}</p>
                   )}
                 </div>
               </div>
 
               {/* Location Info */}
               <div>
-                <h4 className="font-medium text-gray-900 mb-3">Location</h4>
+                <h4 className="font-medium text-gray-900 mb-3">Vị trí</h4>
                 <div className="p-4 bg-gray-50 rounded-lg">
                   <p className="font-medium text-gray-900">{selectedAlert.location.address}</p>
                   <p className="text-sm text-gray-600 mt-1">
-                    Coordinates: {selectedAlert.location.lat}, {selectedAlert.location.lng}
+                    Tọa độ: {selectedAlert.location.lat}, {selectedAlert.location.lng}
                   </p>
                   <button className="btn-primary mt-3 text-sm">
                     <MapPinIcon className="h-4 w-4 mr-1" />
-                    View on Map
+                    Mở trên bản đồ
                   </button>
                 </div>
               </div>
@@ -515,15 +604,15 @@ export default function SafetyManagement() {
               {/* Resolution Info */}
               {selectedAlert.resolvedAt && (
                 <div>
-                  <h4 className="font-medium text-gray-900 mb-3">Resolution</h4>
+                  <h4 className="font-medium text-gray-900 mb-3">Thông tin xử lý</h4>
                   <div className="p-4 bg-green-50 rounded-lg">
-                    <p className="text-sm text-gray-600">Resolved on:</p>
+                    <p className="text-sm text-gray-600">Thời gian xử lý:</p>
                     <p className="font-semibold">
-                      {new Date(selectedAlert.resolvedAt).toLocaleString()}
+                      {new Date(selectedAlert.resolvedAt).toLocaleString('vi-VN')}
                     </p>
                     {selectedAlert.resolvedBy && (
                       <p className="text-sm text-gray-600 mt-1">
-                        Resolved by: {selectedAlert.resolvedBy}
+                        Người xử lý: {selectedAlert.resolvedBy}
                       </p>
                     )}
                   </div>
@@ -541,7 +630,7 @@ export default function SafetyManagement() {
                     }}
                     className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
                   >
-                    Resolve Alert
+                    Đánh dấu đã xử lý
                   </button>
                   <button
                     onClick={() => {
@@ -550,7 +639,7 @@ export default function SafetyManagement() {
                     }}
                     className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700"
                   >
-                    False Alarm
+                    Báo giả
                   </button>
                 </>
               )}
@@ -558,7 +647,7 @@ export default function SafetyManagement() {
                 onClick={() => setSelectedAlert(null)}
                 className="btn-secondary"
               >
-                Close
+                Đóng
               </button>
             </div>
           </motion.div>

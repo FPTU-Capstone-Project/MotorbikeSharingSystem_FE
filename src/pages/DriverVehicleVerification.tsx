@@ -124,7 +124,7 @@ export default function DriverVehicleVerification() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Vehicle Verification</h1>
+          <h1 className="text-3xl font-bold text-gray-900">Vehicle Management</h1>
           <p className="mt-2 text-gray-600">
             Submit your vehicle documents for verification to start accepting rides
           </p>

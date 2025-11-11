@@ -87,7 +87,10 @@ class HttpClient {
     });
   }
 
-  private async fetchWithRetry<T>(url: string, config: RequestInit, retryAttempts: number): Promise<T> {
+  private isRefreshing = false;
+  private refreshPromise: Promise<string> | null = null;
+
+  private async fetchWithRetry<T>(url: string, config: RequestInit, retryAttempts: number, isRetry = false): Promise<T> {
     const apiConfig = getApiConfig();
     let lastError: Error | null = null;
 
@@ -102,6 +105,35 @@ class HttpClient {
         });
 
         clearTimeout(timeoutId);
+
+        // Handle 401 Unauthorized - try to refresh token
+        if (response.status === 401 && !isRetry) {
+          // Don't refresh if this is already a refresh token request
+          if (url.includes('/auth/refresh')) {
+            const errorData = await response.json().catch(() => ({
+              message: response.statusText,
+            }));
+            throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
+          }
+
+          // Try to refresh token
+          try {
+            const newToken = await this.refreshTokenIfNeeded();
+            if (newToken) {
+              // Retry the original request with new token
+              const newHeaders = {
+                ...config.headers as Record<string, string>,
+                'Authorization': `Bearer ${newToken}`,
+              };
+              return this.fetchWithRetry<T>(url, { ...config, headers: newHeaders }, retryAttempts, true);
+            }
+          } catch (refreshError) {
+            console.error('Token refresh failed:', refreshError);
+            // If refresh fails, clear auth and throw error
+            this.clearAuth();
+            throw new Error('Session expired. Please login again.');
+          }
+        }
 
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({
@@ -126,6 +158,87 @@ class HttpClient {
     }
 
     throw lastError || new Error('Request failed after retries');
+  }
+
+  private async refreshTokenIfNeeded(): Promise<string | null> {
+    // If already refreshing, wait for the existing promise
+    if (this.isRefreshing && this.refreshPromise) {
+      return this.refreshPromise;
+    }
+
+    // Check if refresh token exists
+    const refreshToken = localStorage.getItem('refreshToken') || 
+                         localStorage.getItem('refresh_token');
+    if (!refreshToken) {
+      return null;
+    }
+
+    this.isRefreshing = true;
+    this.refreshPromise = this.performTokenRefresh(refreshToken);
+
+    try {
+      const newToken = await this.refreshPromise;
+      this.isRefreshing = false;
+      this.refreshPromise = null;
+      return newToken;
+    } catch (error) {
+      this.isRefreshing = false;
+      this.refreshPromise = null;
+      throw error;
+    }
+  }
+
+  private async performTokenRefresh(refreshToken: string): Promise<string> {
+    const config = getApiConfig();
+    const url = `${config.baseURL}/auth/refresh`;
+    
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ refreshToken }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({
+        message: response.statusText,
+      }));
+      throw new Error(errorData.message || 'Token refresh failed');
+    }
+
+    const data = await response.json();
+    const newAccessToken = data.access_token || data.accessToken;
+    
+    if (!newAccessToken) {
+      throw new Error('No access token in refresh response');
+    }
+
+    // Update stored tokens
+    this.setAuthToken(newAccessToken);
+    localStorage.setItem('access_token', newAccessToken);
+    localStorage.setItem('token', newAccessToken);
+    localStorage.setItem('accessToken', newAccessToken);
+    localStorage.setItem('authToken', newAccessToken);
+    
+    // Update refresh token if provided
+    if (data.refresh_token || data.refreshToken) {
+      const newRefreshToken = data.refresh_token || data.refreshToken;
+      localStorage.setItem('refreshToken', newRefreshToken);
+      localStorage.setItem('refresh_token', newRefreshToken);
+    }
+
+    return newAccessToken;
+  }
+
+  private clearAuth(): void {
+    this.setAuthToken(null);
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('token');
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('refreshToken');
+    localStorage.removeItem('refresh_token');
   }
 
   async request<T>(endpoint: string, config: RequestConfig = {}): Promise<T> {
@@ -185,6 +298,10 @@ class HttpClient {
 
   async put<T>(endpoint: string, data?: any, config?: RequestConfig): Promise<T> {
     return this.request<T>(endpoint, { ...config, method: 'PUT', body: JSON.stringify(data) });
+  }
+
+  async patch<T>(endpoint: string, data?: any, config?: RequestConfig): Promise<T> {
+    return this.request<T>(endpoint, { ...config, method: 'PATCH', body: JSON.stringify(data) });
   }
 
   async delete<T>(endpoint: string, config?: RequestConfig): Promise<T> {

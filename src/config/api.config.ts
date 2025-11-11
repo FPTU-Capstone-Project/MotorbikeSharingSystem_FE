@@ -10,7 +10,7 @@ interface ApiConfig {
 }
 
 // Use environment variable or fallback to localhost
-const BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8081/api/v1';
+const BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8080/api/v1';
 
 const API_CONFIG: ApiConfig = {
   baseURL: BASE_URL,
@@ -39,6 +39,15 @@ export const API_ENDPOINTS = {
     TOPUP_TRENDS: '/reports/wallet/topup-trends',
     COMMISSION: '/reports/wallet/commission',
   },
+  USER_REPORTS: {
+    LIST: '/user-reports',
+    DETAILS: (id: number) => `/user-reports/${id}`,
+    UPDATE_STATUS: (id: number) => `/user-reports/${id}`,
+    RESOLVE: (id: number) => `/user-reports/${id}/resolve`,
+    ANALYTICS: '/user-reports/analytics',
+    MY_REPORTS: '/user-reports/my-reports',
+    DRIVER_RESPONSE: (id: number) => `/user-reports/${id}/driver-response`,
+  },
   VERIFICATION: {
     STUDENTS: {
       PENDING: '/verification/students/pending',
@@ -64,6 +73,17 @@ export const API_ENDPOINTS = {
     BY_ID: (id: number) => `/vehicles/${id}`,
     BY_DRIVER: (driverId: number) => `/vehicles/driver/${driverId}`,
     BY_STATUS: (status: string) => `/vehicles/status/${status}`,
+  },
+  TRANSACTIONS: {
+    ALL: '/transaction/all',
+    BY_USER: (userId: number) => `/transaction/user/${userId}`,
+    BY_GROUP: (groupId: string) => `/transaction/group/${groupId}`,
+  },
+  USERS: {
+    ALL: '/admin/users',
+    BY_ID: (userId: number) => `/admin/users/${userId}`,
+    SUSPEND: (userId: number) => `/admin/users/${userId}/suspend`,
+    ACTIVATE: (userId: number) => `/admin/users/${userId}/activate`,
   },
 } as const;
 

@@ -3,23 +3,27 @@ import {
   MagnifyingGlassIcon,
   FunnelIcon,
   EyeIcon,
-  XCircleIcon,
   ArrowDownOnSquareStackIcon,
   CheckCircleIcon,
   UsersIcon,
   AcademicCapIcon,
+  NoSymbolIcon,
+  ArrowPathIcon,
+  ExclamationTriangleIcon,
 } from '@heroicons/react/24/outline';
 import { Bike, Plus } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { UserManagementItem } from '../types';
-import { getAllUsers } from '../services/profileService';
+import { getAllUsers, suspendUser, activateUser } from '../services/profileService';
+import Pagination from '../components/Pagination';
 import toast from 'react-hot-toast';
+import StatSummaryCard from '../components/StatSummaryCard';
 
 export default function UserManagement() {
   const [users, setUsers] = useState<UserManagementItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterRole, setFilterRole] = useState<'all' | 'student' | 'driver'>('all');
+  const [filterRole, setFilterRole] = useState<'all' | 'rider' | 'driver'>('all');
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive' | 'suspended'>('all');
   const [page, setPage] = useState(0);
   const [size, setSize] = useState(20);
@@ -37,7 +41,7 @@ export default function UserManagement() {
         setTotalRecords(response.pagination?.total_records ?? (response.data?.length || 0));
       } catch (error) {
         console.error('Failed to load users:', error);
-        toast.error('Failed to load users');
+        toast.error('Không tải được danh sách người dùng');
       } finally {
         setLoading(false);
       }
@@ -54,7 +58,7 @@ export default function UserManagement() {
       String(user.user_id).includes(searchTerm);
 
     // Determine user role based on profiles
-    const userRole = user.driver_profile ? 'driver' : 'student';
+    const userRole = user.driver_profile ? 'driver' : 'rider';
     const matchesRole = filterRole === 'all' || userRole === filterRole;
 
     // Map status to match filter options
@@ -64,30 +68,74 @@ export default function UserManagement() {
     return matchesSearch && matchesRole && matchesStatus;
   });
 
+  const handleSuspendUser = async (userId: number, userName: string) => {
+    if (window.confirm(`Bạn có chắc chắn muốn tạm khóa người dùng "${userName}"?`)) {
+      try {
+        await suspendUser(userId);
+        toast.success(`Người dùng "${userName}" đã bị tạm khóa`);
+        
+        // Reload users after suspension
+        const response = await getAllUsers(page, size);
+        setUsers(response.data || []);
+        setTotalPages(response.pagination?.total_pages ?? 1);
+        setTotalRecords(response.pagination?.total_records ?? (response.data?.length || 0));
+      } catch (error) {
+        console.error('Failed to suspend user:', error);
+        toast.error('Không thể tạm khóa người dùng');
+      }
+    }
+  };
+
+  const handleActivateUser = async (userId: number, userName: string) => {
+    if (window.confirm(`Bạn có chắc chắn muốn kích hoạt người dùng "${userName}"?`)) {
+      try {
+        await activateUser(userId);
+        toast.success(`Người dùng "${userName}" đã được kích hoạt`);
+        
+        // Reload users after activation
+        const response = await getAllUsers(page, size);
+        setUsers(response.data || []);
+        setTotalPages(response.pagination?.total_pages ?? 1);
+        setTotalRecords(response.pagination?.total_records ?? (response.data?.length || 0));
+      } catch (error) {
+        console.error('Failed to activate user:', error);
+        toast.error('Không thể kích hoạt người dùng');
+      }
+    }
+  };
+
   const stats = [
     {
-      label: 'Total Users',
+      label: 'Tổng số người dùng',
       value: users.length,
-      Icon: UsersIcon,
-      bg: 'bg-blue-500',
+      icon: UsersIcon,
+      gradient: 'from-blue-600 to-indigo-600',
+      backgroundGradient: 'from-blue-50 to-blue-100',
+      detail: `${totalRecords} hồ sơ đã tải`,
     },
     {
-      label: 'Students',
+      label: 'Hành khách',
       value: users.filter(u => !u.driver_profile).length,
-      Icon: AcademicCapIcon,
-      bg: 'bg-indigo-500',
+      icon: AcademicCapIcon,
+      gradient: 'from-indigo-600 to-sky-600',
+      backgroundGradient: 'from-indigo-50 to-sky-100',
+      detail: 'Bao gồm mọi hồ sơ hành khách',
     },
     {
-      label: 'Drivers',
+      label: 'Tài xế',
       value: users.filter(u => u.driver_profile).length,
-      Icon: Bike,
-      bg: 'bg-purple-500',
+      icon: Bike,
+      gradient: 'from-purple-600 to-fuchsia-600',
+      backgroundGradient: 'from-purple-50 to-fuchsia-100',
+      detail: 'Tài xế đã hoàn tất đăng ký',
     },
     {
-      label: 'Active Users',
+      label: 'Đang hoạt động',
       value: users.filter(u => u.status === 'ACTIVE').length,
-      Icon: CheckCircleIcon,
-      bg: 'bg-green-500',
+      icon: CheckCircleIcon,
+      gradient: 'from-emerald-600 to-teal-600',
+      backgroundGradient: 'from-emerald-50 to-teal-100',
+      detail: 'Có thể đặt và nhận chuyến',
     },
   ];
 
@@ -100,9 +148,9 @@ export default function UserManagement() {
         className="flex flex-col sm:flex-row sm:items-center sm:justify-between"
       >
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">User Management</h1>
+          <h1 className="text-3xl font-bold text-gray-900">Quản lý người dùng</h1>
           <p className="mt-2 text-gray-600">
-            Manage student and driver accounts, verification status, and user activities
+            Theo dõi tài khoản hành khách, tài xế, trạng thái xác thực và hoạt động liên quan
           </p>
         </div>
         <div className="mt-4 sm:mt-0">
@@ -111,31 +159,30 @@ export default function UserManagement() {
             onClick={() => toast.success('Open Create Staff modal (to be implemented)')}
           >
             <Plus className="h-4 w-4" />
-            Create Staff
+            Tạo tài khoản nhân viên
           </button>
         </div>
         {/* Removed Add New User button as requested */}
       </motion.div>
 
-      {/* Stats Cards (consistent with other pages) */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-stretch">
         {stats.map((stat, index) => (
           <motion.div
             key={stat.label}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.05 }}
-            className="card"
+            className="h-full"
           >
-            <div className="flex items-center">
-              <div className={`p-3 rounded-lg ${stat.bg}`}>
-                <stat.Icon className="h-6 w-6 text-white" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">{stat.label}</p>
-                <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
-              </div>
-            </div>
+            <StatSummaryCard
+              label={stat.label}
+              value={stat.value}
+              icon={stat.icon}
+              gradient={stat.gradient}
+              backgroundGradient={stat.backgroundGradient}
+              detail={stat.detail}
+            />
           </motion.div>
         ))}
       </div>
@@ -153,7 +200,7 @@ export default function UserManagement() {
               <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
               <input
                 type="text"
-                placeholder="Search users..."
+                placeholder="Tìm kiếm người dùng..."
                 className="input-field pl-10 w-full sm:w-80"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -165,19 +212,19 @@ export default function UserManagement() {
                 value={filterRole}
                 onChange={(e) => setFilterRole(e.target.value as any)}
               >
-                <option value="all">All Roles</option>
-                <option value="student">Students</option>
-                <option value="driver">Drivers</option>
+                <option value="all">Tất cả vai trò</option>
+                <option value="rider">Hành khách</option>
+                <option value="driver">Tài xế</option>
               </select>
               <select
                 className="input-field"
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value as any)}
               >
-                <option value="all">All Status</option>
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
-                <option value="suspended">Suspended</option>
+                <option value="all">Tất cả trạng thái</option>
+                <option value="active">Đang hoạt động</option>
+                <option value="inactive">Không hoạt động</option>
+                <option value="suspended">Tạm khóa</option>
               </select>
             </div>
           </div>
@@ -187,7 +234,7 @@ export default function UserManagement() {
             className="btn-secondary flex items-center"
           >
             <FunnelIcon className="h-5 w-5 mr-2" />
-            Advanced Filters
+            Bộ lọc nâng cao
           </motion.button>
         </div>
       </motion.div>
@@ -204,22 +251,22 @@ export default function UserManagement() {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  User
+                  Người dùng
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Role
+                  Vai trò
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
+                  Trạng thái
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Verification
+                  Xác thực
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Last Active
+                  Hoạt động cuối
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
+                  Thao tác
                 </th>
               </tr>
             </thead>
@@ -231,13 +278,20 @@ export default function UserManagement() {
                       <div className="flex justify-center">
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
                       </div>
-                      <p className="mt-2 text-gray-500">Loading users...</p>
+                      <p className="mt-2 text-gray-500">Đang tải danh sách người dùng...</p>
                     </td>
                   </tr>
                 ) : (
                   filteredUsers.map((user, index) => {
-                    const userRole = user.driver_profile ? 'driver' : 'student';
+                    const userRole = user.driver_profile ? 'driver' : 'rider';
+                    const userRoleLabel = userRole === 'driver' ? 'Tài xế' : 'Hành khách';
                     const isVerified = user.email_verified && user.phone_verified;
+                    const statusLabel =
+                      user.status === 'ACTIVE'
+                        ? 'Đang hoạt động'
+                        : user.status === 'INACTIVE'
+                          ? 'Không hoạt động'
+                          : 'Tạm khóa';
 
                     return (
                       <motion.tr
@@ -267,7 +321,7 @@ export default function UserManagement() {
                               ? 'bg-purple-100 text-purple-800'
                               : 'bg-blue-100 text-blue-800'
                             }`}>
-                            {userRole}
+                            {userRoleLabel}
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -277,19 +331,19 @@ export default function UserManagement() {
                                 ? 'bg-gray-100 text-gray-800'
                                 : 'bg-red-100 text-red-800'
                             }`}>
-                            {user.status.toLowerCase()}
+                            {statusLabel}
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           {isVerified ? (
                             <div className="flex items-center text-green-600">
                               <CheckCircleIcon className="h-5 w-5 mr-1" />
-                              <span className="text-sm">Verified</span>
+                              <span className="text-sm">Đã xác thực</span>
                             </div>
                           ) : (
                             <div className="flex items-center text-yellow-600">
-                              <XCircleIcon className="h-5 w-5 mr-1" />
-                              <span className="text-sm">Pending</span>
+                              <ExclamationTriangleIcon className="h-5 w-5 mr-1" />
+                              <span className="text-sm">Đang chờ</span>
                             </div>
                           )}
                         </td>
@@ -298,14 +352,29 @@ export default function UserManagement() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                           <div className="flex items-center space-x-2">
-                            <button className="text-blue-600 hover:text-blue-900 p-1 rounded flex items-center">
+                            <button className="text-blue-600 hover:text-blue-900 p-1 rounded flex items-center"
+                              title="Xem chi tiết người dùng">
                               <EyeIcon className="h-4 w-4" />
                             </button>
-                            <button className="text-green-600 hover:text-green-900 p-1 rounded flex items-center">
+                            <button className="text-green-600 hover:text-green-900 p-1 rounded flex items-center"
+                              title="Xuất dữ liệu người dùng">
                               <ArrowDownOnSquareStackIcon className="h-4 w-4" />
-                            </button><button className="text-red-600 hover:text-red-900 p-1 rounded flex items-center">
-                              <XCircleIcon className="h-4 w-4" />
                             </button>
+                            
+                            {/* Show suspend button for active users, activate button for suspended users */}
+                            {user.status.toLowerCase() === 'suspended' ? (
+                              <button className="text-green-600 hover:text-green-900 p-1 rounded flex items-center"
+                                onClick={() => handleActivateUser(user.user_id, user.full_name || `Người dùng ${user.user_id}`)}
+                                title="Kích hoạt người dùng">
+                                <ArrowPathIcon className="h-4 w-4" />
+                              </button>
+                            ) : (
+                              <button className="text-yellow-600 hover:text-yellow-900 p-1 rounded flex items-center"
+                                onClick={() => handleSuspendUser(user.user_id, user.full_name || `Người dùng ${user.user_id}`)}
+                                title="Tạm khóa người dùng">
+                                <NoSymbolIcon className="h-4 w-4" />
+                              </button>
+                            )}
                           </div>
                         </td>
                       </motion.tr>
@@ -317,52 +386,26 @@ export default function UserManagement() {
           </table>
         </div>
         {/* Pagination Controls */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between px-6 py-4 border-t border-gray-100 bg-gray-50">
-          <div className="text-sm text-gray-600 mb-3 sm:mb-0">
-            Showing page <span className="font-semibold">{page + 1}</span> of <span className="font-semibold">{totalPages}</span>
-            {` `}(<span className="font-semibold">{totalRecords}</span> total users)
-          </div>
-          <div className="flex items-center space-x-3">
-            <div className="flex items-center space-x-2">
-              <span className="text-sm text-gray-600">Rows per page</span>
-              <select
-                className="input-field py-1"
-                value={size}
-                onChange={(e) => {
-                  setPage(0);
-                  setSize(Number(e.target.value));
-                }}
-              >
-                {[10, 20, 50, 100].map((s) => (
-                  <option key={s} value={s}>{s}</option>
-                ))}
-              </select>
-            </div>
-            <div className="flex items-center space-x-2">
-              <button
-                className="btn-secondary px-3 py-2 disabled:opacity-50"
-                onClick={() => setPage((p) => Math.max(0, p - 1))}
-                disabled={page <= 0 || loading}
-              >
-                Prev
-              </button>
-              <button
-                className="btn-primary px-3 py-2 disabled:opacity-50"
-                onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
-                disabled={page >= totalPages - 1 || loading}
-              >
-                Next
-              </button>
-            </div>
-          </div>
-        </div>
+        <Pagination
+          currentPage={page}
+          totalPages={totalPages}
+          totalRecords={totalRecords}
+          pageSize={size}
+          onPageChange={setPage}
+          onPageSizeChange={(newSize) => {
+            setPage(0);
+            setSize(newSize);
+          }}
+          loading={loading}
+          pageSizeOptions={[10, 20, 50, 100]}
+        />
         {filteredUsers.length === 0 && (
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             className="text-center py-12"
           >
-            <p className="text-gray-500">No users found matching your criteria.</p>
+            <p className="text-gray-500">Không tìm thấy người dùng phù hợp với tiêu chí.</p>
           </motion.div>
         )}
       </motion.div>

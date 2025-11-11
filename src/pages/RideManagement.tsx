@@ -118,7 +118,7 @@ export default function RideManagement() {
           : ride
       )
     );
-    toast.success('Ride cancelled successfully');
+    toast.success('Đã hủy chuyến thành công');
   };
 
   const getStatusBadge = (status: Ride['status']) => {
@@ -138,42 +138,55 @@ export default function RideManagement() {
       : 'bg-gray-100 text-gray-800';
   };
 
+  const statusLabels: Record<Ride['status'], string> = {
+    pending: 'Đang chờ',
+    accepted: 'Đã nhận',
+    ongoing: 'Đang thực hiện',
+    completed: 'Đã hoàn thành',
+    cancelled: 'Đã hủy',
+  };
+
+  const typeLabels: Record<Ride['type'], string> = {
+    solo: 'Đi riêng',
+    shared: 'Đi chung',
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Ride Management</h1>
+          <h1 className="text-3xl font-bold text-gray-900">Quản lý chuyến đi</h1>
           <p className="mt-2 text-gray-600">
-            Monitor and manage all ride requests, ongoing trips, and completed journeys
+            Theo dõi và xử lý yêu cầu chuyến, chuyến đang diễn ra và đã hoàn tất
           </p>
         </div>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-stretch">
         {[
           { 
-            label: 'Total Rides', 
+            label: 'Tổng số chuyến', 
             value: rides.length, 
             color: 'bg-blue-500',
             icon: MapPinIcon
           },
           { 
-            label: 'Ongoing Rides', 
+            label: 'Đang thực hiện', 
             value: rides.filter(r => r.status === 'ongoing').length, 
             color: 'bg-purple-500',
             icon: ClockIcon
           },
           { 
-            label: 'Shared Rides', 
+            label: 'Chuyến đi chung', 
             value: rides.filter(r => r.type === 'shared').length, 
             color: 'bg-green-500',
             icon: UserIcon
           },
           { 
-            label: 'Total Revenue', 
-            value: `${rides.filter(r => r.status === 'completed').reduce((sum, r) => sum + r.fare, 0).toLocaleString()}đ`, 
+            label: 'Tổng doanh thu', 
+            value: `${rides.filter(r => r.status === 'completed').reduce((sum, r) => sum + r.fare, 0).toLocaleString('vi-VN')}đ`, 
             color: 'bg-yellow-500',
             icon: CurrencyDollarIcon
           },
@@ -183,9 +196,9 @@ export default function RideManagement() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.1 }}
-            className="card"
+            className="card h-full flex flex-col"
           >
-            <div className="flex items-center">
+            <div className="flex items-center flex-1">
               <div className={`p-3 rounded-lg ${stat.color}`}>
                 <stat.icon className="h-6 w-6 text-white" />
               </div>
@@ -211,21 +224,21 @@ export default function RideManagement() {
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value as any)}
           >
-            <option value="all">All Status</option>
-            <option value="pending">Pending</option>
-            <option value="accepted">Accepted</option>
-            <option value="ongoing">Ongoing</option>
-            <option value="completed">Completed</option>
-            <option value="cancelled">Cancelled</option>
+            <option value="all">Tất cả trạng thái</option>
+            <option value="pending">Đang chờ</option>
+            <option value="accepted">Đã nhận</option>
+            <option value="ongoing">Đang thực hiện</option>
+            <option value="completed">Đã hoàn thành</option>
+            <option value="cancelled">Đã hủy</option>
           </select>
           <select
             className="input-field"
             value={filterType}
             onChange={(e) => setFilterType(e.target.value as any)}
           >
-            <option value="all">All Types</option>
-            <option value="solo">Solo Rides</option>
-            <option value="shared">Shared Rides</option>
+            <option value="all">Tất cả loại chuyến</option>
+            <option value="solo">Đi riêng</option>
+            <option value="shared">Đi chung</option>
           </select>
         </div>
       </motion.div>
@@ -242,22 +255,22 @@ export default function RideManagement() {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Ride Details
+                  Thông tin chuyến
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Rider & Driver
+                  Hành khách & Tài xế
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Route
+                  Lộ trình
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status & Type
+                  Trạng thái & Loại
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Fare
+                  Cước phí
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
+                  Thao tác
                 </th>
               </tr>
             </thead>
@@ -268,28 +281,28 @@ export default function RideManagement() {
                     <div>
                       <div className="text-sm font-medium text-gray-900">#{ride.id}</div>
                       <div className="text-sm text-gray-500">
-                        {new Date(ride.createdAt).toLocaleDateString()} at{' '}
-                        {new Date(ride.createdAt).toLocaleTimeString([], { 
+                        {new Date(ride.createdAt).toLocaleDateString('vi-VN')} lúc{' '}
+                        {new Date(ride.createdAt).toLocaleTimeString('vi-VN', { 
                           hour: '2-digit', 
                           minute: '2-digit' 
                         })}
                       </div>
                       <div className="text-xs text-gray-400">
-                        {ride.distance}km • {ride.duration}min
+                        {ride.distance}km • {ride.duration} phút
                       </div>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div>
                       <div className="text-sm font-medium text-gray-900">
-                        Rider: {riderNames[ride.riderId]}
+                        Hành khách: {riderNames[ride.riderId]}
                       </div>
                       <div className="text-sm text-gray-500">
-                        Driver: {driverNames[ride.driverId]}
+                        Tài xế: {driverNames[ride.driverId]}
                       </div>
                       {ride.sharedWith && ride.sharedWith.length > 0 && (
                         <div className="text-xs text-blue-600">
-                          +{ride.sharedWith.length} passengers
+                          +{ride.sharedWith.length} hành khách
                         </div>
                       )}
                     </div>
@@ -309,18 +322,18 @@ export default function RideManagement() {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="space-y-2">
                       <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadge(ride.status)}`}>
-                        {ride.status}
+                        {statusLabels[ride.status]}
                       </span>
                       <br />
                       <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getTypeBadge(ride.type)}`}>
-                        {ride.type}
+                        {typeLabels[ride.type]}
                       </span>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div>
                       <div className="text-sm font-medium text-gray-900">
-                        {ride.fare.toLocaleString()}đ
+                        {ride.fare.toLocaleString('vi-VN')}đ
                       </div>
                       <div className={`text-xs ${
                         ride.paymentStatus === 'completed' 
@@ -329,7 +342,11 @@ export default function RideManagement() {
                           ? 'text-yellow-600'
                           : 'text-red-600'
                       }`}>
-                        {ride.paymentStatus}
+                        {ride.paymentStatus === 'completed'
+                          ? 'Đã thanh toán'
+                          : ride.paymentStatus === 'pending'
+                            ? 'Chờ thanh toán'
+                            : 'Thất bại'}
                       </div>
                     </div>
                   </td>
@@ -338,6 +355,7 @@ export default function RideManagement() {
                       <button
                         onClick={() => setSelectedRide(ride)}
                         className="text-blue-600 hover:text-blue-900 p-1 rounded"
+                        title="Xem chi tiết"
                       >
                         <EyeIcon className="h-4 w-4" />
                       </button>
@@ -345,6 +363,7 @@ export default function RideManagement() {
                         <button
                           onClick={() => handleCancelRide(ride.id)}
                           className="text-red-600 hover:text-red-900 p-1 rounded"
+                          title="Hủy chuyến"
                         >
                           <XMarkIcon className="h-4 w-4" />
                         </button>

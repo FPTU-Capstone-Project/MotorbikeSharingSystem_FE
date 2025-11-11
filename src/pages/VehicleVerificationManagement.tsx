@@ -17,10 +17,11 @@ import { VehicleVerification } from '../types';
 import { approveDriverVehicle, rejectDriver } from '../services/verificationService';
 import { vehicleService } from '../services/vehicleService';
 import toast from 'react-hot-toast';
+import StatSummaryCard from '../components/StatSummaryCard';
 
 // Load from backend
 
-export default function VehicleVerificationManagement() {
+export default function VehicleManagement() {
   const [verifications, setVerifications] = useState<VehicleVerification[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   // Removed filterStatus per request; using sort-only controls
@@ -133,6 +134,40 @@ export default function VehicleVerificationManagement() {
   const pendingCount = verifications.filter(v => v.status === 'pending').length;
   const approvedCount = verifications.filter(v => v.status === 'approved').length;
   const rejectedCount = verifications.filter(v => v.status === 'rejected').length;
+  const stats = [
+    {
+      label: 'Total Vehicles',
+      value: verifications.length,
+      icon: Bike,
+      gradient: 'from-blue-600 to-indigo-600',
+      backgroundGradient: 'from-blue-50 to-blue-100',
+      detail: `${verifications.length} total records`,
+    },
+    {
+      label: 'Pending',
+      value: pendingCount,
+      icon: ClockIcon,
+      gradient: 'from-amber-500 to-orange-500',
+      backgroundGradient: 'from-amber-50 to-orange-100',
+      detail: 'Waiting for verification',
+    },
+    {
+      label: 'Approved',
+      value: approvedCount,
+      icon: CheckCircleIcon,
+      gradient: 'from-emerald-600 to-teal-600',
+      backgroundGradient: 'from-emerald-50 to-teal-100',
+      detail: 'Approved driver documents',
+    },
+    {
+      label: 'Rejected',
+      value: rejectedCount,
+      icon: XCircleIcon,
+      gradient: 'from-rose-600 to-red-600',
+      backgroundGradient: 'from-rose-50 to-red-100',
+      detail: 'Requires resubmission',
+    },
+  ];
 
   const handleApprove = async (verification: VehicleVerification) => {
     try {
@@ -271,7 +306,7 @@ export default function VehicleVerificationManagement() {
         className="flex flex-col sm:flex-row sm:items-center sm:justify-between"
       >
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Vehicle Verification</h1>
+          <h1 className="text-3xl font-bold text-gray-900">Vehicle Management</h1>
           <p className="mt-2 text-gray-600">
             Manage and approve vehicle registrations, insurance certificates, and vehicle photos
           </p>
@@ -288,74 +323,25 @@ export default function VehicleVerificationManagement() {
       </motion.div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="card hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
-        >
-          <div className="flex items-center">
-            <div className="p-3 rounded-lg bg-gradient-to-r from-blue-500 to-blue-600 shadow-lg">
-              <Bike className="h-6 w-6 text-white" />
-            </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">Total Vehicles</p>
-              <p className="text-2xl font-bold text-gray-900">{verifications.length}</p>
-            </div>
-          </div>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="card hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
-        >
-          <div className="flex items-center">
-            <div className="p-3 rounded-lg bg-gradient-to-r from-yellow-500 to-orange-500 shadow-lg">
-              <ClockIcon className="h-6 w-6 text-white" />
-            </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">Pending</p>
-              <p className="text-2xl font-bold text-gray-900">{pendingCount}</p>
-            </div>
-          </div>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="card hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
-        >
-          <div className="flex items-center">
-            <div className="p-3 rounded-lg bg-gradient-to-r from-green-500 to-emerald-600 shadow-lg">
-              <CheckCircleIcon className="h-6 w-6 text-white" />
-            </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">Approved</p>
-              <p className="text-2xl font-bold text-gray-900">{approvedCount}</p>
-            </div>
-          </div>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-          className="card hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
-        >
-          <div className="flex items-center">
-            <div className="p-3 rounded-lg bg-gradient-to-r from-red-500 to-pink-600 shadow-lg">
-              <XCircleIcon className="h-6 w-6 text-white" />
-            </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">Rejected</p>
-              <p className="text-2xl font-bold text-gray-900">{rejectedCount}</p>
-            </div>
-          </div>
-        </motion.div>
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-stretch">
+        {stats.map((stat, index) => (
+          <motion.div
+            key={stat.label}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.05 * index }}
+            className="h-full"
+          >
+            <StatSummaryCard
+              label={stat.label}
+              value={stat.value}
+              icon={stat.icon}
+              gradient={stat.gradient}
+              backgroundGradient={stat.backgroundGradient}
+              detail={stat.detail}
+            />
+          </motion.div>
+        ))}
       </div>
 
       {/* Filters */}
@@ -546,7 +532,7 @@ export default function VehicleVerificationManagement() {
                   <div className="w-full">
                     <div className="flex items-center justify-between mb-4">
                       <h3 className="text-2xl font-bold text-gray-900">
-                        Vehicle Verification Details
+                        Vehicle Details
                       </h3>
                       <button
                         onClick={() => setShowDetailModal(false)}
@@ -792,7 +778,7 @@ export default function VehicleVerificationManagement() {
                   </div>
                   <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
                     <h3 className="text-lg leading-6 font-medium text-gray-900">
-                      Reject Vehicle Verification
+                      Reject Vehicle
                     </h3>
                     <div className="mt-2">
                       <p className="text-sm text-gray-500 mb-4">

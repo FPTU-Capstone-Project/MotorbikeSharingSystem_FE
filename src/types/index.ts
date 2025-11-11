@@ -16,6 +16,33 @@ export interface User {
   status: 'active' | 'inactive' | 'suspended'
 }
 
+export interface ChatMessage {
+  id: string
+  senderId: string
+  recipientId: string
+  content: string
+  timestamp: string
+  status: 'sent' | 'delivered' | 'read'
+  attachments?: Array<{
+    id: string
+    name: string
+    url: string
+    type: string
+  }>
+  metadata?: {
+    important?: boolean
+    automated?: boolean
+  }
+}
+
+export interface ChatThread {
+  userId: string
+  lastMessageAt: string
+  unreadCount: number
+  messages: ChatMessage[]
+  tags?: string[]
+}
+
 export interface Driver extends User {
   role: 'driver'
   licenseNumber: string
@@ -86,6 +113,7 @@ export interface SOSAlert {
   createdAt: string
   resolvedAt?: string
   resolvedBy?: string
+  userName?: string // User name from backend
 }
 
 export interface Analytics {

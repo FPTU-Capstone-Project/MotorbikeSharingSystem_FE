@@ -82,20 +82,33 @@ export class AuthAPI {
    * Refresh access token
    */
   static async refreshToken(): Promise<RefreshTokenResponse> {
-    const refreshToken = localStorage.getItem('refresh_token');
+    // Try multiple keys for compatibility
+    const refreshToken = localStorage.getItem('refreshToken') || 
+                         localStorage.getItem('refresh_token');
+    
     if (!refreshToken) {
       throw new Error('No refresh token available');
     }
 
+    // Backend expects refreshToken (camelCase) in request body
     const response = await httpClient.post<RefreshTokenResponse>(
       API_ENDPOINTS.AUTH.REFRESH,
-      { refresh_token: refreshToken }
+      { refreshToken: refreshToken }
     );
 
     // Update tokens
     if (response.access_token) {
       localStorage.setItem('access_token', response.access_token);
-      localStorage.setItem('refresh_token', response.refresh_token);
+      localStorage.setItem('token', response.access_token);
+      localStorage.setItem('accessToken', response.access_token);
+      localStorage.setItem('authToken', response.access_token);
+      
+      // Update refresh token if provided
+      if (response.refresh_token) {
+        localStorage.setItem('refreshToken', response.refresh_token);
+        localStorage.setItem('refresh_token', response.refresh_token);
+      }
+      
       httpClient.setAuthToken(response.access_token);
     }
 
@@ -107,11 +120,16 @@ export class AuthAPI {
    */
   static clearAuth(): void {
     localStorage.removeItem('access_token');
+    localStorage.removeItem('token');
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('authToken');
     localStorage.removeItem('refresh_token');
+    localStorage.removeItem('refreshToken');
     localStorage.removeItem('user_id');
     localStorage.removeItem('user_type');
     localStorage.removeItem('email');
     localStorage.removeItem('full_name');
+    localStorage.removeItem('user');
     httpClient.setAuthToken(null);
   }
 
