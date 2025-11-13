@@ -161,3 +161,14 @@ export const formatStatus = (status: string): string => {
     .map(word => capitalize(word))
     .join(' ');
 };
+
+/**
+ * Format user ID to U0000 format
+ * Example: 16 -> U0016, 123 -> U0123, 1 -> U0001
+ */
+export const formatUserId = (id: number | string | undefined | null): string => {
+  if (id === undefined || id === null || id === '') return 'N/A';
+  const numId = typeof id === 'string' ? parseInt(id, 10) : id;
+  if (isNaN(numId)) return String(id);
+  return `U${String(numId).padStart(4, '0')}`;
+};

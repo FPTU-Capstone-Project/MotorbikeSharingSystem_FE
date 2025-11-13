@@ -25,6 +25,7 @@ import {
 } from '../types/api.types';
 import Pagination from '../components/Pagination';
 import StatSummaryCard from '../components/StatSummaryCard';
+import { formatUserId } from '../utils/formatters';
 
 // Helper functions
 const formatReportId = (id: number): string => {
@@ -657,6 +658,19 @@ export default function ReportManagement() {
                   </div>
                 </div>
 
+                {/* Ride Info */}
+                {selected.sharedRideId && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      ID Chuyến đi
+                    </label>
+                    <p className="text-sm text-gray-900 dark:text-white">
+                      #{selected.sharedRideId}
+                      {selected.driverName && ` - Tài xế: ${selected.driverName}`}
+                    </p>
+                  </div>
+                )}
+
                 {/* Reporter Info */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -664,18 +678,18 @@ export default function ReportManagement() {
                   </label>
                   <p className="text-sm text-gray-900 dark:text-white">
                     {selected.reporterName} ({selected.reporterEmail})
+                    {selected.reporterId && ` - ID: ${formatUserId(selected.reporterId)}`}
                   </p>
                 </div>
 
-                {/* Ride Info */}
-                {selected.sharedRideId && (
+                {/* Reported User Info */}
+                {selected.reportedUserId && selected.reportedUserName && (
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Chuyến đi
+                      Người bị báo cáo
                     </label>
                     <p className="text-sm text-gray-900 dark:text-white">
-                      Ride #{selected.sharedRideId}
-                      {selected.driverName && ` - Tài xế: ${selected.driverName}`}
+                      {selected.reportedUserName} - ID: {formatUserId(selected.reportedUserId)}
                     </p>
                   </div>
                 )}

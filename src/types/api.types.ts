@@ -81,6 +81,8 @@ export interface UserReportSummary {
 
 export interface UserReportDetails extends UserReportSummary {
   reporterEmail: string;
+  reportedUserId?: number;
+  reportedUserName?: string;
   resolverId?: number;
   resolverName?: string;
   resolutionMessage?: string;

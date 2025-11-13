@@ -16,6 +16,7 @@ import { userProfileService, UserProfileMap } from '../services/userProfileServi
 import Pagination from '../components/Pagination';
 import toast from 'react-hot-toast';
 import StatSummaryCard from '../components/StatSummaryCard';
+import { formatUserId } from '../utils/formatters';
 
 const currencyFormatter = new Intl.NumberFormat('vi-VN');
 const numberFormatter = new Intl.NumberFormat();
@@ -447,7 +448,7 @@ export default function PaymentManagement() {
                                   {displayName}
                         </div>
                         <div className="text-sm text-gray-500">
-                                  Mã người dùng: {transaction.actorUserId}
+                                  Mã người dùng: {formatUserId(transaction.actorUserId)}
                                 </div>
                         </div>
                             </>
@@ -670,7 +671,7 @@ export default function PaymentManagement() {
                                   </div>
                                   <div className="ml-3">
                                     <p className="text-base font-medium text-gray-900">{displayName}</p>
-                                    <p className="text-sm text-gray-500">Mã người dùng: {selectedTransaction.actorUserId}</p>
+                                    <p className="text-sm text-gray-500">Mã người dùng: {formatUserId(selectedTransaction.actorUserId)}</p>
                                   </div>
                                 </>
                               );
@@ -713,7 +714,7 @@ export default function PaymentManagement() {
                                     </div>
                                     <div className="ml-3">
                                       <p className="text-base font-medium text-gray-900">{displayName}</p>
-                                      <p className="text-sm text-gray-500">Mã người dùng: {selectedTransaction.riderUserId}</p>
+                                      <p className="text-sm text-gray-500">Mã người dùng: {formatUserId(selectedTransaction.riderUserId)}</p>
                                     </div>
                                   </>
                                 );
@@ -757,7 +758,7 @@ export default function PaymentManagement() {
                                     </div>
                                     <div className="ml-3">
                                       <p className="text-base font-medium text-gray-900">{displayName}</p>
-                                      <p className="text-sm text-gray-500">Mã người dùng: {selectedTransaction.driverUserId}</p>
+                                      <p className="text-sm text-gray-500">Mã người dùng: {formatUserId(selectedTransaction.driverUserId)}</p>
                                     </div>
                                   </>
                                 );
