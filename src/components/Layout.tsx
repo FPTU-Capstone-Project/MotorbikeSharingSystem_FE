@@ -13,7 +13,6 @@ import {
   MagnifyingGlassIcon,
   DocumentCheckIcon,
   ArrowRightOnRectangleIcon,
-  ChatBubbleLeftRightIcon,
   DocumentTextIcon,
 } from '@heroicons/react/24/outline';
 import { MotorbikeIcon } from 'lucide-react';
@@ -32,7 +31,6 @@ interface LayoutProps {
 const navigation = [
   { name: 'Tổng quan', href: '/dashboard', icon: HomeIcon },
   { name: 'Người dùng', href: '/users', icon: UsersIcon },
-  { name: 'Trò chuyện', href: '/chat', icon: ChatBubbleLeftRightIcon },
   { name: 'Quản lý xác minh', href: '/verification', icon: DocumentCheckIcon },
   { name: 'Quản lý xe', href: '/vehicle-verification', icon: MotorbikeIcon },
   { name: 'Chuyến đi', href: '/rides', icon: MapIcon },
