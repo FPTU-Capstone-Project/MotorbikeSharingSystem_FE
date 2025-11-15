@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { XMarkIcon, PaperAirplaneIcon } from '@heroicons/react/24/outline';
 import { ChatAPI } from '../api/chat.api';
@@ -46,7 +46,7 @@ export default function ReportChatModal({
   }, [conversationId, user?.userId, targetUserId, reportId]);
 
   // Load messages
-  const loadMessages = async () => {
+  const loadMessages = useCallback(async () => {
     if (!conversationId) return;
 
     try {
@@ -62,7 +62,7 @@ export default function ReportChatModal({
     } finally {
       setLoading(false);
     }
-  };
+  }, [conversationId]);
 
   // Load messages when modal opens or conversationId changes
   useEffect(() => {
@@ -72,7 +72,7 @@ export default function ReportChatModal({
       const interval = setInterval(loadMessages, 3000);
       return () => clearInterval(interval);
     }
-  }, [isOpen, conversationId]);
+  }, [isOpen, conversationId, loadMessages]);
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {

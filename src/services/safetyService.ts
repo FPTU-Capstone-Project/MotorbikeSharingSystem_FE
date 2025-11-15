@@ -122,7 +122,8 @@ function transformSosAlert(backendAlert: any): SOSAlert {
   // Try to parse address from description or contactInfo if available
   if (backendAlert.contactInfo) {
     try {
-      const contactInfo = JSON.parse(backendAlert.contactInfo);
+      // Parse contactInfo but don't use it yet - reserved for future use
+      JSON.parse(backendAlert.contactInfo);
       // Extract address if available in contact info
     } catch (e) {
       // Ignore parse errors

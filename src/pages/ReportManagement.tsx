@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import {
   MagnifyingGlassIcon,
@@ -110,7 +110,6 @@ export default function ReportManagement() {
   const [page, setPage] = useState(0);
   const [size, setSize] = useState(10);
   const [loading, setLoading] = useState(false);
-  const [analyticsLoading, setAnalyticsLoading] = useState(false);
 
   const [filterStatus, setFilterStatus] = useState<'ALL' | ReportStatus>('ALL');
   const [filterType, setFilterType] = useState<'ALL' | ReportType>('ALL');
@@ -134,7 +133,7 @@ export default function ReportManagement() {
   const [totalElements, setTotalElements] = useState(0);
 
   // Load reports
-  const loadReports = async () => {
+  const loadReports = useCallback(async () => {
     try {
       setLoading(true);
       const params: any = {
@@ -167,25 +166,22 @@ export default function ReportManagement() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, size, filterStatus, filterType]);
 
   // Load analytics
   const loadAnalytics = async () => {
     try {
-      setAnalyticsLoading(true);
       const data = await UserReportsAPI.getAnalytics();
       setAnalytics(data);
     } catch (error: any) {
       console.error('Error loading analytics:', error);
       toast.error(error.message || 'Không thể tải thống kê');
-    } finally {
-      setAnalyticsLoading(false);
     }
   };
 
   useEffect(() => {
     loadReports();
-  }, [page, size, filterStatus, filterType, filterPriority]);
+  }, [loadReports, filterPriority]);
 
   useEffect(() => {
     loadAnalytics();
