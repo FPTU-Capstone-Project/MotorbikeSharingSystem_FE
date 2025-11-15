@@ -36,7 +36,7 @@ const navigation = [
   { name: 'Quản lý xác minh', href: '/verification', icon: DocumentCheckIcon },
   { name: 'Quản lý xe', href: '/vehicle-verification', icon: MotorbikeIcon },
   { name: 'Chuyến đi', href: '/rides', icon: MapIcon },
-  { name: 'Thanh toán', href: '/payments', icon: CreditCardIcon },
+  { name: 'Tài chính', href: '/payments', icon: CreditCardIcon },
   { name: 'Báo cáo', href: '/reports', icon: DocumentTextIcon },
   { name: 'An toàn', href: '/safety', icon: ShieldCheckIcon },
   { name: 'Phân tích', href: '/analytics', icon: ChartBarIcon },

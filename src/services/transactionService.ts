@@ -9,25 +9,21 @@ export interface TransactionResponse {
   txnId: number;
   groupId: string;
   type: string;
-  direction: 'IN' | 'OUT';
-  actorKind: 'USER' | 'SYSTEM';
-  actorUserId: number;
-  actorUsername: string;
+  direction: 'IN' | 'OUT' | 'INTERNAL';
+  actorKind: 'USER' | 'SYSTEM' | 'PSP';
+  actorUserId?: number;
+  actorUsername?: string;
   systemWallet?: string;
   amount: number;
   currency: string;
-  bookingId?: number;
-  riderUserId?: number;
-  riderUsername?: string;
-  driverUserId?: number;
-  driverUsername?: string;
+  sharedRideId?: number;
+  sharedRideRequestId?: number;
   pspRef?: string;
-  status: 'PENDING' | 'COMPLETED' | 'FAILED' | 'CANCELLED' | 'SUCCESS';
+  status: 'PENDING' | 'SUCCESS' | 'FAILED' | 'REVERSED' | 'COMPLETED' | 'CANCELLED';
   beforeAvail?: number;
   afterAvail?: number;
   beforePending?: number;
   afterPending?: number;
-  description?: string;
   note?: string;
   createdAt: string;
   updatedAt?: string;
@@ -40,21 +36,10 @@ export interface TransactionFilters {
   sortDir?: 'asc' | 'desc';
   type?: string;
   status?: string;
-  direction?: 'IN' | 'OUT';
+  direction?: 'IN' | 'OUT' | 'INTERNAL';
   actorKind?: 'USER' | 'SYSTEM';
   dateFrom?: string;
   dateTo?: string;
-}
-
-export interface TransactionStats {
-  totalTransactions: number;
-  totalAmount: number;
-  totalRevenue: number;
-  totalDeposits: number;
-  totalWithdrawals: number;
-  pendingTransactions: number;
-  failedTransactions: number;
-  completedTransactions: number;
 }
 
 // =====================
@@ -72,6 +57,12 @@ export const transactionService = {
     if (filters.size !== undefined) params.append('size', filters.size.toString());
     if (filters.sortBy) params.append('sortBy', filters.sortBy);
     if (filters.sortDir) params.append('sortDir', filters.sortDir);
+    if (filters.type) params.append('type', filters.type);
+    if (filters.status) params.append('status', filters.status);
+    if (filters.direction) params.append('direction', filters.direction);
+    if (filters.actorKind) params.append('actorKind', filters.actorKind);
+    if (filters.dateFrom) params.append('dateFrom', filters.dateFrom);
+    if (filters.dateTo) params.append('dateTo', filters.dateTo);
     
     const queryString = params.toString();
     const url = queryString ? `${API_ENDPOINTS.TRANSACTIONS.ALL}?${queryString}` : API_ENDPOINTS.TRANSACTIONS.ALL;
@@ -106,74 +97,6 @@ export const transactionService = {
   },
 
   /**
-   * Get transaction statistics
-   */
-  getTransactionStats: async (): Promise<TransactionStats> => {
-    try {
-      // Get all transactions to calculate stats
-      const response = await transactionService.getAllTransactions({ size: 1000 });
-      const transactions = response.data;
-
-      const stats: TransactionStats = {
-        totalTransactions: transactions.length,
-        totalAmount: 0,
-        totalRevenue: 0,
-        totalDeposits: 0,
-        totalWithdrawals: 0,
-        pendingTransactions: 0,
-        failedTransactions: 0,
-        completedTransactions: 0,
-      };
-
-      transactions.forEach(transaction => {
-        stats.totalAmount += transaction.amount;
-        
-        // Count by status
-        switch (transaction.status) {
-          case 'PENDING':
-            stats.pendingTransactions++;
-            break;
-          case 'FAILED':
-          case 'CANCELLED':
-            stats.failedTransactions++;
-            break;
-          case 'COMPLETED':
-            stats.completedTransactions++;
-            break;
-        }
-
-        // Count by direction and type
-        if (transaction.direction === 'IN') {
-          if (transaction.type === 'TOPUP' || transaction.type === 'RIDE_CAPTURE') {
-            stats.totalDeposits += transaction.amount;
-          }
-          if (transaction.type === 'RIDE_CAPTURE') {
-            stats.totalRevenue += transaction.amount;
-          }
-        } else if (transaction.direction === 'OUT') {
-          if (transaction.type === 'PAYOUT' || transaction.type === 'RIDE_HOLD') {
-            stats.totalWithdrawals += transaction.amount;
-          }
-        }
-      });
-
-      return stats;
-    } catch (error) {
-      console.error('Error calculating transaction stats:', error);
-      return {
-        totalTransactions: 0,
-        totalAmount: 0,
-        totalRevenue: 0,
-        totalDeposits: 0,
-        totalWithdrawals: 0,
-        pendingTransactions: 0,
-        failedTransactions: 0,
-        completedTransactions: 0,
-      };
-    }
-  },
-
-  /**
    * Format transaction amount for display
    */
   formatAmount: (amount: number | null | undefined, currency: string = 'VND'): string => {
@@ -192,16 +115,13 @@ export const transactionService = {
    */
   getTransactionTypeDisplay: (type: string): string => {
     const typeMap: { [key: string]: string } = {
-      'TOPUP': 'Wallet Top-up',
-      'RIDE_HOLD': 'Ride Payment Hold',
-      'RIDE_CAPTURE': 'Ride Payment',
-      'RIDE_CANCEL': 'Ride Cancellation',
-      'PAYOUT': 'Driver Payout',
-      'RIDE_REFUND': 'Ride Refund',
-      'REFUND': 'Refund',
-      'PROMO_CREDIT': 'Promotional Credit',
-      'ADJUSTMENT': 'Wallet Adjustment',
-      'COMMISSION': 'Commission',
+      TOPUP: 'Nạp ví',
+      HOLD_CREATE: 'Tạo lệnh treo tiền',
+      HOLD_RELEASE: 'Hoàn lệnh treo tiền',
+      CAPTURE_FARE: 'Thanh toán chuyến',
+      PAYOUT: 'Rút tiền khỏi ví',
+      ADJUSTMENT: 'Điều chỉnh',
+      REFUND: 'Hoàn tiền',
     };
     return typeMap[type] || type;
   },
@@ -211,11 +131,12 @@ export const transactionService = {
    */
   getTransactionStatusDisplay: (status: string): { text: string; color: string } => {
     const statusMap: { [key: string]: { text: string; color: string } } = {
-      'PENDING': { text: 'Pending', color: 'text-yellow-600' },
-      'COMPLETED': { text: 'Completed', color: 'text-green-600' },
-      'SUCCESS': { text: 'Success', color: 'text-green-600' },
-      'FAILED': { text: 'Failed', color: 'text-red-600' },
-      'CANCELLED': { text: 'Cancelled', color: 'text-gray-600' },
+      PENDING: { text: 'Đang xử lý', color: 'text-yellow-600' },
+      SUCCESS: { text: 'Thành công', color: 'text-green-600' },
+      COMPLETED: { text: 'Hoàn tất', color: 'text-green-600' },
+      FAILED: { text: 'Thất bại', color: 'text-red-600' },
+      REVERSED: { text: 'Đã đảo ngược', color: 'text-amber-600' },
+      CANCELLED: { text: 'Đã hủy', color: 'text-gray-600' },
     };
     return statusMap[status] || { text: status, color: 'text-gray-600' };
   },
@@ -225,9 +146,11 @@ export const transactionService = {
    */
   getTransactionDirectionDisplay: (direction: string): { text: string; color: string; icon: string } => {
     if (direction === 'IN') {
-      return { text: 'Credit', color: 'text-green-600', icon: '↗' };
-    } else {
-      return { text: 'Debit', color: 'text-red-600', icon: '↘' };
+      return { text: 'Tiền vào', color: 'text-green-600', icon: '↗' };
     }
+    if (direction === 'OUT') {
+      return { text: 'Tiền ra', color: 'text-red-600', icon: '↘' };
+    }
+    return { text: 'Điều chuyển', color: 'text-blue-600', icon: '↔' };
   },
 };
