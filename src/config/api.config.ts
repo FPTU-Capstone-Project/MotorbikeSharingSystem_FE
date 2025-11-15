@@ -47,6 +47,7 @@ export const API_ENDPOINTS = {
     ANALYTICS: '/user-reports/analytics',
     MY_REPORTS: '/user-reports/my-reports',
     DRIVER_RESPONSE: (id: number) => `/user-reports/${id}/driver-response`,
+    START_CHAT: (id: number) => `/user-reports/${id}/start-chat`,
   },
   VERIFICATION: {
     STUDENTS: {
