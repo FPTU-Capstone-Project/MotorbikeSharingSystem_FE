@@ -45,6 +45,3 @@ export class ChatAPI {
     return `report_${reportId}_users_${smaller}_${larger}`;
   }
 }
-
-
-
