@@ -81,6 +81,9 @@ export interface UserReportSummary {
 
 export interface UserReportDetails extends UserReportSummary {
   reporterEmail: string;
+  reportedUserId?: number;
+  reportedUserName?: string;
+  reportedUserEmail?: string;
   resolverId?: number;
   resolverName?: string;
   resolutionMessage?: string;
@@ -129,4 +132,41 @@ export interface ResolveReportRequest {
 
 export interface DriverResponseRequest {
   driverResponse: string;
+}
+
+export interface StartReportChatRequest {
+  targetUserId: number;
+  initialMessage?: string;
+}
+
+// Chat Types
+export type MessageType = 'TEXT' | 'IMAGE' | 'SYSTEM';
+export type ConversationType = 'RIDE_REQUEST' | 'REPORT';
+
+export interface ChatMessageResponse {
+  messageId: number;
+  senderId: number;
+  senderName: string;
+  senderPhotoUrl?: string;
+  receiverId: number;
+  receiverName: string;
+  receiverPhotoUrl?: string;
+  conversationId: string;
+  conversationType: ConversationType;
+  rideRequestId?: number;
+  reportId?: number;
+  messageType: MessageType;
+  content: string;
+  metadata?: string;
+  isRead: boolean;
+  readAt?: string;
+  sentAt: string;
+}
+
+export interface SendMessageRequest {
+  receiverId: number;
+  reportId?: number;
+  rideRequestId?: number;
+  messageType?: MessageType;
+  content: string;
 }

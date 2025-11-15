@@ -79,7 +79,7 @@ export default function LoginPage() {
           {/* Gradient Card */}
           <div className="relative rounded-2xl overflow-hidden shadow-2xl transition-all duration-500 ease-in-out">
             {/* Mesh Gradient Background */}
-            <div className="absolute inset-0 bg-gradient-to-br from-emerald-600 via-teal-600 to-cyan-600">
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-600 via-indigo-600 to-cyan-600">
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.1),transparent_50%)]"></div>
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_80%,rgba(255,255,255,0.1),transparent_50%)]"></div>
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,0,0,0.1),transparent_70%)]"></div>
@@ -87,10 +87,10 @@ export default function LoginPage() {
                 className="absolute inset-0 opacity-30"
                 animate={{
                   background: [
-                    'radial-gradient(circle at 20% 30%, rgba(16,185,129,0.4), transparent 50%)',
-                    'radial-gradient(circle at 80% 70%, rgba(6,182,212,0.4), transparent 50%)',
-                    'radial-gradient(circle at 50% 50%, rgba(5,150,105,0.4), transparent 50%)',
-                    'radial-gradient(circle at 20% 30%, rgba(16,185,129,0.4), transparent 50%)',
+                    'radial-gradient(circle at 20% 30%, rgba(37,99,235,0.4), transparent 50%)',
+                    'radial-gradient(circle at 80% 70%, rgba(79,70,229,0.4), transparent 50%)',
+                    'radial-gradient(circle at 50% 50%, rgba(14,165,233,0.4), transparent 50%)',
+                    'radial-gradient(circle at 20% 30%, rgba(37,99,235,0.4), transparent 50%)',
                   ],
                 }}
                 transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut' }}
@@ -98,9 +98,9 @@ export default function LoginPage() {
             </div>
 
             {/* Content */}
-            <div className="relative z-10 p-12 text-gray-900 transition-colors duration-500">
-              <h1 className="text-5xl font-bold mb-4 transition-colors duration-500">Hệ thống quản lý MSSUS</h1>
-              <p className="text-xl text-gray-800 leading-relaxed transition-colors duration-500">
+            <div className="relative z-10 p-12 text-white transition-colors duration-500">
+              <h1 className="text-5xl font-bold mb-4 text-white transition-colors duration-500">Hệ thống quản lý MSSUS</h1>
+              <p className="text-xl text-white leading-relaxed transition-colors duration-500">
                 Trang web quản lý hệ thống chia sẻ xe máy cho sinh viên đại học. 
                 Hệ thống cung cấp các tính năng quản lý người dùng, phương tiện, 
                 chuyến đi và thanh toán một cách hiệu quả và an toàn.

@@ -15,14 +15,11 @@ import { VerificationItem } from '../types';
 import { approveVerification, rejectVerification } from '../services/verificationService';
 import Pagination from '../components/Pagination';
 import StatSummaryCard from '../components/StatSummaryCard';
+import { formatUserId } from '../utils/formatters';
 
 // Helper functions to format IDs
 const formatVerificationId = (id: number): string => {
   return `VR${String(id).padStart(5, '0')}`;
-};
-
-const formatUserId = (id: number): string => {
-  return `U${String(id).padStart(4, '0')}`;
 };
 
 // Helper function to translate verification type to Vietnamese

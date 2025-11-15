@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import {
   MagnifyingGlassIcon,
@@ -12,6 +12,7 @@ import {
   ArrowUpIcon,
   ArrowDownIcon,
   MinusIcon,
+  ChatBubbleLeftRightIcon,
 } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
 import { UserReportsAPI } from '../api/reports.api';
@@ -25,6 +26,8 @@ import {
 } from '../types/api.types';
 import Pagination from '../components/Pagination';
 import StatSummaryCard from '../components/StatSummaryCard';
+import ReportChatModal from '../components/ReportChatModal';
+import { formatUserId } from '../utils/formatters';
 
 // Helper functions
 const formatReportId = (id: number): string => {
@@ -107,7 +110,6 @@ export default function ReportManagement() {
   const [page, setPage] = useState(0);
   const [size, setSize] = useState(10);
   const [loading, setLoading] = useState(false);
-  const [analyticsLoading, setAnalyticsLoading] = useState(false);
 
   const [filterStatus, setFilterStatus] = useState<'ALL' | ReportStatus>('ALL');
   const [filterType, setFilterType] = useState<'ALL' | ReportType>('ALL');
@@ -123,12 +125,15 @@ export default function ReportManagement() {
   const [adminNotes, setAdminNotes] = useState('');
   const [resolutionMessage, setResolutionMessage] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
+  const [showChatModal, setShowChatModal] = useState(false);
+  const [chatTargetUserId, setChatTargetUserId] = useState<number | null>(null);
+  const [chatTargetUserName, setChatTargetUserName] = useState<string>('');
 
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
 
   // Load reports
-  const loadReports = async () => {
+  const loadReports = useCallback(async () => {
     try {
       setLoading(true);
       const params: any = {
@@ -161,25 +166,22 @@ export default function ReportManagement() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, size, filterStatus, filterType]);
 
   // Load analytics
   const loadAnalytics = async () => {
     try {
-      setAnalyticsLoading(true);
       const data = await UserReportsAPI.getAnalytics();
       setAnalytics(data);
     } catch (error: any) {
       console.error('Error loading analytics:', error);
       toast.error(error.message || 'Không thể tải thống kê');
-    } finally {
-      setAnalyticsLoading(false);
     }
   };
 
   useEffect(() => {
     loadReports();
-  }, [page, size, filterStatus, filterType, filterPriority]);
+  }, [loadReports, filterPriority]);
 
   useEffect(() => {
     loadAnalytics();
@@ -280,6 +282,25 @@ export default function ReportManagement() {
     setShowResolveModal(true);
   };
 
+  // Open chat modal
+  const openChatModal = (targetUserId: number, targetUserName: string) => {
+    if (!selected) return;
+    setChatTargetUserId(targetUserId);
+    setChatTargetUserName(targetUserName);
+    setShowChatModal(true);
+  };
+
+  // Close chat modal
+  const closeChatModal = async () => {
+    setShowChatModal(false);
+    setChatTargetUserId(null);
+    setChatTargetUserName('');
+    // Reload report details to see updated chat status
+    if (selected && showDetailModal) {
+      await handleViewDetails(selected.reportId);
+    }
+  };
+
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
@@ -334,7 +355,7 @@ export default function ReportManagement() {
       )}
 
       {/* Filters */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+      <div className="card">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           {/* Search */}
           <div className="md:col-span-2">
@@ -429,7 +450,7 @@ export default function ReportManagement() {
       </div>
 
       {/* Reports Table */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+      <div className="card overflow-hidden">
         {loading ? (
           <div className="p-12 text-center">
             <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
@@ -449,7 +470,7 @@ export default function ReportManagement() {
           <>
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                <thead className="bg-gray-50 dark:bg-gray-700">
+                <thead className="bg-gray-50 dark:bg-slate-900/95">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                       ID
@@ -477,7 +498,7 @@ export default function ReportManagement() {
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                <tbody className="bg-white dark:bg-slate-900/85 divide-y divide-gray-200 dark:divide-slate-800/80">
                   {filteredReports.map((report) => (
                     <motion.tr
                       key={report.reportId}
@@ -600,6 +621,7 @@ export default function ReportManagement() {
                     setShowDetailModal(false);
                     setShowUpdateModal(false);
                     setShowResolveModal(false);
+                    setShowChatModal(false);
                   }}
                   className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                 >
@@ -608,6 +630,31 @@ export default function ReportManagement() {
               </div>
 
               <div className="space-y-4">
+                {/* Ride Info - Hiển thị đầu tiên và luôn hiển thị nếu có */}
+                {selected.sharedRideId ? (
+                  <div className="bg-indigo-50 dark:bg-indigo-900/20 p-4 rounded-lg border-2 border-indigo-300 dark:border-indigo-700">
+                    <label className="block text-sm font-semibold text-indigo-900 dark:text-indigo-300 mb-2">
+                      ID Chuyến đi bị báo cáo
+                    </label>
+                    <div className="flex items-center gap-3">
+                      <span className="inline-flex items-center px-4 py-2 rounded-lg text-base font-bold text-indigo-700 dark:text-indigo-200 bg-indigo-100 dark:bg-indigo-800/50 border-2 border-indigo-400 dark:border-indigo-600">
+                        #{selected.sharedRideId}
+                      </span>
+                      {selected.driverName && (
+                        <span className="text-sm text-gray-700 dark:text-gray-300">
+                          Tài xế: <span className="font-semibold">{selected.driverName}</span>
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="bg-amber-50 dark:bg-amber-900/20 p-3 rounded-lg border border-amber-200 dark:border-amber-800">
+                    <p className="text-sm text-amber-800 dark:text-amber-200">
+                      <span className="font-semibold">Lưu ý:</span> Báo cáo này không liên quan đến chuyến đi cụ thể.
+                    </p>
+                  </div>
+                )}
+
                 {/* Status and Priority */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
@@ -659,23 +706,49 @@ export default function ReportManagement() {
 
                 {/* Reporter Info */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Người báo cáo
-                  </label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Người báo cáo
+                    </label>
+                    {selected.status !== 'RESOLVED' && selected.status !== 'DISMISSED' && selected.reporterId && (
+                      <button
+                        onClick={() => openChatModal(selected.reporterId, selected.reporterName)}
+                        className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 rounded-lg shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition-all duration-200"
+                        title="Chat với người báo cáo"
+                      >
+                        <ChatBubbleLeftRightIcon className="w-5 h-5" />
+                        Chat với {selected.reporterName}
+                      </button>
+                    )}
+                  </div>
                   <p className="text-sm text-gray-900 dark:text-white">
                     {selected.reporterName} ({selected.reporterEmail})
+                    {selected.reporterId && ` - ID: ${formatUserId(selected.reporterId)}`}
                   </p>
                 </div>
 
-                {/* Ride Info */}
-                {selected.sharedRideId && (
+                {/* Reported User Info */}
+                {selected.reportedUserId && selected.reportedUserName && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Chuyến đi
-                    </label>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Người bị báo cáo
+                      </label>
+                      {selected.status !== 'RESOLVED' && selected.status !== 'DISMISSED' && (
+                        <button
+                          onClick={() => openChatModal(selected.reportedUserId!, selected.reportedUserName!)}
+                          className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 rounded-lg shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition-all duration-200"
+                          title="Chat với người bị báo cáo"
+                        >
+                          <ChatBubbleLeftRightIcon className="w-5 h-5" />
+                          Chat với {selected.reportedUserName}
+                        </button>
+                      )}
+                    </div>
                     <p className="text-sm text-gray-900 dark:text-white">
-                      Ride #{selected.sharedRideId}
-                      {selected.driverName && ` - Tài xế: ${selected.driverName}`}
+                      {selected.reportedUserName}
+                      {selected.reportedUserEmail && ` (${selected.reportedUserEmail})`}
+                      {` - ID: ${formatUserId(selected.reportedUserId)}`}
                     </p>
                   </div>
                 )}
@@ -841,6 +914,17 @@ export default function ReportManagement() {
             </div>
           </motion.div>
         </div>
+      )}
+
+      {/* Chat Modal */}
+      {selected && showChatModal && chatTargetUserId && (
+        <ReportChatModal
+          isOpen={showChatModal}
+          onClose={closeChatModal}
+          reportId={selected.reportId}
+          targetUserId={chatTargetUserId}
+          targetUserName={chatTargetUserName}
+        />
       )}
 
       {/* Resolve Modal */}

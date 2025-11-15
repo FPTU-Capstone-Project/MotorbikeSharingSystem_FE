@@ -18,6 +18,7 @@ import { getAllUsers, suspendUser, activateUser } from '../services/profileServi
 import Pagination from '../components/Pagination';
 import toast from 'react-hot-toast';
 import StatSummaryCard from '../components/StatSummaryCard';
+import { formatUserId } from '../utils/formatters';
 
 export default function UserManagement() {
   const [users, setUsers] = useState<UserManagementItem[]>([]);
@@ -312,7 +313,7 @@ export default function UserManagement() {
                             <div className="ml-4">
                               <div className="text-sm font-medium text-gray-900">{user.full_name}</div>
                               <div className="text-sm text-gray-500">{user.email}</div>
-                              <div className="text-xs text-gray-400">ID: {user.user_id}</div>
+                              <div className="text-xs text-gray-400">ID: {formatUserId(user.user_id)}</div>
                             </div>
                           </div>
                         </td>

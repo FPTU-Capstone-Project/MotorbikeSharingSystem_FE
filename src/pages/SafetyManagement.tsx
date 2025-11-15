@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, memo, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
   ExclamationTriangleIcon,
@@ -14,6 +14,7 @@ import {
 import { SOSAlert } from '../types';
 import toast from 'react-hot-toast';
 import StatSummaryCard from '../components/StatSummaryCard';
+import { formatUserId } from '../utils/formatters';
 import {
   getSafetyDashboardStats,
   getSafetyAlertsList,
@@ -380,7 +381,7 @@ export default function SafetyManagement() {
                         <div className="text-sm font-medium text-gray-900">
                           {userNames[alert.userId] || `User ${alert.userId}`}
                         </div>
-                        <div className="text-sm text-gray-500">ID: {alert.userId}</div>
+                        <div className="text-sm text-gray-500">ID: {formatUserId(alert.userId)}</div>
                       </div>
                     </div>
                   </td>
@@ -579,7 +580,7 @@ export default function SafetyManagement() {
                 <h4 className="font-medium text-gray-900 mb-3">Thông tin người gửi</h4>
                 <div className="p-4 bg-gray-50 rounded-lg">
                   <p className="font-semibold text-gray-900">{userNames[selectedAlert.userId] || `User ${selectedAlert.userId}`}</p>
-                  <p className="text-sm text-gray-600">Mã người dùng: {selectedAlert.userId}</p>
+                  <p className="text-sm text-gray-600">Mã người dùng: {formatUserId(selectedAlert.userId)}</p>
                   {selectedAlert.rideId && (
                     <p className="text-sm text-blue-600">Chuyến liên quan: {selectedAlert.rideId}</p>
                   )}

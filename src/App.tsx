@@ -23,7 +23,6 @@ const RiderVehicleVerification = lazy(() => import('./pages/RiderVehicleVerifica
 const DriverVehicleVerification = lazy(() => import('./pages/DriverVehicleVerification'));
 const VehicleManagement = lazy(() => import('./pages/VehicleManagement'));
 const TokenExpiryTest = lazy(() => import('./pages/TokenExpiryTest'));
-const UserChat = lazy(() => import('./pages/UserChat'));
 const ReportManagement = lazy(() => import('./pages/ReportManagement'));
 const RouteManagement = lazy(() => import('./pages/RouteManagement'));
 
@@ -62,16 +61,6 @@ function App() {
                       <ProtectedRoute>
                         <Layout>
                           <UserManagement />
-                        </Layout>
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/chat"
-                    element={
-                      <ProtectedRoute>
-                        <Layout>
-                          <UserChat />
                         </Layout>
                       </ProtectedRoute>
                     }

@@ -9,6 +9,8 @@ import type {
   UpdateReportStatusRequest,
   ResolveReportRequest,
   DriverResponseRequest,
+  StartReportChatRequest,
+  MessageResponse,
   PaginationParams,
   ReportStatus,
   ReportType,
@@ -129,6 +131,22 @@ export class UserReportsAPI {
   ): Promise<UserReportDetails> {
     return httpClient.post<UserReportDetails>(
       API_ENDPOINTS.USER_REPORTS.DRIVER_RESPONSE(reportId),
+      data,
+      {
+        enableCache: false,
+      }
+    );
+  }
+
+  /**
+   * Start a chat conversation related to a report (Admin only)
+   */
+  static async startChat(
+    reportId: number,
+    data: StartReportChatRequest
+  ): Promise<MessageResponse> {
+    return httpClient.post<MessageResponse>(
+      API_ENDPOINTS.USER_REPORTS.START_CHAT(reportId),
       data,
       {
         enableCache: false,
