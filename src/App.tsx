@@ -25,6 +25,7 @@ const VehicleManagement = lazy(() => import('./pages/VehicleManagement'));
 const TokenExpiryTest = lazy(() => import('./pages/TokenExpiryTest'));
 const UserChat = lazy(() => import('./pages/UserChat'));
 const ReportManagement = lazy(() => import('./pages/ReportManagement'));
+const RouteManagement = lazy(() => import('./pages/RouteManagement'));
 
 function App() {
   return (
@@ -91,6 +92,16 @@ function App() {
                       <ProtectedRoute>
                         <Layout>
                           <RideManagement />
+                        </Layout>
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/routes"
+                    element={
+                      <ProtectedRoute>
+                        <Layout>
+                          <RouteManagement />
                         </Layout>
                       </ProtectedRoute>
                     }

@@ -32,6 +32,7 @@ interface LayoutProps {
 const navigation = [
   { name: 'Tổng quan', href: '/dashboard', icon: HomeIcon },
   { name: 'Người dùng', href: '/users', icon: UsersIcon },
+  { name: 'Tuyến đường', href: '/routes', icon: MapIcon },
   { name: 'Trò chuyện', href: '/chat', icon: ChatBubbleLeftRightIcon },
   { name: 'Quản lý xác minh', href: '/verification', icon: DocumentCheckIcon },
   { name: 'Quản lý xe', href: '/vehicle-verification', icon: MotorbikeIcon },
