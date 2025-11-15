@@ -86,6 +86,9 @@ export const API_ENDPOINTS = {
     SUSPEND: (userId: number) => `/admin/users/${userId}/suspend`,
     ACTIVATE: (userId: number) => `/admin/users/${userId}/activate`,
   },
+  LOCATIONS: {
+    POIS: '/locations/pois',
+  },
 } as const;
 
 export const CACHE_CONFIG = {

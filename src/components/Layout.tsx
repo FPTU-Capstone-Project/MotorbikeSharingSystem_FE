@@ -31,10 +31,11 @@ interface LayoutProps {
 const navigation = [
   { name: 'Tổng quan', href: '/dashboard', icon: HomeIcon },
   { name: 'Người dùng', href: '/users', icon: UsersIcon },
+  { name: 'Tuyến đường', href: '/routes', icon: MapIcon },
   { name: 'Quản lý xác minh', href: '/verification', icon: DocumentCheckIcon },
   { name: 'Quản lý xe', href: '/vehicle-verification', icon: MotorbikeIcon },
   { name: 'Chuyến đi', href: '/rides', icon: MapIcon },
-  { name: 'Thanh toán', href: '/payments', icon: CreditCardIcon },
+  { name: 'Tài chính', href: '/payments', icon: CreditCardIcon },
   { name: 'Báo cáo', href: '/reports', icon: DocumentTextIcon },
   { name: 'An toàn', href: '/safety', icon: ShieldCheckIcon },
   { name: 'Phân tích', href: '/analytics', icon: ChartBarIcon },

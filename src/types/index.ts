@@ -375,3 +375,5 @@ export interface UserManagementItem {
   rider_profile?: RiderProfile
   driver_profile?: DriverProfile
 }
+
+export * from './routes.types';
