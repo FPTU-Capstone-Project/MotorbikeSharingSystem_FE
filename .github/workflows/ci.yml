@@ -21,7 +21,8 @@ jobs:
           cache: 'npm'
 
       - name: 📦 Install dependencies
-        run: npm ci
+        run: npm install --legacy-peer-deps
+        continue-on-error: false
 
       - name: 🔍 Lint code
         run: npm run lint || echo "⚠️ Linting warnings detected"
@@ -31,6 +32,7 @@ jobs:
         run: npm run build
         env:
           CI: false
+        continue-on-error: false
 
       - name: ✅ Tests passed
         run: echo "🎉 All checks passed!"
