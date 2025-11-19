@@ -108,7 +108,7 @@ export default function PaymentManagement() {
       // Load user profiles for the transactions
       await loadUserProfiles(response.data);
     } catch (err) {
-      console.error('Error loading transactions:', err);
+      console.error('Lỗi tải giao dịch:', err);
       setError('Không thể tải danh sách giao dịch');
       toast.error('Không thể tải danh sách giao dịch');
     } finally {
@@ -137,7 +137,7 @@ export default function PaymentManagement() {
       setTrendData(trends);
       setCommissionReport(commission);
     } catch (err) {
-      console.error('Error loading wallet insights:', err);
+      console.error('Lỗi tải thông tin ví:', err);
       setInsightsError('Không thể tải thông tin báo cáo tài chính');
       toast.error('Không thể tải thông tin báo cáo tài chính');
     } finally {
@@ -159,7 +159,7 @@ export default function PaymentManagement() {
         setUserProfiles(profiles);
       }
     } catch (err) {
-      console.error('Error loading user profiles:', err);
+      console.error('Lỗi tải hồ sơ người dùng:', err);
     }
   };
 

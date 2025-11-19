@@ -157,7 +157,7 @@ export default function VehicleManagement() {
       icon: CheckCircleIcon,
       gradient: 'from-emerald-600 to-teal-600',
       backgroundGradient: 'from-emerald-50 to-teal-100',
-      detail: 'Approved driver documents',
+      detail: 'Tài liệu tài xế đã duyệt',
     },
     {
       label: 'Rejected',
@@ -306,9 +306,9 @@ export default function VehicleManagement() {
         className="flex flex-col sm:flex-row sm:items-center sm:justify-between"
       >
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Vehicle Management</h1>
-          <p className="mt-2 text-gray-600">
-            Manage and approve vehicle registrations, insurance certificates, and vehicle photos
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Quản lý xe</h1>
+          <p className="mt-2 text-gray-600 dark:text-slate-300">
+            Quản lý và phê duyệt đăng ký xe, giấy chứng nhận bảo hiểm và hình ảnh phương tiện
           </p>
         </div>
         <div className="mt-4 sm:mt-0">
@@ -317,7 +317,7 @@ export default function VehicleManagement() {
             onClick={openCreate}
           >
             <Plus className="h-4 w-4" />
-            Create Vehicle
+            Tạo xe mới
           </button>
         </div>
       </motion.div>
@@ -647,21 +647,21 @@ export default function VehicleManagement() {
                     <div className="space-y-4">
                       <h4 className="text-lg font-semibold text-gray-900 mb-3 flex items-center">
                         <DocumentTextIcon className="h-5 w-5 mr-2 text-green-500" />
-                        Verification Documents
+                        Tài liệu xác minh
                       </h4>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {/* Registration Document */}
                         {selectedVerification.documents.registrationUrl && (
                           <div>
-                            <h5 className="text-sm font-semibold text-gray-700 mb-2 flex items-center">
+                            <h5 className="text-sm font-semibold text-gray-700 dark:text-slate-300 mb-2 flex items-center">
                               <ShieldCheckIcon className="h-4 w-4 mr-1 text-green-500" />
-                              Vehicle Registration
+                              Giấy đăng ký xe
                             </h5>
-                            <div className="border-2 border-gray-200 rounded-lg overflow-hidden">
+                            <div className="border-2 border-gray-200 dark:border-slate-700 rounded-lg overflow-hidden">
                               <img
                                 src={selectedVerification.documents.registrationUrl}
-                                alt="Vehicle Registration"
+                                alt="Giấy đăng ký xe"
                                 className="w-full h-auto object-contain max-h-64"
                               />
                             </div>
@@ -671,14 +671,14 @@ export default function VehicleManagement() {
                         {/* Insurance Certificate */}
                         {selectedVerification.documents.insuranceUrl && (
                           <div>
-                            <h5 className="text-sm font-semibold text-gray-700 mb-2 flex items-center">
+                            <h5 className="text-sm font-semibold text-gray-700 dark:text-slate-300 mb-2 flex items-center">
                               <ShieldCheckIcon className="h-4 w-4 mr-1 text-blue-500" />
-                              Insurance Certificate
+                              Giấy chứng nhận bảo hiểm
                             </h5>
-                            <div className="border-2 border-gray-200 rounded-lg overflow-hidden">
+                            <div className="border-2 border-gray-200 dark:border-slate-700 rounded-lg overflow-hidden">
                               <img
                                 src={selectedVerification.documents.insuranceUrl}
-                                alt="Insurance Certificate"
+                                alt="Giấy chứng nhận bảo hiểm"
                                 className="w-full h-auto object-contain max-h-64"
                               />
                             </div>
@@ -688,14 +688,14 @@ export default function VehicleManagement() {
                         {/* Front Photo */}
                         {selectedVerification.documents.frontPhotoUrl && (
                           <div>
-                            <h5 className="text-sm font-semibold text-gray-700 mb-2 flex items-center">
+                            <h5 className="text-sm font-semibold text-gray-700 dark:text-slate-300 mb-2 flex items-center">
                               <PhotoIcon className="h-4 w-4 mr-1 text-purple-500" />
-                              Front Photo
+                              Ảnh phía trước
                             </h5>
-                            <div className="border-2 border-gray-200 rounded-lg overflow-hidden">
+                            <div className="border-2 border-gray-200 dark:border-slate-700 rounded-lg overflow-hidden">
                               <img
                                 src={selectedVerification.documents.frontPhotoUrl}
-                                alt="Front view of vehicle"
+                                alt="Ảnh phía trước của xe"
                                 className="w-full h-auto object-contain max-h-64"
                               />
                             </div>
@@ -705,14 +705,14 @@ export default function VehicleManagement() {
                         {/* Side Photo */}
                         {selectedVerification.documents.sidePhotoUrl && (
                           <div>
-                            <h5 className="text-sm font-semibold text-gray-700 mb-2 flex items-center">
+                            <h5 className="text-sm font-semibold text-gray-700 dark:text-slate-300 mb-2 flex items-center">
                               <PhotoIcon className="h-4 w-4 mr-1 text-purple-500" />
-                              Side Photo
+                              Ảnh bên hông
                             </h5>
-                            <div className="border-2 border-gray-200 rounded-lg overflow-hidden">
+                            <div className="border-2 border-gray-200 dark:border-slate-700 rounded-lg overflow-hidden">
                               <img
                                 src={selectedVerification.documents.sidePhotoUrl}
-                                alt="Side view of vehicle"
+                                alt="Ảnh bên hông của xe"
                                 className="w-full h-auto object-contain max-h-64"
                               />
                             </div>
@@ -724,12 +724,12 @@ export default function VehicleManagement() {
                           <div>
                             <h5 className="text-sm font-semibold text-gray-700 mb-2 flex items-center">
                               <PhotoIcon className="h-4 w-4 mr-1 text-yellow-500" />
-                              Plate Number Closeup
+                              Ảnh cận biển số
                             </h5>
-                            <div className="border-2 border-gray-200 rounded-lg overflow-hidden">
+                            <div className="border-2 border-gray-200 dark:border-slate-700 rounded-lg overflow-hidden">
                               <img
                                 src={selectedVerification.documents.platePhotoUrl}
-                                alt="Plate Number"
+                                alt="Biển số"
                                 className="w-full h-auto object-contain max-h-64"
                               />
                             </div>

@@ -29,7 +29,7 @@ export default function LoginPage() {
       toast.success('Đăng nhập thành công!');
       navigate("/dashboard");
     } catch (error: any) {
-      console.error('Login error:', error);
+      console.error('Lỗi đăng nhập:', error);
       toast.error(error?.message || 'Đăng nhập thất bại. Vui lòng kiểm tra thông tin.');
     } finally {
       setLoading(false);

@@ -58,9 +58,9 @@ const StatCard = memo(({ stat, index }: { stat: any; index: number }) => {
               <stat.icon className="h-6 w-6 text-white" />
             </div>
             <div>
-              <p className="text-sm font-medium text-gray-500 mb-0.5">{stat.name}</p>
-              <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
-              <p className="text-xs text-gray-400 mt-0.5">{stat.details}</p>
+              <p className="text-sm font-medium text-gray-500 dark:text-slate-400 mb-0.5">{stat.name}</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">{stat.value}</p>
+              <p className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">{stat.details}</p>
             </div>
           </div>
           <div className="text-right">
@@ -102,23 +102,23 @@ const ActivityItem = memo(({ activity, index }: { activity: any; index: number }
       initial={{ opacity: 0, x: -20 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay: index * 0.05, duration: 0.3 }}
-      className="flex items-center p-4 bg-gray-50/50 rounded-xl border border-gray-100 hover:bg-white hover:shadow-sm transition-all duration-200"
+      className="flex items-center p-4 bg-gray-50/50 dark:bg-slate-800/50 rounded-xl border border-gray-100 dark:border-slate-700 hover:bg-white dark:hover:bg-slate-800 hover:shadow-sm transition-all duration-200"
     >
       <div className={`h-10 w-10 rounded-full flex items-center justify-center text-sm font-semibold text-white ${avatarColors[activity.status as keyof typeof avatarColors]}`}>
         {activity.avatar}
       </div>
       <div className="flex-1 ml-4">
         <div className="flex items-center space-x-3">
-          <p className="text-sm text-gray-900">
+          <p className="text-sm text-gray-900 dark:text-white">
             <span className="font-semibold">{activity.user}</span> {activity.description}
           </p>
           {activity.amount && (
-            <span className="text-sm font-semibold text-gray-700 bg-gray-100 px-2 py-1 rounded-lg">
+            <span className="text-sm font-semibold text-gray-700 dark:text-slate-300 bg-gray-100 dark:bg-slate-700 px-2 py-1 rounded-lg">
               {activity.amount}
             </span>
           )}
         </div>
-        <p className="text-xs text-gray-500 mt-1">{activity.time}</p>
+        <p className="text-xs text-gray-500 dark:text-slate-400 mt-1">{activity.time}</p>
       </div>
       <div className={`px-2 py-1 rounded-lg text-xs font-medium border ${statusColors[activity.status as keyof typeof statusColors]}`}>
         {(activity.badgeLabel || activity.type).toUpperCase()}
@@ -138,10 +138,10 @@ export default function Dashboard() {
       try {
         setLoading(true);
         const data = await getDashboardStats();
-        console.log('Dashboard data loaded:', data);
+        console.log('Dữ liệu dashboard đã tải:', data);
         setDashboardData(data);
       } catch (error: any) {
-        console.error('Failed to load dashboard data:', error);
+        console.error('Không tải được dữ liệu dashboard:', error);
         toast.error(error?.message || 'Không tải được dữ liệu dashboard');
         // Set empty data structure to prevent crashes
         setDashboardData({
@@ -295,7 +295,7 @@ export default function Dashboard() {
             Tổng quan hệ thống
           </h1>
         </div>
-        <p className="text-lg text-gray-600 max-w-2xl">
+        <p className="text-lg text-gray-600 dark:text-slate-300 max-w-2xl">
           Theo dõi hiệu suất nền tảng chia sẻ xe máy với các chỉ số cập nhật theo thời gian thực
         </p>
       </div>
@@ -324,21 +324,21 @@ export default function Dashboard() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, duration: 0.4 }}
-          className="xl:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-lg transition-shadow duration-300"
+          className="xl:col-span-2 bg-white dark:bg-slate-900/85 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-800 p-6 hover:shadow-lg transition-shadow duration-300"
         >
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h3 className="text-xl font-bold text-gray-900">Doanh thu & tăng trưởng</h3>
-              <p className="text-sm text-gray-500 mt-1">Hiệu suất theo tháng</p>
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white">Doanh thu & tăng trưởng</h3>
+              <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">Hiệu suất theo tháng</p>
             </div>
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2">
                 <div className="w-3 h-3 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full"></div>
-                <span className="text-sm text-gray-600">Doanh thu</span>
+                <span className="text-sm text-gray-600 dark:text-slate-300">Doanh thu</span>
               </div>
               <div className="flex items-center space-x-2">
                 <div className="w-3 h-3 bg-gradient-to-r from-emerald-500 to-teal-600 rounded-full"></div>
-                <span className="text-sm text-gray-600">Người dùng</span>
+                <span className="text-sm text-gray-600 dark:text-slate-300">Người dùng</span>
               </div>
             </div>
           </div>
@@ -409,10 +409,10 @@ export default function Dashboard() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3, duration: 0.4 }}
-          className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-lg transition-shadow duration-300"
+          className="bg-white dark:bg-slate-900/85 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-800 p-6 hover:shadow-lg transition-shadow duration-300"
         >
-          <h3 className="text-xl font-bold text-gray-900 mb-2">Phân bổ trạng thái chuyến đi</h3>
-          <p className="text-sm text-gray-500 mb-6">Thống kê trạng thái hiện tại</p>
+          <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Phân bổ trạng thái chuyến đi</h3>
+          <p className="text-sm text-gray-500 dark:text-slate-400 mb-6">Thống kê trạng thái hiện tại</p>
           <div className="h-48 mb-6">
             {rideStatusData.length > 0 ? (
             <ResponsiveContainer width="100%" height="100%">
@@ -454,11 +454,11 @@ export default function Dashboard() {
                     className="w-3 h-3 rounded-full"
                     style={{ backgroundColor: item.color }}
                   />
-                  <span className="text-sm font-medium text-gray-700">{item.name}</span>
+                  <span className="text-sm font-medium text-gray-700 dark:text-slate-300">{item.name}</span>
                 </div>
                 <div className="text-right">
-                  <span className="text-sm font-semibold text-gray-900">{item.value}</span>
-                  <div className="text-xs text-gray-500">{item.percentage}%</div>
+                  <span className="text-sm font-semibold text-gray-900 dark:text-white">{item.value}</span>
+                  <div className="text-xs text-gray-500 dark:text-slate-400">{item.percentage}%</div>
                 </div>
               </div>
             ))}
@@ -471,17 +471,17 @@ export default function Dashboard() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.4, duration: 0.4 }}
-        className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-8 hover:shadow-lg transition-shadow duration-300"
+        className="bg-white dark:bg-slate-900/85 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-800 p-6 mb-8 hover:shadow-lg transition-shadow duration-300"
       >
         <div className="flex items-center justify-between mb-6">
             <div>
-            <h3 className="text-xl font-bold text-gray-900">Hiệu suất theo giờ</h3>
-            <p className="text-sm text-gray-500 mt-1">Số chuyến theo từng khung giờ trong ngày</p>
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white">Hiệu suất theo giờ</h3>
+            <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">Số chuyến theo từng khung giờ trong ngày</p>
           </div>
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2">
               <div className="w-3 h-3 bg-gradient-to-r from-violet-500 to-purple-600 rounded-full"></div>
-              <span className="text-sm text-gray-600">Chuyến đi</span>
+              <span className="text-sm text-gray-600 dark:text-slate-300">Chuyến đi</span>
             </div>
           </div>
         </div>
@@ -540,12 +540,12 @@ export default function Dashboard() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.5, duration: 0.4 }}
-        className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-lg transition-shadow duration-300"
+        className="bg-white dark:bg-slate-900/85 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-800 p-6 hover:shadow-lg transition-shadow duration-300"
       >
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h3 className="text-xl font-bold text-gray-900">Hoạt động thời gian thực</h3>
-            <p className="text-sm text-gray-500 mt-1">Sự kiện và giao dịch mới nhất trên hệ thống</p>
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white">Hoạt động thời gian thực</h3>
+            <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">Sự kiện và giao dịch mới nhất trên hệ thống</p>
           </div>
           <div className="flex items-center space-x-2">
             <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse"></div>

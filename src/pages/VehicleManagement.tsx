@@ -92,7 +92,7 @@ export default function VehicleManagement() {
         setTotalPages((p.total_pages ?? 0) as number);
         setTotalRecords((p.total_records ?? rows.length) as number);
       } catch (e: any) {
-        console.error(e);
+        console.error('Lỗi tải danh sách xe:', e);
         toast.error(e?.message || 'Không tải được danh sách xe');
       } finally {
         if (!ignore) setLoading(false);
@@ -165,7 +165,7 @@ export default function VehicleManagement() {
 
   const handleApprove = async (verification: VehicleVerification) => {
     try {
-      await approveDriverVehicle(Number(verification.driverId), 'Approved vehicle registration');
+      await approveDriverVehicle(Number(verification.driverId), 'Đã phê duyệt đăng ký xe');
       toast.success(`Đã phê duyệt xe cho ${verification.driverName}`);
       setShowDetailModal(false);
       setPage(0);
@@ -181,7 +181,7 @@ export default function VehicleManagement() {
       return;
     }
     try {
-      await rejectDriver(Number(verificationToReject.driverId), rejectionReason, 'Rejected by admin');
+      await rejectDriver(Number(verificationToReject.driverId), rejectionReason, 'Bị từ chối bởi quản trị viên');
       toast.success(`Đã từ chối xe của ${verificationToReject.driverName}`);
       setShowRejectModal(false);
       setShowDetailModal(false);
@@ -300,8 +300,8 @@ export default function VehicleManagement() {
         className="flex flex-col sm:flex-row sm:items-center sm:justify-between"
       >
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Quản lý xe</h1>
-          <p className="mt-2 text-gray-600">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Quản lý xe</h1>
+          <p className="mt-2 text-gray-600 dark:text-slate-300">
             Quản lý phương tiện, giấy tờ đăng ký, bảo hiểm và hình ảnh liên quan
           </p>
         </div>
@@ -339,7 +339,12 @@ export default function VehicleManagement() {
       </div>
 
       {/* Filters */}
-      <div className="card">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+        className="card"
+      >
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
           <div className="relative flex-1">
             <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
@@ -373,73 +378,84 @@ export default function VehicleManagement() {
             </select>
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Vehicles Table */}
-      <div className="card overflow-hidden">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
+        className="card overflow-hidden"
+      >
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+          <table className="min-w-full divide-y divide-gray-200 dark:divide-slate-700">
+            <thead className="bg-gray-50 dark:bg-slate-800">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-300 uppercase tracking-wider">
                   ID tài xế
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-300 uppercase tracking-wider">
                   Tên tài xế
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-300 uppercase tracking-wider">
                   Dòng xe
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-300 uppercase tracking-wider">
                   Biển số
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-300 uppercase tracking-wider">
                   Hạn bảo hiểm
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-300 uppercase tracking-wider">
                   Trạng thái
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-300 uppercase tracking-wider">
                   Ngày gửi
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-300 uppercase tracking-wider">
                   Thao tác
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {filteredVerifications.map((verification) => (
-                <tr key={verification.id} className="hover:bg-gray-50 transition-colors">
+            <tbody className="bg-white dark:bg-slate-900 divide-y divide-gray-200 dark:divide-slate-800">
+              {filteredVerifications.map((verification, index) => (
+                <motion.tr
+                  key={verification.id}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: index * 0.05 }}
+                  className="hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors"
+                >
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <div className="ml-4">
-                        <div className="text-sm font-medium text-gray-900">{verification.driverId}</div>
+                        <div className="text-sm font-medium text-gray-900 dark:text-white">{verification.driverId}</div>
                       </div>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <div className="ml-4">
-                        <div className="text-sm font-medium text-gray-900">{verification.driverName}</div>
+                        <div className="text-sm font-medium text-gray-900 dark:text-white">{verification.driverName}</div>
                       </div>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900 font-medium">{verification.model}</div>
-                    <div className="text-sm text-gray-500">{verification.color} - {verification.year}</div>
+                    <div className="text-sm text-gray-900 dark:text-white font-medium">{verification.model}</div>
+                    <div className="text-sm text-gray-500 dark:text-slate-400">{verification.color} - {verification.year}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-bold text-black bg-yellow-100 px-3 py-1 rounded-md inline-block">
+                    <div className="text-sm font-bold text-black dark:text-slate-900 bg-yellow-100 dark:bg-yellow-400/30 px-3 py-1 rounded-md inline-block">
                       {verification.plateNumber}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">
+                    <div className="text-sm text-gray-900 dark:text-white">
                       {new Date(verification.insuranceExpiry).toLocaleDateString('vi-VN')}
                     </div>
                     <div className={`text-xs ${new Date(verification.insuranceExpiry) < new Date()
-                        ? 'text-red-600 font-semibold'
-                        : 'text-green-600'
+                        ? 'text-red-600 dark:text-red-400 font-semibold'
+                        : 'text-green-600 dark:text-green-400'
                       }`}>
                       {new Date(verification.insuranceExpiry) < new Date() ? 'Hết hạn' : 'Còn hiệu lực'}
                     </div>
@@ -469,25 +485,25 @@ export default function VehicleManagement() {
                       );
                     })()}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-slate-400">
                     {new Date(verification.submittedAt).toLocaleDateString('vi-VN')}
-                    <div className="text-xs text-gray-400">
+                    <div className="text-xs text-gray-400 dark:text-slate-500">
                       {new Date(verification.submittedAt).toLocaleTimeString('vi-VN')}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div className="flex items-center space-x-2">
-                      <button onClick={() => openDetailModal(verification)} className="text-blue-600 hover:text-blue-900 p-1 rounded flex items-center" title="Xem chi tiết">
+                      <button onClick={() => openDetailModal(verification)} className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 p-1 rounded flex items-center transition-colors" title="Xem chi tiết">
                         <EyeIcon className="h-4 w-4" />
                       </button>
-                      <button onClick={() => openEdit(verification)} className="text-green-600 hover:text-green-900 p-1 rounded flex items-center" title="Chỉnh sửa">
+                      <button onClick={() => openEdit(verification)} className="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300 p-1 rounded flex items-center transition-colors" title="Chỉnh sửa">
                         <ArrowDownOnSquareStackIcon className="h-4 w-4" />
-                      </button><button onClick={() => openDelete(verification)} className="text-red-600 hover:text-red-900 p-1 rounded flex items-center" title="Xóa">
+                      </button><button onClick={() => openDelete(verification)} className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 p-1 rounded flex items-center transition-colors" title="Xóa">
                         <XCircleIcon className="h-4 w-4" />
                       </button>
                     </div>
                   </td>
-                </tr>
+                </motion.tr>
               ))}
             </tbody>
           </table>
@@ -495,8 +511,8 @@ export default function VehicleManagement() {
 
         {filteredVerifications.length === 0 && (
           <div className="text-center py-12">
-            <Bike className="mx-auto h-12 w-12 text-gray-400" />
-            <p className="mt-2 text-gray-500">No vehicles found.</p>
+            <Bike className="mx-auto h-12 w-12 text-gray-400 dark:text-slate-500" />
+            <p className="mt-2 text-gray-500 dark:text-slate-400">Không tìm thấy xe nào.</p>
           </div>
         )}
         {/* Pagination */}
@@ -513,13 +529,15 @@ export default function VehicleManagement() {
           loading={loading}
           pageSizeOptions={[5, 10, 20, 50]}
         />
-      </div>
+      </motion.div>
 
       {/* Detail Modal */}
-      {showDetailModal && selectedVerification && (
+      {showDetailModal && selectedVerification && (() => {
+        const verification = selectedVerification; // TypeScript guard
+        return (
         <div className="fixed inset-0 z-50 overflow-y-auto">
           <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-            <div className="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" onClick={() => setShowDetailModal(false)} />
+            <div className="fixed inset-0 transition-opacity bg-gray-500 dark:bg-black/60 bg-opacity-75" onClick={() => setShowDetailModal(false)} />
 
             <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-6xl sm:w-full">
               <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
@@ -546,26 +564,26 @@ export default function VehicleManagement() {
                       <div className="grid grid-cols-2 gap-4">
                         <div>
                           <p className="text-sm text-gray-500">Họ và tên</p>
-                          <p className="text-base font-medium text-gray-900">{selectedVerification.driverName}</p>
+                          <p className="text-base font-medium text-gray-900 dark:text-white">{verification.driverName}</p>
                         </div>
                         <div>
-                          <p className="text-sm text-gray-500">Email</p>
-                          <p className="text-base font-medium text-gray-900">{selectedVerification.driverEmail}</p>
+                          <p className="text-sm text-gray-500 dark:text-slate-400">Email</p>
+                          <p className="text-base font-medium text-gray-900 dark:text-white">{verification.driverEmail}</p>
                         </div>
                         <div>
-                          <p className="text-sm text-gray-500">Số điện thoại</p>
-                          <p className="text-base font-medium text-gray-900">{selectedVerification.driverPhone}</p>
+                          <p className="text-sm text-gray-500 dark:text-slate-400">Số điện thoại</p>
+                          <p className="text-base font-medium text-gray-900 dark:text-white">{verification.driverPhone}</p>
                         </div>
                         <div>
-                          <p className="text-sm text-gray-500">Trạng thái</p>
-                          <span className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${selectedVerification.userStatus === 'active'
-                              ? 'bg-green-100 text-green-800'
-                              : selectedVerification.userStatus === 'inactive'
-                                ? 'bg-red-100 text-red-800'
-                                : 'bg-yellow-100 text-yellow-800'
+                          <p className="text-sm text-gray-500 dark:text-slate-400">Trạng thái</p>
+                          <span className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${verification.userStatus === 'active'
+                              ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300'
+                              : verification.userStatus === 'inactive'
+                                ? 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300'
+                                : 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300'
                             }`}>
-                            {selectedVerification.userStatus === 'active' && 'Hoạt động'}
-                            {selectedVerification.userStatus === 'inactive' && 'Không hoạt động'}
+                            {verification.userStatus === 'active' && 'Hoạt động'}
+                            {verification.userStatus === 'inactive' && 'Không hoạt động'}
                           </span>
                         </div>
                       </div>
@@ -581,57 +599,57 @@ export default function VehicleManagement() {
                         <div>
                           <p className="text-sm text-gray-500">Biển số</p>
                           <p className="text-base font-bold text-black bg-yellow-100 px-3 py-1 rounded-md inline-block">
-                            {selectedVerification.plateNumber}
+                            {verification.plateNumber}
                           </p>
                         </div>
                         <div>
-                          <p className="text-sm text-gray-500">Dòng xe</p>
-                          <p className="text-base font-medium text-gray-900">{selectedVerification.model}</p>
+                          <p className="text-sm text-gray-500 dark:text-slate-400">Dòng xe</p>
+                          <p className="text-base font-medium text-gray-900 dark:text-white">{verification.model}</p>
                         </div>
                         <div>
-                          <p className="text-sm text-gray-500">Màu sắc</p>
-                          <p className="text-base font-medium text-gray-900">{selectedVerification.color}</p>
+                          <p className="text-sm text-gray-500 dark:text-slate-400">Màu sắc</p>
+                          <p className="text-base font-medium text-gray-900 dark:text-white">{verification.color}</p>
                         </div>
                         <div>
-                          <p className="text-sm text-gray-500">Năm</p>
-                          <p className="text-base font-medium text-gray-900">{selectedVerification.year}</p>
+                          <p className="text-sm text-gray-500 dark:text-slate-400">Năm</p>
+                          <p className="text-base font-medium text-gray-900 dark:text-white">{verification.year}</p>
                         </div>
                         <div>
-                          <p className="text-sm text-gray-500">Hạn bảo hiểm</p>
-                          <p className={`text-base font-medium ${new Date(selectedVerification.insuranceExpiry) < new Date()
-                              ? 'text-red-600'
-                              : 'text-green-600'
+                          <p className="text-sm text-gray-500 dark:text-slate-400">Hạn bảo hiểm</p>
+                          <p className={`text-base font-medium ${new Date(verification.insuranceExpiry) < new Date()
+                              ? 'text-red-600 dark:text-red-400'
+                              : 'text-green-600 dark:text-green-400'
                             }`}>
-                            {new Date(selectedVerification.insuranceExpiry).toLocaleDateString('vi-VN')}
-                            {new Date(selectedVerification.insuranceExpiry) < new Date() && ' (Hết hạn)'}
+                            {new Date(verification.insuranceExpiry).toLocaleDateString('vi-VN')}
+                            {new Date(verification.insuranceExpiry) < new Date() && ' (Hết hạn)'}
                           </p>
                         </div>
                         <div>
-                          <p className="text-sm text-gray-500">Thời điểm gửi</p>
-                          <p className="text-base font-medium text-gray-900">
-                            {new Date(selectedVerification.submittedAt).toLocaleString('vi-VN')}
+                          <p className="text-sm text-gray-500 dark:text-slate-400">Thời điểm gửi</p>
+                          <p className="text-base font-medium text-gray-900 dark:text-white">
+                            {new Date(verification.submittedAt).toLocaleString('vi-VN')}
                           </p>
                         </div>
                       </div>
 
-                      {selectedVerification.status !== 'pending' && (
-                        <div className="mt-4 pt-4 border-t border-blue-200">
+                      {verification.status !== 'pending' && (
+                        <div className="mt-4 pt-4 border-t border-blue-200 dark:border-slate-700">
                           <div className="grid grid-cols-2 gap-4">
                             <div>
-                              <p className="text-sm text-gray-500">Người duyệt</p>
-                              <p className="text-base font-medium text-gray-900">{selectedVerification.verifiedBy}</p>
+                              <p className="text-sm text-gray-500 dark:text-slate-400">Người duyệt</p>
+                              <p className="text-base font-medium text-gray-900 dark:text-white">{verification.verifiedBy}</p>
                             </div>
                             <div>
-                              <p className="text-sm text-gray-500">Thời điểm duyệt</p>
-                              <p className="text-base font-medium text-gray-900">
-                                {selectedVerification.verifiedAt && new Date(selectedVerification.verifiedAt).toLocaleString('vi-VN')}
+                              <p className="text-sm text-gray-500 dark:text-slate-400">Thời điểm duyệt</p>
+                              <p className="text-base font-medium text-gray-900 dark:text-white">
+                                {verification.verifiedAt ? new Date(verification.verifiedAt).toLocaleString('vi-VN') : '—'}
                               </p>
                             </div>
                           </div>
-                          {selectedVerification.rejectionReason && (
+                          {verification.rejectionReason && (
                             <div className="mt-4">
-                              <p className="text-sm text-gray-500">Lý do từ chối</p>
-                              <p className="text-base font-medium text-red-600">{selectedVerification.rejectionReason}</p>
+                              <p className="text-sm text-gray-500 dark:text-slate-400">Lý do từ chối</p>
+                              <p className="text-base font-medium text-red-600 dark:text-red-400">{verification.rejectionReason}</p>
                             </div>
                           )}
                         </div>
@@ -647,15 +665,15 @@ export default function VehicleManagement() {
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {/* Registration Document */}
-                        {selectedVerification.documents.registrationUrl && (
+                        {verification.documents.registrationUrl && (
                           <div>
-                            <h5 className="text-sm font-semibold text-gray-700 mb-2 flex items-center">
+                            <h5 className="text-sm font-semibold text-gray-700 dark:text-slate-300 mb-2 flex items-center">
                               <ShieldCheckIcon className="h-4 w-4 mr-1 text-green-500" />
                               Giấy đăng ký xe
                             </h5>
-                            <div className="border-2 border-gray-200 rounded-lg overflow-hidden">
+                            <div className="border-2 border-gray-200 dark:border-slate-700 rounded-lg overflow-hidden">
                               <img
-                                src={selectedVerification.documents.registrationUrl}
+                                src={verification.documents.registrationUrl}
                                 alt="Giấy đăng ký xe"
                                 className="w-full h-auto object-contain max-h-64"
                               />
@@ -664,15 +682,15 @@ export default function VehicleManagement() {
                         )}
 
                         {/* Insurance Certificate */}
-                        {selectedVerification.documents.insuranceUrl && (
+                        {verification.documents.insuranceUrl && (
                           <div>
-                            <h5 className="text-sm font-semibold text-gray-700 mb-2 flex items-center">
+                            <h5 className="text-sm font-semibold text-gray-700 dark:text-slate-300 mb-2 flex items-center">
                               <ShieldCheckIcon className="h-4 w-4 mr-1 text-blue-500" />
                               Giấy chứng nhận bảo hiểm
                             </h5>
-                            <div className="border-2 border-gray-200 rounded-lg overflow-hidden">
+                            <div className="border-2 border-gray-200 dark:border-slate-700 rounded-lg overflow-hidden">
                               <img
-                                src={selectedVerification.documents.insuranceUrl}
+                                src={verification.documents.insuranceUrl}
                                 alt="Giấy chứng nhận bảo hiểm"
                                 className="w-full h-auto object-contain max-h-64"
                               />
@@ -681,15 +699,15 @@ export default function VehicleManagement() {
                         )}
 
                         {/* Front Photo */}
-                        {selectedVerification.documents.frontPhotoUrl && (
+                        {verification.documents.frontPhotoUrl && (
                           <div>
-                            <h5 className="text-sm font-semibold text-gray-700 mb-2 flex items-center">
+                            <h5 className="text-sm font-semibold text-gray-700 dark:text-slate-300 mb-2 flex items-center">
                               <PhotoIcon className="h-4 w-4 mr-1 text-purple-500" />
                               Ảnh phía trước
                             </h5>
-                            <div className="border-2 border-gray-200 rounded-lg overflow-hidden">
+                            <div className="border-2 border-gray-200 dark:border-slate-700 rounded-lg overflow-hidden">
                               <img
-                                src={selectedVerification.documents.frontPhotoUrl}
+                                src={verification.documents.frontPhotoUrl}
                                 alt="Ảnh phía trước của xe"
                                 className="w-full h-auto object-contain max-h-64"
                               />
@@ -698,15 +716,15 @@ export default function VehicleManagement() {
                         )}
 
                         {/* Side Photo */}
-                        {selectedVerification.documents.sidePhotoUrl && (
+                        {verification.documents.sidePhotoUrl && (
                           <div>
-                            <h5 className="text-sm font-semibold text-gray-700 mb-2 flex items-center">
+                            <h5 className="text-sm font-semibold text-gray-700 dark:text-slate-300 mb-2 flex items-center">
                               <PhotoIcon className="h-4 w-4 mr-1 text-purple-500" />
                               Ảnh bên hông
                             </h5>
-                            <div className="border-2 border-gray-200 rounded-lg overflow-hidden">
+                            <div className="border-2 border-gray-200 dark:border-slate-700 rounded-lg overflow-hidden">
                               <img
-                                src={selectedVerification.documents.sidePhotoUrl}
+                                src={verification.documents.sidePhotoUrl}
                                 alt="Ảnh bên hông của xe"
                                 className="w-full h-auto object-contain max-h-64"
                               />
@@ -715,15 +733,15 @@ export default function VehicleManagement() {
                         )}
 
                         {/* Plate Photo */}
-                        {selectedVerification.documents.platePhotoUrl && (
+                        {verification.documents.platePhotoUrl && (
                           <div>
-                            <h5 className="text-sm font-semibold text-gray-700 mb-2 flex items-center">
+                            <h5 className="text-sm font-semibold text-gray-700 dark:text-slate-300 mb-2 flex items-center">
                               <PhotoIcon className="h-4 w-4 mr-1 text-yellow-500" />
                               Ảnh cận biển số
                             </h5>
-                            <div className="border-2 border-gray-200 rounded-lg overflow-hidden">
+                            <div className="border-2 border-gray-200 dark:border-slate-700 rounded-lg overflow-hidden">
                               <img
-                                src={selectedVerification.documents.platePhotoUrl}
+                                src={verification.documents.platePhotoUrl}
                                 alt="Biển số"
                                 className="w-full h-auto object-contain max-h-64"
                               />
@@ -736,17 +754,17 @@ export default function VehicleManagement() {
                 </div>
               </div>
 
-              {selectedVerification.status === 'pending' && (
-                <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse gap-3">
+              {verification.status === 'pending' && (
+                <div className="bg-gray-50 dark:bg-slate-800 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse gap-3">
                   <button
-                    onClick={() => handleApprove(selectedVerification)}
+                    onClick={() => handleApprove(verification)}
                     className="w-full sm:w-auto inline-flex justify-center items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
                   >
                     <CheckCircleIcon className="h-5 w-5 mr-2" />
                     Phê duyệt
                   </button>
                   <button
-                    onClick={() => openRejectModal(selectedVerification)}
+                    onClick={() => openRejectModal(verification)}
                     className="mt-3 sm:mt-0 w-full sm:w-auto inline-flex justify-center items-center px-6 py-3 border border-gray-300 text-base font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
                   >
                     <XCircleIcon className="h-5 w-5 mr-2" />
@@ -757,7 +775,8 @@ export default function VehicleManagement() {
             </div>
           </div>
         </div>
-      )}
+        );
+      })()}
 
       {/* Reject Modal */}
       {showRejectModal && verificationToReject && (
@@ -777,7 +796,7 @@ export default function VehicleManagement() {
                     </h3>
                     <div className="mt-2">
                       <p className="text-sm text-gray-500 mb-4">
-                        Bạn sắp từ chối xe của <span className="font-semibold">{verificationToReject.driverName}</span> ({verificationToReject.plateNumber}).
+                        Bạn sắp từ chối xe của <span className="font-semibold">{verificationToReject?.driverName}</span> ({verificationToReject?.plateNumber}).
                         Vui lòng nhập lý do từ chối.
                       </p>
                       <textarea
@@ -937,8 +956,8 @@ export default function VehicleManagement() {
             <div className="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" onClick={() => setShowDeleteModal(false)} />
             <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-md sm:w-full">
               <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Delete Vehicle</h3>
-                <p className="text-sm text-gray-600">Are you sure you want to delete vehicle {selectedForDelete.plateNumber} (Driver {selectedForDelete.driverName})?</p>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Xóa xe</h3>
+                <p className="text-sm text-gray-600 dark:text-slate-300">Bạn có chắc chắn muốn xóa xe {selectedForDelete?.plateNumber} (Tài xế {selectedForDelete?.driverName})?</p>
               </div>
               <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse gap-3">
                 <button

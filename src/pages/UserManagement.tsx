@@ -41,7 +41,7 @@ export default function UserManagement() {
         setTotalPages(response.pagination?.total_pages ?? 1);
         setTotalRecords(response.pagination?.total_records ?? (response.data?.length || 0));
       } catch (error) {
-        console.error('Failed to load users:', error);
+        console.error('Không tải được danh sách người dùng:', error);
         toast.error('Không tải được danh sách người dùng');
       } finally {
         setLoading(false);
@@ -81,7 +81,7 @@ export default function UserManagement() {
         setTotalPages(response.pagination?.total_pages ?? 1);
         setTotalRecords(response.pagination?.total_records ?? (response.data?.length || 0));
       } catch (error) {
-        console.error('Failed to suspend user:', error);
+        console.error('Không thể tạm khóa người dùng:', error);
         toast.error('Không thể tạm khóa người dùng');
       }
     }
@@ -99,7 +99,7 @@ export default function UserManagement() {
         setTotalPages(response.pagination?.total_pages ?? 1);
         setTotalRecords(response.pagination?.total_records ?? (response.data?.length || 0));
       } catch (error) {
-        console.error('Failed to activate user:', error);
+        console.error('Không thể kích hoạt người dùng:', error);
         toast.error('Không thể kích hoạt người dùng');
       }
     }
@@ -149,8 +149,8 @@ export default function UserManagement() {
         className="flex flex-col sm:flex-row sm:items-center sm:justify-between"
       >
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Quản lý người dùng</h1>
-          <p className="mt-2 text-gray-600">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Quản lý người dùng</h1>
+          <p className="mt-2 text-gray-600 dark:text-slate-300">
             Theo dõi tài khoản hành khách, tài xế, trạng thái xác thực và hoạt động liên quan
           </p>
         </div>
@@ -248,30 +248,30 @@ export default function UserManagement() {
         className="card overflow-hidden"
       >
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+          <table className="min-w-full divide-y divide-gray-200 dark:divide-slate-700">
+            <thead className="bg-gray-50 dark:bg-slate-800">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-300 uppercase tracking-wider">
                   Người dùng
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-300 uppercase tracking-wider">
                   Vai trò
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-300 uppercase tracking-wider">
                   Trạng thái
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-300 uppercase tracking-wider">
                   Xác thực
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-300 uppercase tracking-wider">
                   Hoạt động cuối
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-300 uppercase tracking-wider">
                   Thao tác
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-white dark:bg-slate-900 divide-y divide-gray-200 dark:divide-slate-800">
               <AnimatePresence>
                 {loading ? (
                   <tr>
@@ -279,7 +279,7 @@ export default function UserManagement() {
                       <div className="flex justify-center">
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
                       </div>
-                      <p className="mt-2 text-gray-500">Đang tải danh sách người dùng...</p>
+                      <p className="mt-2 text-gray-500 dark:text-slate-400">Đang tải danh sách người dùng...</p>
                     </td>
                   </tr>
                 ) : (
@@ -301,7 +301,7 @@ export default function UserManagement() {
                         animate={{ opacity: 1, x: 0 }}
                         exit={{ opacity: 0, x: 20 }}
                         transition={{ delay: index * 0.05 }}
-                        className="hover:bg-gray-50 transition-colors"
+                        className="hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors"
                       >
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
@@ -311,9 +311,9 @@ export default function UserManagement() {
                               alt=""
                             />
                             <div className="ml-4">
-                              <div className="text-sm font-medium text-gray-900">{user.full_name}</div>
-                              <div className="text-sm text-gray-500">{user.email}</div>
-                              <div className="text-xs text-gray-400">ID: {formatUserId(user.user_id)}</div>
+                              <div className="text-sm font-medium text-gray-900 dark:text-white">{user.full_name}</div>
+                              <div className="text-sm text-gray-500 dark:text-slate-400">{user.email}</div>
+                              <div className="text-xs text-gray-400 dark:text-slate-500">ID: {formatUserId(user.user_id)}</div>
                             </div>
                           </div>
                         </td>
@@ -348,7 +348,7 @@ export default function UserManagement() {
                             </div>
                           )}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-slate-400">
                           {new Date(user.created_at).toLocaleDateString()}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -406,7 +406,7 @@ export default function UserManagement() {
             animate={{ opacity: 1, scale: 1 }}
             className="text-center py-12"
           >
-            <p className="text-gray-500">Không tìm thấy người dùng phù hợp với tiêu chí.</p>
+            <p className="text-gray-500 dark:text-slate-400">Không tìm thấy người dùng phù hợp với tiêu chí.</p>
           </motion.div>
         )}
       </motion.div>

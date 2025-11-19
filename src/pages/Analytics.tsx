@@ -115,8 +115,8 @@ export default function Analytics() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Phân tích & Báo cáo</h1>
-          <p className="mt-2 text-gray-600">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Phân tích & Báo cáo</h1>
+          <p className="mt-2 text-gray-600 dark:text-slate-300">
             Tổng quan chỉ số hoạt động và hiệu suất của nền tảng
           </p>
         </div>
@@ -154,26 +154,26 @@ export default function Analytics() {
           >
             <div className="flex items-center justify-between flex-1">
               <div>
-                <p className="text-sm font-medium text-gray-500">{kpi.title}</p>
-                <p className="text-3xl font-bold text-gray-900 mt-1">{kpi.value}</p>
+                <p className="text-sm font-medium text-gray-500 dark:text-slate-400">{kpi.title}</p>
+                <p className="text-3xl font-bold text-gray-900 dark:text-white mt-1">{kpi.value}</p>
                 <div className="flex items-center mt-2">
                   {kpi.changeType === 'increase' ? (
-                    <ArrowTrendingUpIcon className="h-4 w-4 text-green-500 mr-1" />
+                    <ArrowTrendingUpIcon className="h-4 w-4 text-green-500 dark:text-green-400 mr-1" />
                   ) : (
-                    <ArrowTrendingDownIcon className="h-4 w-4 text-red-500 mr-1" />
+                    <ArrowTrendingDownIcon className="h-4 w-4 text-red-500 dark:text-red-400 mr-1" />
                   )}
                   <span
                     className={`text-sm font-medium ${
-                      kpi.changeType === 'increase' ? 'text-green-600' : 'text-red-600'
+                      kpi.changeType === 'increase' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
                     }`}
                   >
                     {kpi.change}
                   </span>
-                  <span className="text-sm text-gray-500 ml-1">{kpi.period}</span>
+                  <span className="text-sm text-gray-500 dark:text-slate-400 ml-1">{kpi.period}</span>
                 </div>
               </div>
-              <div className="p-3 bg-primary-50 rounded-lg">
-                <ChartBarIcon className="h-6 w-6 text-primary-600" />
+              <div className="p-3 bg-primary-50 dark:bg-indigo-500/20 rounded-lg">
+                <ChartBarIcon className="h-6 w-6 text-primary-600 dark:text-indigo-400" />
               </div>
             </div>
           </motion.div>
@@ -188,8 +188,8 @@ export default function Analytics() {
         className="card"
       >
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-lg font-semibold text-gray-900">Doanh thu & Tăng trưởng người dùng</h3>
-          <div className="flex items-center space-x-4 text-sm">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Doanh thu & Tăng trưởng người dùng</h3>
+          <div className="flex items-center space-x-4 text-sm dark:text-slate-300">
             <div className="flex items-center">
               <div className="w-3 h-3 bg-primary-500 rounded-full mr-2"></div>
               <span>Doanh thu</span>
@@ -245,7 +245,7 @@ export default function Analytics() {
           transition={{ delay: 0.4 }}
           className="card"
         >
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Phân bổ chuyến theo tuần</h3>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Phân bổ chuyến theo tuần</h3>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={dailyRidesData}>
@@ -267,7 +267,7 @@ export default function Analytics() {
           transition={{ delay: 0.5 }}
           className="card"
         >
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Tỉ lệ loại chuyến</h3>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Tỉ lệ loại chuyến</h3>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
@@ -296,7 +296,7 @@ export default function Analytics() {
                   className="w-3 h-3 rounded-full mr-2"
                   style={{ backgroundColor: item.color }}
                 />
-                <span className="text-sm text-gray-600">
+                <span className="text-sm text-gray-600 dark:text-slate-300">
                   {item.name}: {((item.value / rideTypeData.reduce((sum, d) => sum + d.value, 0)) * 100).toFixed(1)}%
                 </span>
               </div>
@@ -312,7 +312,7 @@ export default function Analytics() {
         transition={{ delay: 0.6 }}
         className="card"
       >
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Phân tích khung giờ cao điểm</h3>
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Phân tích khung giờ cao điểm</h3>
         <div className="h-64">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={peakHoursData}>
@@ -343,41 +343,41 @@ export default function Analytics() {
         className="card"
       >
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-lg font-semibold text-gray-900">Tuyến đường nổi bật</h3>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Tuyến đường nổi bật</h3>
           <button className="btn-secondary text-sm">Xem tất cả tuyến</button>
         </div>
         <div className="overflow-x-auto">
           <table className="min-w-full">
-            <thead className="bg-gray-50">
+            <thead className="bg-gray-50 dark:bg-slate-800">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-300 uppercase">
                   Tuyến đường
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-300 uppercase">
                   Tổng chuyến
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-300 uppercase">
                   Doanh thu
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-300 uppercase">
                   Cước bình quân
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200">
+            <tbody className="divide-y divide-gray-200 dark:divide-slate-700">
               {topRoutes.map((route, index) => (
-                <tr key={index} className="hover:bg-gray-50">
+                <tr key={index} className="hover:bg-gray-50 dark:hover:bg-slate-800">
                   <td className="px-6 py-4">
-                    <div className="text-sm font-medium text-gray-900">{route.route}</div>
+                    <div className="text-sm font-medium text-gray-900 dark:text-white">{route.route}</div>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="text-sm text-gray-900">{route.count}</div>
+                    <div className="text-sm text-gray-900 dark:text-white">{route.count}</div>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="text-sm text-gray-900">₫{route.revenue.toLocaleString()}</div>
+                    <div className="text-sm text-gray-900 dark:text-white">₫{route.revenue.toLocaleString()}</div>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="text-sm text-gray-900">
+                    <div className="text-sm text-gray-900 dark:text-white">
                       ₫{Math.round(route.revenue / route.count).toLocaleString()}
                     </div>
                   </td>

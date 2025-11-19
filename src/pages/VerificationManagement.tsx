@@ -124,7 +124,7 @@ export default function VerificationManagement() {
               else if (meta.student_name) name = meta.student_name;
             }
           } catch (e) {
-            console.log('Failed to parse metadata:', v.metadata);
+            console.log('Không thể phân tích metadata:', v.metadata);
           }
           // Only store actual names, not user IDs
           return [v.user_id, name] as const;
@@ -182,7 +182,7 @@ export default function VerificationManagement() {
       setSelected(null);
       await refreshData();
     } catch (error: any) {
-      console.error('Approve failed:', error);
+      console.error('Phê duyệt thất bại:', error);
       toast.error(error?.message || 'Phê duyệt thất bại');
     } finally {
       setActionLoading(false);
@@ -205,7 +205,7 @@ export default function VerificationManagement() {
       setSelected(null);
       await refreshData();
     } catch (error: any) {
-      console.error('Reject failed:', error);
+      console.error('Từ chối thất bại:', error);
       toast.error(error?.message || 'Từ chối thất bại');
     } finally {
       setActionLoading(false);
@@ -307,8 +307,8 @@ export default function VerificationManagement() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Quản lý xác minh</h1>
-          <p className="mt-2 text-gray-600">Xem và xử lý các yêu cầu xác minh</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Quản lý xác minh</h1>
+          <p className="mt-2 text-gray-600 dark:text-slate-300">Xem và xử lý các yêu cầu xác minh</p>
         </div>
       </div>
 
@@ -396,8 +396,8 @@ export default function VerificationManagement() {
       {/* Verifications Table */}
       <motion.div className="card overflow-hidden" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+          <table className="min-w-full divide-y divide-gray-200 dark:divide-slate-700">
+            <thead className="bg-gray-50 dark:bg-slate-800">
               <tr>
                 <th className="px-6 py-3">
                   <input
@@ -417,18 +417,18 @@ export default function VerificationManagement() {
                     }}
                   />
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mã xác minh</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Người dùng</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Loại</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-300 uppercase tracking-wider">Mã xác minh</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-300 uppercase tracking-wider">Người dùng</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-300 uppercase tracking-wider">Loại</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-300 uppercase tracking-wider">
                   Trạng thái
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tạo lúc</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Duyệt lúc</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Chi tiết</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-300 uppercase tracking-wider">Tạo lúc</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-300 uppercase tracking-wider">Duyệt lúc</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-300 uppercase tracking-wider">Chi tiết</th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-white dark:bg-slate-900 divide-y divide-gray-200 dark:divide-slate-800">
               {filteredItems.map((v) => (
                 <tr key={v.verification_id} className="hover:bg-gray-50 transition-colors">
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -468,7 +468,7 @@ export default function VerificationManagement() {
                       {translateStatus(v.status)}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-slate-400">
                     {(() => {
                       // Backend sends UTC with 'Z' suffix, but it's actually Vietnam time
                       // Remove 'Z' and treat as local Vietnam time
@@ -480,7 +480,7 @@ export default function VerificationManagement() {
                         day: '2-digit'
                       });
                     })()}
-                    <div className="text-xs text-gray-400">
+                    <div className="text-xs text-gray-400 dark:text-slate-500">
                       {(() => {
                         const timestamp = v.created_at.replace('Z', '');
                         const date = new Date(timestamp);
@@ -492,7 +492,7 @@ export default function VerificationManagement() {
                       })()}
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-slate-400">
                     {v.verified_at ? (
                       <>
                         {(() => {
@@ -536,8 +536,8 @@ export default function VerificationManagement() {
 
         {filteredItems.length === 0 && !loading && (
           <div className="text-center py-12">
-            <DocumentTextIcon className="mx-auto h-12 w-12 text-gray-400" />
-            <p className="mt-2 text-gray-500">Không có yêu cầu xác minh.</p>
+            <DocumentTextIcon className="mx-auto h-12 w-12 text-gray-400 dark:text-slate-500" />
+            <p className="mt-2 text-gray-500 dark:text-slate-400">Không có yêu cầu xác minh.</p>
           </div>
         )}
 
@@ -563,42 +563,42 @@ export default function VerificationManagement() {
           <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
             <div className="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" onClick={closeDetailModal} />
 
-            <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full">
-              <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+            <div className="inline-block align-bottom bg-white dark:bg-slate-900 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full">
+              <div className="bg-white dark:bg-slate-900 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                 <div className="sm:flex sm:items-start">
                   <div className="w-full">
                     <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-2xl font-bold text-gray-900">
+                      <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
                         Chi tiết xác minh
                       </h3>
                       <button
                         onClick={closeDetailModal}
-                        className="text-gray-400 hover:text-gray-500"
+                        className="text-gray-400 hover:text-gray-500 dark:hover:text-slate-300"
                       >
                         <XCircleIcon className="h-6 w-6" />
                       </button>
                     </div>
 
                     {/* Verification Info */}
-                    <div className="bg-gray-50 rounded-lg p-4 mb-4">
-                      <h4 className="text-lg font-semibold text-gray-900 mb-3 flex items-center">
+                    <div className="bg-gray-50 dark:bg-slate-800 rounded-lg p-4 mb-4">
+                      <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 flex items-center">
                         <IdentificationIcon className="h-5 w-5 mr-2 text-blue-500" />
                         Thông tin xác minh
                       </h4>
                       <div className="grid grid-cols-2 gap-4">
                         <div>
-                          <p className="text-sm text-gray-500">Mã xác minh</p>
-                          <p className="text-base font-medium text-gray-900">{formatVerificationId(selected.verification_id)}</p>
+                          <p className="text-sm text-gray-500 dark:text-slate-400">Mã xác minh</p>
+                          <p className="text-base font-medium text-gray-900 dark:text-white">{formatVerificationId(selected.verification_id)}</p>
                         </div>
                         <div>
-                          <p className="text-sm text-gray-500">Người dùng</p>
-                          <p className="text-base font-medium text-gray-900">
+                          <p className="text-sm text-gray-500 dark:text-slate-400">Người dùng</p>
+                          <p className="text-base font-medium text-gray-900 dark:text-white">
                             {userNames[Number(selected.user_id)] ? `${userNames[Number(selected.user_id)]} (${formatUserId(Number(selected.user_id))})` : formatUserId(Number(selected.user_id))}
                           </p>
                         </div>
                         <div>
-                          <p className="text-sm text-gray-500">Loại</p>
-                          <p className="text-base font-medium text-gray-900">{translateType(selected.type)}</p>
+                          <p className="text-sm text-gray-500 dark:text-slate-400">Loại</p>
+                          <p className="text-base font-medium text-gray-900 dark:text-white">{translateType(selected.type)}</p>
                         </div>
                         <div>
                           <p className="text-sm text-gray-500">Trạng thái</p>
@@ -612,8 +612,8 @@ export default function VerificationManagement() {
                           </span>
                         </div>
                         <div>
-                          <p className="text-sm text-gray-500">Tạo lúc</p>
-                          <p className="text-base font-medium text-gray-900">
+                          <p className="text-sm text-gray-500 dark:text-slate-400">Tạo lúc</p>
+                          <p className="text-base font-medium text-gray-900 dark:text-white">
                             {(() => {
                               const timestamp = selected.created_at.replace('Z', '');
                               const date = new Date(timestamp);
@@ -629,8 +629,8 @@ export default function VerificationManagement() {
                           </p>
                         </div>
                         <div>
-                          <p className="text-sm text-gray-500">Duyệt lúc</p>
-                          <p className="text-base font-medium text-gray-900">
+                          <p className="text-sm text-gray-500 dark:text-slate-400">Duyệt lúc</p>
+                          <p className="text-base font-medium text-gray-900 dark:text-white">
                             {selected.verified_at ? (() => {
                               const timestamp = selected.verified_at.replace('Z', '');
                               const date = new Date(timestamp);
@@ -649,7 +649,7 @@ export default function VerificationManagement() {
                         {/* Metadata (moved from table) */}
                         {selected.metadata && (
                           <div className="mt-4">
-                            <h5 className="text-sm font-semibold text-gray-900 mb-2 flex items-center">
+                            <h5 className="text-sm font-semibold text-gray-900 dark:text-white mb-2 flex items-center">
                               <DocumentTextIcon className="h-4 w-4 mr-2 text-indigo-500" />
                               Dữ liệu kèm theo
                             </h5>
@@ -659,14 +659,14 @@ export default function VerificationManagement() {
                                 if (metaObj && typeof metaObj === 'object') {
                                   const entries = Object.entries(metaObj);
                                   return (
-                                    <div className="bg-white border border-gray-200 rounded-lg p-3 max-h-56 overflow-auto">
+                                    <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg p-3 max-h-56 overflow-auto">
                                       {entries.length === 0 ? (
-                                        <div className="text-xs text-gray-500">Không có dữ liệu</div>
+                                        <div className="text-xs text-gray-500 dark:text-slate-400">Không có dữ liệu</div>
                                       ) : (
                                         <ul className="space-y-1">
                                           {entries.map(([k, v]) => (
-                                            <li key={k} className="text-xs text-gray-700">
-                                              <span className="font-semibold text-gray-900">{k}:</span> {String(v)}
+                                            <li key={k} className="text-xs text-gray-700 dark:text-slate-300">
+                                              <span className="font-semibold text-gray-900 dark:text-white">{k}:</span> {String(v)}
                                             </li>
                                           ))}
                                         </ul>
@@ -678,8 +678,8 @@ export default function VerificationManagement() {
                                 // fallthrough to raw text
                               }
                               return (
-                                <div className="bg-white border border-gray-200 rounded-lg p-3 max-h-56 overflow-auto">
-                                  <div className="text-xs text-gray-700 break-words whitespace-pre-wrap">{selected.metadata}</div>
+                                <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg p-3 max-h-56 overflow-auto">
+                                  <div className="text-xs text-gray-700 dark:text-slate-300 break-words whitespace-pre-wrap">{selected.metadata}</div>
                                 </div>
                               );
                             })()}
@@ -688,23 +688,23 @@ export default function VerificationManagement() {
                       </div>
 
                       {selected.status !== 'PENDING' && (
-                        <div className="mt-4 pt-4 border-t border-gray-200">
+                        <div className="mt-4 pt-4 border-t border-gray-200 dark:border-slate-700">
                           <div className="grid grid-cols-2 gap-4">
                             <div>
-                              <p className="text-sm text-gray-500">Người duyệt</p>
-                              <p className="text-base font-medium text-gray-900">{selected.verified_by || '—'}</p>
+                              <p className="text-sm text-gray-500 dark:text-slate-400">Người duyệt</p>
+                              <p className="text-base font-medium text-gray-900 dark:text-white">{selected.verified_by || '—'}</p>
                             </div>
                             <div>
-                              <p className="text-sm text-gray-500">Duyệt lúc</p>
-                              <p className="text-base font-medium text-gray-900">
+                              <p className="text-sm text-gray-500 dark:text-slate-400">Duyệt lúc</p>
+                              <p className="text-base font-medium text-gray-900 dark:text-white">
                                 {selected.verified_at ? new Date(selected.verified_at).toLocaleString('vi-VN') : '—'}
                               </p>
                             </div>
                           </div>
                           {selected.rejection_reason && (
                             <div className="mt-4">
-                              <p className="text-sm text-gray-500">Lý do từ chối</p>
-                              <p className="text-base font-medium text-red-600">{selected.rejection_reason}</p>
+                              <p className="text-sm text-gray-500 dark:text-slate-400">Lý do từ chối</p>
+                              <p className="text-base font-medium text-red-600 dark:text-red-400">{selected.rejection_reason}</p>
                             </div>
                           )}
                         </div>
@@ -755,17 +755,17 @@ export default function VerificationManagement() {
                                   <div key={index} className="space-y-2">
                                     <p className="text-sm font-medium text-gray-700">
                                       {selected.type === 'STUDENT_ID'
-                                        ? (index === 0 ? 'Front (Mặt trước)' : 'Back (Mặt sau)')
-                                        : `Document ${index + 1}`}
+                                        ? (index === 0 ? 'Mặt trước' : 'Mặt sau')
+                                        : `Tài liệu ${index + 1}`}
                                     </p>
                                     {selected.document_type === 'IMAGE' ? (
                                       <div className="border-2 border-gray-200 rounded-lg overflow-hidden bg-white">
                                         <img
                                           src={url}
-                                          alt={`Document ${index + 1}`}
+                                          alt={`Tài liệu ${index + 1}`}
                                           className="w-full h-auto object-contain max-h-80"
                                           onError={(e) => {
-                                            console.error('Image load error:', url);
+                                            console.error('Lỗi tải hình ảnh:', url);
                                             (e.target as HTMLImageElement).src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="300"%3E%3Crect fill="%23f3f4f6" width="400" height="300"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" fill="%236b7280" font-size="16"%3EFailed to load image%3C/text%3E%3C/svg%3E';
                                           }}
                                         />
@@ -1031,7 +1031,7 @@ export default function VerificationManagement() {
                                       <div className="border-2 border-gray-200 rounded-lg overflow-hidden bg-white">
                                         <img
                                           src={u}
-                                          alt={`Document ${idx + 1}`}
+                                          alt={`Tài liệu ${idx + 1}`}
                                           className="w-full h-auto object-contain max-h-80"
                                           onError={(e) => {
                                             (e.target as HTMLImageElement).src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="300"%3E%3Crect fill="%23f3f4f6" width="400" height="300"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" fill="%236b7280" font-size="16"%3EFailed to load image%3C/text%3E%3C/svg%3E';
@@ -1061,7 +1061,7 @@ export default function VerificationManagement() {
                                         className="inline-flex items-center px-3 py-1.5 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
                                       >
                                         <DocumentTextIcon className="h-4 w-4 mr-1.5" />
-                                        Open in new tab
+                                        Mở trong tab mới
                                       </a>
                                     </div>
                                   </div>

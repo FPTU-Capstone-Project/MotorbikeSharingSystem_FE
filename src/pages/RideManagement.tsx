@@ -57,7 +57,7 @@ const mockRides: Ride[] = [
     createdAt: '2024-01-20T07:15:00Z',
     completedAt: '2024-01-20T07:33:00Z',
     rating: 4.8,
-    feedback: 'Great ride, very safe driver!',
+    feedback: 'Chuyến đi tuyệt vời, tài xế rất an toàn!',
     paymentStatus: 'completed',
   },
   {
@@ -164,7 +164,7 @@ export default function RideManagement() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-stretch">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         {[
           { 
             label: 'Tổng số chuyến', 
@@ -196,9 +196,9 @@ export default function RideManagement() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.1 }}
-            className="card h-full flex flex-col"
+            className="card"
           >
-            <div className="flex items-center flex-1">
+            <div className="flex items-center">
               <div className={`p-3 rounded-lg ${stat.color}`}>
                 <stat.icon className="h-6 w-6 text-white" />
               </div>
@@ -378,7 +378,7 @@ export default function RideManagement() {
         
         {filteredRides.length === 0 && (
           <div className="text-center py-12">
-            <p className="text-gray-500">No rides found matching your criteria.</p>
+            <p className="text-gray-500 dark:text-slate-400">Không tìm thấy chuyến đi nào phù hợp với tiêu chí của bạn.</p>
           </div>
         )}
       </motion.div>
@@ -393,8 +393,8 @@ export default function RideManagement() {
           >
             <div className="px-6 py-4 border-b border-gray-200">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-gray-900">
-                  Ride Details - #{selectedRide.id}
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  Chi tiết chuyến đi - #{selectedRide.id}
                 </h3>
                 <button
                   onClick={() => setSelectedRide(null)}
@@ -408,35 +408,35 @@ export default function RideManagement() {
             <div className="px-6 py-4 space-y-6">
               {/* Participants */}
               <div>
-                <h4 className="font-medium text-gray-900 mb-3">Participants</h4>
+                <h4 className="font-medium text-gray-900 dark:text-white mb-3">Người tham gia</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="p-4 bg-gray-50 rounded-lg">
-                    <p className="text-sm font-medium text-gray-500">Rider</p>
-                    <p className="text-lg font-semibold text-gray-900">{riderNames[selectedRide.riderId]}</p>
+                  <div className="p-4 bg-gray-50 dark:bg-slate-800 rounded-lg">
+                    <p className="text-sm font-medium text-gray-500 dark:text-slate-400">Hành khách</p>
+                    <p className="text-lg font-semibold text-gray-900 dark:text-white">{riderNames[selectedRide.riderId]}</p>
                   </div>
-                  <div className="p-4 bg-gray-50 rounded-lg">
-                    <p className="text-sm font-medium text-gray-500">Driver</p>
-                    <p className="text-lg font-semibold text-gray-900">{driverNames[selectedRide.driverId]}</p>
+                  <div className="p-4 bg-gray-50 dark:bg-slate-800 rounded-lg">
+                    <p className="text-sm font-medium text-gray-500 dark:text-slate-400">Tài xế</p>
+                    <p className="text-lg font-semibold text-gray-900 dark:text-white">{driverNames[selectedRide.driverId]}</p>
                   </div>
                 </div>
               </div>
 
               {/* Route Information */}
               <div>
-                <h4 className="font-medium text-gray-900 mb-3">Route Information</h4>
+                <h4 className="font-medium text-gray-900 dark:text-white mb-3">Thông tin lộ trình</h4>
                 <div className="space-y-3">
                   <div className="flex items-start">
                     <div className="w-3 h-3 bg-green-500 rounded-full mt-1 mr-3"></div>
                     <div>
-                      <p className="text-sm font-medium text-gray-900">Pickup Location</p>
-                      <p className="text-sm text-gray-600">{selectedRide.pickupLocation.address}</p>
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">Điểm đón</p>
+                      <p className="text-sm text-gray-600 dark:text-slate-300">{selectedRide.pickupLocation.address}</p>
                     </div>
                   </div>
                   <div className="flex items-start">
                     <div className="w-3 h-3 bg-red-500 rounded-full mt-1 mr-3"></div>
                     <div>
-                      <p className="text-sm font-medium text-gray-900">Destination</p>
-                      <p className="text-sm text-gray-600">{selectedRide.destination.address}</p>
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">Điểm đến</p>
+                      <p className="text-sm text-gray-600 dark:text-slate-300">{selectedRide.destination.address}</p>
                     </div>
                   </div>
                 </div>
@@ -444,23 +444,23 @@ export default function RideManagement() {
 
               {/* Trip Details */}
               <div>
-                <h4 className="font-medium text-gray-900 mb-3">Trip Details</h4>
+                <h4 className="font-medium text-gray-900 dark:text-white mb-3">Chi tiết chuyến đi</h4>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div>
-                    <p className="text-sm text-gray-500">Distance</p>
-                    <p className="font-semibold">{selectedRide.distance}km</p>
+                    <p className="text-sm text-gray-500 dark:text-slate-400">Khoảng cách</p>
+                    <p className="font-semibold dark:text-white">{selectedRide.distance}km</p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500">Duration</p>
-                    <p className="font-semibold">{selectedRide.duration}min</p>
+                    <p className="text-sm text-gray-500 dark:text-slate-400">Thời gian</p>
+                    <p className="font-semibold dark:text-white">{selectedRide.duration} phút</p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500">Fare</p>
-                    <p className="font-semibold">{selectedRide.fare.toLocaleString()}đ</p>
+                    <p className="text-sm text-gray-500 dark:text-slate-400">Cước phí</p>
+                    <p className="font-semibold dark:text-white">{selectedRide.fare.toLocaleString()}đ</p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500">Type</p>
-                    <p className="font-semibold capitalize">{selectedRide.type}</p>
+                    <p className="text-sm text-gray-500 dark:text-slate-400">Loại</p>
+                    <p className="font-semibold capitalize dark:text-white">{selectedRide.type === 'shared' ? 'Đi chung' : 'Đi riêng'}</p>
                   </div>
                 </div>
               </div>
@@ -468,14 +468,14 @@ export default function RideManagement() {
               {/* Rating & Feedback */}
               {selectedRide.status === 'completed' && selectedRide.rating && (
                 <div>
-                  <h4 className="font-medium text-gray-900 mb-3">Rating & Feedback</h4>
-                  <div className="p-4 bg-gray-50 rounded-lg">
+                  <h4 className="font-medium text-gray-900 dark:text-white mb-3">Đánh giá & Phản hồi</h4>
+                  <div className="p-4 bg-gray-50 dark:bg-slate-800 rounded-lg">
                     <div className="flex items-center mb-2">
-                      <span className="text-lg font-semibold text-gray-900">{selectedRide.rating}</span>
+                      <span className="text-lg font-semibold text-gray-900 dark:text-white">{selectedRide.rating}</span>
                       <span className="text-yellow-400 ml-1">⭐</span>
                     </div>
                     {selectedRide.feedback && (
-                      <p className="text-gray-600 italic">"{selectedRide.feedback}"</p>
+                      <p className="text-gray-600 dark:text-slate-300 italic">"{selectedRide.feedback}"</p>
                     )}
                   </div>
                 </div>
@@ -487,7 +487,7 @@ export default function RideManagement() {
                 onClick={() => setSelectedRide(null)}
                 className="btn-secondary"
               >
-                Close
+                Đóng
               </button>
             </div>
           </motion.div>

@@ -49,7 +49,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           try {
             setUser(JSON.parse(storedUser));
           } catch (error) {
-            console.error('Failed to parse stored user:', error);
+            console.error('Không thể phân tích người dùng đã lưu:', error);
             localStorage.removeItem('user');
           }
         }
@@ -68,7 +68,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           localStorage.setItem('user', JSON.stringify(fullUserData));
         } catch (error) {
           // If fetching profile fails (expired token, etc.), keep optimistic user or logout later when an authed request fails
-          console.warn('Failed to fetch current user profile:', error);
+          console.warn('Không thể tải hồ sơ người dùng hiện tại:', error);
         }
       } else {
         // No token found, ensure monitoring is stopped
@@ -134,7 +134,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(fullUserData);
         localStorage.setItem('user', JSON.stringify(fullUserData));
       } catch (profileError) {
-        console.warn('Failed to fetch profile after login, falling back to minimal user:', profileError);
+        console.warn('Không thể tải hồ sơ sau khi đăng nhập, sử dụng thông tin tối thiểu:', profileError);
         const minimalUser: User = {
           userId: response.userId ?? (response as any).user_id ?? 0,
           email,
@@ -146,7 +146,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         localStorage.setItem('user', JSON.stringify(minimalUser));
       }
     } catch (error: any) {
-      console.error('Login error:', error);
+      console.error('Lỗi đăng nhập:', error);
       throw error;
     }
   };
@@ -174,7 +174,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Ignore logout API errors
       });
     } catch (error) {
-      console.warn('Logout API call failed:', error);
+      console.warn('Lỗi gọi API đăng xuất:', error);
     }
   };
 

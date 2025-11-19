@@ -147,10 +147,10 @@ export default function ReportManagement() {
       if (filterType !== 'ALL') params.reportType = filterType;
 
       const response = await UserReportsAPI.getReports(params);
-      console.log('Reports API Response:', response);
+      console.log('Phản hồi API báo cáo:', response);
       // Handle PageResponse format - backend returns { data, pagination }
       const reportsList = response.data || response.content || [];
-      console.log('Reports List:', reportsList);
+      console.log('Danh sách báo cáo:', reportsList);
       setReports(reportsList);
       // Use pagination object if available, otherwise fall back to legacy fields
       if (response.pagination) {
@@ -161,7 +161,7 @@ export default function ReportManagement() {
         setTotalElements(response.totalElements || reportsList.length);
       }
     } catch (error: any) {
-      console.error('Error loading reports:', error);
+      console.error('Lỗi tải báo cáo:', error);
       toast.error(error.message || 'Không thể tải danh sách báo cáo');
     } finally {
       setLoading(false);
@@ -174,7 +174,7 @@ export default function ReportManagement() {
       const data = await UserReportsAPI.getAnalytics();
       setAnalytics(data);
     } catch (error: any) {
-      console.error('Error loading analytics:', error);
+      console.error('Lỗi tải thống kê:', error);
       toast.error(error.message || 'Không thể tải thống kê');
     }
   };

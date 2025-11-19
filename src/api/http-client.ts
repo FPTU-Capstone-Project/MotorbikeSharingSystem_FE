@@ -128,7 +128,7 @@ class HttpClient {
               return this.fetchWithRetry<T>(url, { ...config, headers: newHeaders }, retryAttempts, true);
             }
           } catch (refreshError) {
-            console.error('Token refresh failed:', refreshError);
+            console.error('Làm mới token thất bại:', refreshError);
             // If refresh fails, clear auth and throw error
             this.clearAuth();
             throw new Error('Session expired. Please login again.');

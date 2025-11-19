@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { motion } from 'framer-motion';
 import maplibregl, { Map as MapLibreMap } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import toast from 'react-hot-toast';
@@ -326,7 +327,7 @@ const RouteManagement: React.FC = () => {
         setToSearch(address || '');
       }
     } catch (error) {
-      console.warn('Reverse geocode failed', error);
+      console.warn('Lỗi reverse geocode', error);
     }
   };
 
@@ -589,7 +590,11 @@ const RouteManagement: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex flex-col md:flex-row md:items-center md:justify-between gap-4"
+      >
         <div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Quản lí tuyến đường</h1>
           <p className="mt-2 text-gray-600 dark:text-gray-300">
@@ -599,23 +604,28 @@ const RouteManagement: React.FC = () => {
         <button className="btn-primary" onClick={() => { resetForm(); setCreateModalOpen(true); }}>
           + Tuyến đường mới
         </button>
-      </div>
+      </motion.div>
 
-      <div className="card">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="card"
+      >
         <div className="mb-4">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Danh sách tuyến đường</h3>
-          <p className="text-sm text-gray-500">Giá mặc định được tính tự động từ cấu hình giá.</p>
+          <p className="text-sm text-gray-500 dark:text-slate-400">Giá mặc định được tính tự động từ cấu hình giá.</p>
         </div>
 
         {loadingRoutes ? (
-          <div className="py-10 text-center text-gray-500">Đang tải dữ liệu...</div>
+          <div className="py-10 text-center text-gray-500 dark:text-slate-400">Đang tải dữ liệu...</div>
         ) : routes.length === 0 ? (
-          <div className="py-10 text-center text-gray-500">Chưa có tuyến đường mẫu nào.</div>
+          <div className="py-10 text-center text-gray-500 dark:text-slate-400">Chưa có tuyến đường mẫu nào.</div>
         ) : (
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm">
               <thead>
-                <tr className="text-left text-xs uppercase text-gray-500">
+                <tr className="text-left text-xs uppercase text-gray-500 dark:text-slate-300">
                   <th className="px-4 py-2">Tuyến đường</th>
                   <th className="px-4 py-2">Giá mặc định</th>
                   <th className="px-4 py-2">Hiệu lực</th>
@@ -623,35 +633,41 @@ const RouteManagement: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {routes.map((route) => (
-                  <tr key={route.routeId ?? route.name} className="border-t border-slate-100 dark:border-slate-800">
+                {routes.map((route, index) => (
+                  <motion.tr
+                    key={route.routeId ?? route.name}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                    className="border-t border-slate-100 dark:border-slate-800 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors"
+                  >
                     <td className="px-4 py-3">
                       <div className="font-semibold text-gray-900 dark:text-white">{route.name}</div>
-                      <div className="text-xs text-gray-500">
+                      <div className="text-xs text-gray-500 dark:text-slate-400">
                         {(route.from?.name || 'Điểm đi')} → {(route.to?.name || 'Điểm đến')}
                       </div>
                       {route.distanceMeters && (
-                        <div className="text-xs text-gray-400">{(route.distanceMeters / 1000).toFixed(2)} km</div>
+                        <div className="text-xs text-gray-400 dark:text-slate-500">{(route.distanceMeters / 1000).toFixed(2)} km</div>
                       )}
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3 dark:text-white">
                       {route.defaultPrice ? `${route.defaultPrice.toLocaleString('vi-VN')} đ` : '--'}
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">
+                    <td className="px-4 py-3 text-sm text-gray-600 dark:text-slate-300">
                       {route.validFrom ? new Date(route.validFrom).toLocaleDateString('vi-VN') : '--'}
                       <br />
                       {route.validUntil ? `Đến ${new Date(route.validUntil).toLocaleDateString('vi-VN')}` : 'Không giới hạn'}
                     </td>
                     <td className="px-4 py-3 text-right">
                       <button
-                        className="text-blue-600 hover:text-blue-900 p-1 rounded"
+                        className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 p-1 rounded transition-colors"
                         onClick={() => handleOpenDetail(route.routeId)}
                         aria-label="Xem chi tiết"
                       >
                         <EyeIcon className="w-5 h-5" />
                       </button>
                     </td>
-                  </tr>
+                  </motion.tr>
                 ))}
               </tbody>
             </table>
@@ -671,7 +687,7 @@ const RouteManagement: React.FC = () => {
             className="bg-transparent px-0 py-0 border-0"
           />
         </div>
-      </div>
+      </motion.div>
       {createModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-6xl max-h-[90vh] overflow-y-auto">

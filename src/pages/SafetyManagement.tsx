@@ -43,7 +43,7 @@ export default function SafetyManagement() {
       const stats = await getSafetyDashboardStats();
       setDashboardStats(stats);
     } catch (error: any) {
-      console.error('Failed to load dashboard stats:', error);
+      console.error('Không tải được thống kê dashboard:', error);
       toast.error(error?.message || 'Không tải được thống kê dashboard');
     }
   }, []);
@@ -66,7 +66,7 @@ export default function SafetyManagement() {
       setTotalPages(response.totalPages);
       setTotalRecords(response.totalRecords);
     } catch (error: any) {
-      console.error('Failed to load alerts:', error);
+      console.error('Không tải được danh sách báo động:', error);
       toast.error(error?.message || 'Không tải được danh sách báo động');
     } finally {
       setLoadingAlerts(false);
@@ -153,8 +153,8 @@ export default function SafetyManagement() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Quản lý an toàn</h1>
-          <p className="mt-2 text-gray-600">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Quản lý an toàn</h1>
+          <p className="mt-2 text-gray-600 dark:text-slate-300">
             Theo dõi báo động SOS, trạng thái xác thực tài xế và sự cố an toàn
           </p>
         </div>
@@ -211,11 +211,11 @@ export default function SafetyManagement() {
                   <div className="flex items-center space-x-3">
                     <div className="h-3 w-3 bg-red-500 rounded-full animate-pulse"></div>
                     <div>
-                      <p className="font-medium text-gray-900">{alert.userName || `User ${alert.userId}`}</p>
+                      <p className="font-medium text-gray-900 dark:text-white">{alert.userName || `User ${alert.userId}`}</p>
                       <p className="text-sm text-gray-600 dark:text-slate-300">
                         {alert.location?.address || `${alert.currentLat.toFixed(4)}, ${alert.currentLng.toFixed(4)}`}
                       </p>
-                      <p className="text-sm text-red-600">{alert.description}</p>
+                      <p className="text-sm text-red-600 dark:text-red-400">{alert.description}</p>
                     </div>
                   </div>
                   <div className="flex items-center space-x-2">
@@ -417,7 +417,7 @@ export default function SafetyManagement() {
           className="card bg-white dark:bg-slate-900 dark:text-slate-100"
         >
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-semibold text-gray-900">Xác thực an toàn tài xế</h3>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Xác thực an toàn tài xế</h3>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="text-center p-6 bg-green-50 dark:bg-slate-800 rounded-lg border border-green-200 dark:border-green-400/40">

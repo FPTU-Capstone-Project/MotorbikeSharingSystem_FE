@@ -54,7 +54,7 @@ export default function ReportChatModal({
       const fetchedMessages = await ChatAPI.getMessagesByConversationId(conversationId);
       setMessages(fetchedMessages);
     } catch (error: any) {
-      console.error('Error loading messages:', error);
+      console.error('Lỗi tải tin nhắn:', error);
       // If conversation doesn't exist yet, that's okay - it will be created on first message
       if (error.status !== 404) {
         toast.error(error.message || 'Không thể tải tin nhắn');
@@ -117,7 +117,7 @@ export default function ReportChatModal({
             // Reload messages after starting chat
             await loadMessages();
           } catch (startError: any) {
-            console.error('Error starting chat:', startError);
+            console.error('Lỗi bắt đầu chat:', startError);
             toast.error(startError.message || 'Không thể bắt đầu chat');
             setNewMessage(messageContent); // Restore message on error
           }
@@ -126,7 +126,7 @@ export default function ReportChatModal({
         }
       }
     } catch (error: any) {
-      console.error('Error sending message:', error);
+      console.error('Lỗi gửi tin nhắn:', error);
       toast.error(error.message || 'Không thể gửi tin nhắn');
       setNewMessage(messageContent); // Restore message on error
     } finally {
