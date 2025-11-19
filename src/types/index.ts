@@ -171,6 +171,7 @@ export interface SOSAlert {
     lng: number;
     address?: string;
   };
+  timeline?: SosAlertEvent[];
   
   // Legacy compatibility
   rideId?: string;

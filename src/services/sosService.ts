@@ -7,6 +7,7 @@ import {
   EmergencyContact,
   EmergencyContactRequest,
   SosAlertEvent,
+  SosAlertEventType,
 } from '../types';
 
 /**
@@ -23,10 +24,11 @@ import {
  * POST /api/v1/sos/alerts
  */
 export async function triggerSosAlert(request: TriggerSosRequest): Promise<SOSAlert> {
-  return apiFetch<SOSAlert>('/sos/alerts', {
+  const response = await apiFetch<any>('/sos/alerts', {
     method: 'POST',
     body: request,
   });
+  return transformSosAlertResponse(response);
 }
 
 /**
@@ -35,12 +37,19 @@ export async function triggerSosAlert(request: TriggerSosRequest): Promise<SOSAl
  */
 export async function getMySOSAlerts(status?: string): Promise<SOSAlert[]> {
   const queryParams = new URLSearchParams();
+  const allStatuses = ['ACTIVE', 'ESCALATED', 'ACKNOWLEDGED', 'RESOLVED', 'FALSE_ALARM'];
   if (status) {
     queryParams.append('status', status);
+  } else {
+    allStatuses.forEach((s) => queryParams.append('status', s));
   }
   
   const endpoint = `/sos/alerts/me${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
-  return apiFetch<SOSAlert[]>(endpoint);
+  const response = await apiFetch<any>(endpoint);
+  const alerts = Array.isArray(response)
+    ? response
+    : response?.alerts || response?.data || [];
+  return alerts.map(transformSosAlertResponse);
 }
 
 /**
@@ -48,7 +57,8 @@ export async function getMySOSAlerts(status?: string): Promise<SOSAlert[]> {
  * GET /api/v1/sos/alerts/{id}
  */
 export async function getSOSAlertById(alertId: number): Promise<SOSAlert> {
-  return apiFetch<SOSAlert>(`/sos/alerts/${alertId}`);
+  const response = await apiFetch<any>(`/sos/alerts/${alertId}`);
+  return transformSosAlertResponse(response);
 }
 
 /**
@@ -56,7 +66,9 @@ export async function getSOSAlertById(alertId: number): Promise<SOSAlert> {
  * GET /api/v1/sos/alerts/{id}/timeline
  */
 export async function getSOSAlertTimeline(alertId: number): Promise<SosAlertEvent[]> {
-  return apiFetch<SosAlertEvent[]>(`/sos/alerts/${alertId}/timeline`);
+  const response = await apiFetch<any[]>(`/sos/alerts/${alertId}/timeline`);
+  if (!Array.isArray(response)) return [];
+  return response.map((event, index) => transformTimelineEvent(alertId, event, index));
 }
 
 /**
@@ -82,8 +94,11 @@ export interface SOSAlertsResponse {
 export async function getAllSOSAlerts(params?: GetSOSAlertsParams): Promise<SOSAlertsResponse> {
   const queryParams = new URLSearchParams();
   
+  const allStatuses = ['ACTIVE', 'ESCALATED', 'ACKNOWLEDGED', 'RESOLVED', 'FALSE_ALARM'];
   if (params?.status) {
     queryParams.append('status', params.status);
+  } else {
+    allStatuses.forEach((s) => queryParams.append('status', s));
   }
   if (params?.page !== undefined) {
     queryParams.append('page', String(params.page));
@@ -99,7 +114,22 @@ export async function getAllSOSAlerts(params?: GetSOSAlertsParams): Promise<SOSA
   }
 
   const endpoint = `/sos/alerts${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
-  return apiFetch<SOSAlertsResponse>(endpoint);
+  const response = await apiFetch<any>(endpoint);
+  const alerts = Array.isArray(response)
+    ? response
+    : response?.alerts || response?.data || [];
+
+  const totalRecords = response?.totalRecords ?? alerts.length;
+  const pageSize = response?.pageSize ?? params?.pageSize ?? (alerts.length || 10);
+  const totalPages = response?.totalPages ?? Math.max(1, Math.ceil(totalRecords / pageSize));
+
+  return {
+    alerts: alerts.map(transformSosAlertResponse),
+    totalPages,
+    totalRecords,
+    currentPage: response?.currentPage ?? params?.page ?? 0,
+    pageSize,
+  };
 }
 
 /**
@@ -110,10 +140,11 @@ export async function acknowledgeSOSAlert(
   alertId: number,
   request?: AcknowledgeSosRequest
 ): Promise<SOSAlert> {
-  return apiFetch<SOSAlert>(`/sos/alerts/${alertId}/acknowledge`, {
+  const response = await apiFetch<any>(`/sos/alerts/${alertId}/acknowledge`, {
     method: 'POST',
     body: request || {},
   });
+  return transformSosAlertResponse(response);
 }
 
 /**
@@ -124,10 +155,11 @@ export async function resolveSOSAlert(
   alertId: number,
   request?: ResolveSosRequest
 ): Promise<SOSAlert> {
-  return apiFetch<SOSAlert>(`/sos/alerts/${alertId}/resolve`, {
+  const response = await apiFetch<any>(`/sos/alerts/${alertId}/resolve`, {
     method: 'POST',
     body: request || {},
   });
+  return transformSosAlertResponse(response);
 }
 
 // ============================================
@@ -227,11 +259,11 @@ export async function getCurrentLocation(): Promise<{ lat: number; lng: number }
  */
 export function formatSOSStatus(status: string): string {
   const statusMap: Record<string, string> = {
-    'ACTIVE': 'Đang hoạt động',
-    'ESCALATED': 'Đã leo thang',
-    'ACKNOWLEDGED': 'Đã xác nhận',
-    'RESOLVED': 'Đã giải quyết',
-    'FALSE_ALARM': 'Báo động giả',
+    ACTIVE: 'Đang hoạt động',
+    ESCALATED: 'Đã báo cáo',
+    ACKNOWLEDGED: 'Đã xác nhận',
+    RESOLVED: 'Đã giải quyết',
+    FALSE_ALARM: 'Báo động giả',
   };
   return statusMap[status] || status;
 }
@@ -246,7 +278,7 @@ export function formatEventType(eventType: string): string {
     'CONTACT_NOTIFIED': 'Thông báo liên hệ khẩn cấp',
     'ADMIN_NOTIFIED': 'Thông báo quản trị viên',
     'CAMPUS_SECURITY_NOTIFIED': 'Thông báo an ninh trường',
-    'ESCALATED': 'Leo thang',
+    'ESCALATED': 'Đã báo cáo',
     'ACKNOWLEDGED': 'Đã xác nhận',
     'NOTE_ADDED': 'Thêm ghi chú',
     'RESOLVED': 'Đã giải quyết',
@@ -288,4 +320,98 @@ export function getEventIconColor(eventType: string): string {
     'DISPATCH_REQUESTED': 'text-purple-600',
   };
   return colorMap[eventType] || 'text-gray-600';
+}
+
+function parseJson<T = any>(value: unknown): T | undefined {
+  if (!value) return undefined;
+  if (typeof value === 'string') {
+    try {
+      return JSON.parse(value) as T;
+    } catch {
+      return undefined;
+    }
+  }
+  return value as T;
+}
+
+function transformTimelineEvent(
+  alertId: number,
+  event: any,
+  index: number
+): SosAlertEvent {
+  const metadata = parseJson<Record<string, any>>(event?.metadata);
+  const timestamp = event?.createdAt || event?.timestamp || new Date().toISOString();
+  return {
+    id: Number(event?.eventId ?? event?.id ?? index),
+    alertId,
+    eventType: (event?.eventType || 'CREATED') as SosAlertEventType,
+    description: event?.description || '',
+    metadata: metadata || undefined,
+    timestamp,
+  };
+}
+
+function transformSosAlertResponse(alert: any): SOSAlert {
+  if (!alert) {
+    return {
+      id: '0',
+      userId: '',
+      triggeredByUserId: '',
+      currentLat: 0,
+      currentLng: 0,
+      status: 'ACTIVE',
+      fallbackContactUsed: false,
+      autoCallTriggered: false,
+      campusSecurityNotified: false,
+      escalationCount: 0,
+      createdAt: new Date().toISOString(),
+    } as SOSAlert;
+  }
+
+  const id = alert.sosId ?? alert.id ?? alert.alertId ?? 0;
+  const triggerUserId = alert.triggeredBy ?? alert.userId ?? alert.triggeredByUserId ?? '';
+  const timeline = Array.isArray(alert.timeline)
+    ? alert.timeline.map((event: any, idx: number) =>
+        transformTimelineEvent(Number(id), event, idx)
+      )
+    : undefined;
+
+  return {
+    id: String(id),
+    userId: triggerUserId ? String(triggerUserId) : '',
+    triggeredByUserId: triggerUserId ? String(triggerUserId) : '',
+    sharedRideId: alert.sharedRideId ? String(alert.sharedRideId) : undefined,
+    currentLat: alert.currentLat ?? 0,
+    currentLng: alert.currentLng ?? 0,
+    description: alert.description || undefined,
+    status: (alert.status || 'ACTIVE') as any,
+    contactInfo: parseJson(alert.contactInfo) || alert.contactInfo,
+    rideSnapshot: parseJson(alert.rideSnapshot) || alert.rideSnapshot,
+    fallbackContactUsed: Boolean(alert.fallbackContactUsed),
+    autoCallTriggered: Boolean(alert.autoCallTriggered),
+    campusSecurityNotified: Boolean(alert.campusSecurityNotified),
+    acknowledgementDeadline: alert.acknowledgementDeadline || alert.ackDeadline,
+    acknowledgedAt: alert.acknowledgedAt,
+    acknowledgedByUserId: alert.acknowledgedBy ? String(alert.acknowledgedBy) : undefined,
+    acknowledgedByName: alert.acknowledgedByName,
+    resolvedAt: alert.resolvedAt,
+    resolvedByUserId: alert.resolvedBy ? String(alert.resolvedBy) : undefined,
+    resolvedByName: alert.resolvedByName,
+    resolutionNotes: alert.resolutionNotes,
+    lastEscalatedAt: alert.lastEscalatedAt,
+    nextEscalationAt: alert.nextEscalationAt,
+    escalationCount: alert.escalationCount ?? 0,
+    createdAt: alert.createdAt || new Date().toISOString(),
+    updatedAt: alert.updatedAt,
+    userName: alert.triggeredByName || alert.userName,
+    userPhone: alert.userPhone,
+    location: {
+      lat: alert.currentLat ?? 0,
+      lng: alert.currentLng ?? 0,
+      address: alert.location?.address || alert.description || undefined,
+    },
+    rideId: alert.sharedRideId ? String(alert.sharedRideId) : undefined,
+    resolvedBy: alert.resolvedByName || (alert.resolvedBy ? String(alert.resolvedBy) : undefined),
+    timeline,
+  } as SOSAlert;
 }

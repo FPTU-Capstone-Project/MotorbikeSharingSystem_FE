@@ -90,6 +90,15 @@ export default function SafetyManagement() {
     }
   }, [filterStatus, page, pageSize, loading, loadAlerts]);
 
+  // Background refresh to simulate realtime updates
+  useEffect(() => {
+    const interval = setInterval(() => {
+      loadDashboardStats();
+      loadAlerts();
+    }, 10000);
+    return () => clearInterval(interval);
+  }, [loadDashboardStats, loadAlerts]);
+
   const activeAlerts = useMemo(() => 
     sosAlerts?.filter(alert => alert.status === 'ACTIVE' || alert.status === 'ESCALATED') || [], 
     [sosAlerts]
@@ -140,7 +149,7 @@ export default function SafetyManagement() {
   ] : [], [dashboardStats]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 text-gray-900 dark:text-slate-100">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -155,7 +164,7 @@ export default function SafetyManagement() {
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-stretch">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="card animate-pulse h-full">
+            <div key={i} className="card animate-pulse h-full bg-white dark:bg-slate-900">
               <div className="h-24 bg-gray-200 rounded"></div>
             </div>
           ))}
@@ -189,7 +198,7 @@ export default function SafetyManagement() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="relative rounded-lg p-6 border border-red-200 bg-red-50 overflow-hidden"
+          className="relative rounded-lg p-6 border border-red-200 dark:border-red-500/50 bg-red-50 dark:bg-red-900/30 overflow-hidden"
         >
           <div className="relative flex items-center mb-4">
             <ExclamationTriangleIcon className="h-6 w-6 text-red-600 mr-3" />
@@ -197,13 +206,13 @@ export default function SafetyManagement() {
           </div>
           <div className="space-y-3">
             {activeAlerts.map(alert => (
-              <div key={alert.id} className="bg-white rounded-lg p-4 shadow-sm">
+              <div key={alert.id} className="bg-white dark:bg-slate-800 rounded-lg p-4 shadow-sm">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
                     <div className="h-3 w-3 bg-red-500 rounded-full animate-pulse"></div>
                     <div>
                       <p className="font-medium text-gray-900">{alert.userName || `User ${alert.userId}`}</p>
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-gray-600 dark:text-slate-300">
                         {alert.location?.address || `${alert.currentLat.toFixed(4)}, ${alert.currentLng.toFixed(4)}`}
                       </p>
                       <p className="text-sm text-red-600">{alert.description}</p>
@@ -230,7 +239,7 @@ export default function SafetyManagement() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.4 }}
-        className="card"
+        className="card bg-white dark:bg-slate-900 dark:text-slate-100"
       >
         <div className="flex flex-col sm:flex-row sm:items-center space-y-4 sm:space-y-0 sm:space-x-4">
           <select
@@ -243,7 +252,7 @@ export default function SafetyManagement() {
           >
             <option value="all">Tất cả trạng thái</option>
             <option value="ACTIVE">Đang hoạt động</option>
-            <option value="ESCALATED">Đã leo thang</option>
+            <option value="ESCALATED">Đã báo cáo</option>
             <option value="ACKNOWLEDGED">Đã xác nhận</option>
             <option value="RESOLVED">Đã giải quyết</option>
             <option value="FALSE_ALARM">Báo động giả</option>
@@ -259,36 +268,36 @@ export default function SafetyManagement() {
         className="card overflow-hidden"
       >
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+          <table className="min-w-full divide-y divide-gray-200 dark:divide-slate-700">
+            <thead className="bg-gray-50 dark:bg-slate-800">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-300 uppercase tracking-wider">
                   Thông tin báo động
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-300 uppercase tracking-wider">
                   Người gửi
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-300 uppercase tracking-wider">
                   Vị trí
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-300 uppercase tracking-wider">
                   Trạng thái
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-300 uppercase tracking-wider">
                   Thời gian
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-300 uppercase tracking-wider">
                   Thao tác
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-white dark:bg-slate-900 divide-y divide-gray-200 dark:divide-slate-800">
               {sosAlerts && sosAlerts.map((alert) => (
-                <tr key={alert.id} className="hover:bg-gray-50 transition-colors">
+                <tr key={alert.id} className="hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div>
-                      <div className="text-sm font-medium text-gray-900">#{alert.id}</div>
-                      <div className="text-sm text-gray-600 max-w-xs truncate">
+                      <div className="text-sm font-medium text-gray-900 dark:text-slate-100">#{alert.id}</div>
+                      <div className="text-sm text-gray-600 dark:text-slate-300 max-w-xs truncate">
                         {alert.description || 'Không có mô tả'}
                       </div>
                       {alert.sharedRideId && (
@@ -296,7 +305,7 @@ export default function SafetyManagement() {
                       )}
                       {alert.escalationCount > 0 && (
                         <div className="text-xs text-orange-600">
-                          Leo thang: {alert.escalationCount} lần
+                          Đã báo cáo: {alert.escalationCount} lần
                         </div>
                       )}
                     </div>
@@ -307,7 +316,7 @@ export default function SafetyManagement() {
                         <UserIcon className="h-4 w-4 text-gray-600" />
                       </div>
                       <div className="ml-3">
-                        <div className="text-sm font-medium text-gray-900">
+                        <div className="text-sm font-medium text-gray-900 dark:text-slate-100">
                           {alert.userName || `User ${alert.userId}`}
                         </div>
                         <div className="text-sm text-gray-500">ID: {formatUserId(alert.userId)}</div>
@@ -318,10 +327,10 @@ export default function SafetyManagement() {
                     <div className="flex items-center">
                       <MapPinIcon className="h-4 w-4 text-gray-400 mr-2" />
                       <div className="max-w-xs">
-                        <div className="text-sm text-gray-900 truncate">
+                        <div className="text-sm text-gray-900 dark:text-slate-100 truncate">
                           {alert.location?.address || 'Không có địa chỉ'}
                         </div>
-                        <div className="text-xs text-gray-500">
+                        <div className="text-xs text-gray-500 dark:text-slate-400">
                           {alert.currentLat.toFixed(4)}, {alert.currentLng.toFixed(4)}
                         </div>
                       </div>
@@ -334,10 +343,10 @@ export default function SafetyManagement() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div>
-                      <div className="text-sm text-gray-900">
+                      <div className="text-sm text-gray-900 dark:text-slate-100">
                         {new Date(alert.createdAt).toLocaleDateString('vi-VN')}
                       </div>
-                      <div className="text-xs text-gray-500">
+                      <div className="text-xs text-gray-500 dark:text-slate-400">
                         {new Date(alert.createdAt).toLocaleTimeString('vi-VN', {
                           hour: '2-digit',
                           minute: '2-digit',
@@ -405,31 +414,31 @@ export default function SafetyManagement() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6 }}
-          className="card"
+          className="card bg-white dark:bg-slate-900 dark:text-slate-100"
         >
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-lg font-semibold text-gray-900">Xác thực an toàn tài xế</h3>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="text-center p-6 bg-green-50 rounded-lg border border-green-200">
+            <div className="text-center p-6 bg-green-50 dark:bg-slate-800 rounded-lg border border-green-200 dark:border-green-400/40">
               <div className="text-3xl font-bold text-green-600">
                 {dashboardStats.approvedDriversCount}
               </div>
-              <div className="text-sm text-gray-600 mt-1">Tài xế đã duyệt</div>
+              <div className="text-sm text-gray-600 dark:text-slate-300 mt-1">Tài xế đã duyệt</div>
               <div className="text-xs text-green-600 mt-2">Đã kiểm tra lý lịch</div>
             </div>
-            <div className="text-center p-6 bg-yellow-50 rounded-lg border border-yellow-200">
+            <div className="text-center p-6 bg-yellow-50 dark:bg-slate-800 rounded-lg border border-yellow-200 dark:border-yellow-400/40">
               <div className="text-3xl font-bold text-yellow-600">
                 {dashboardStats.pendingDriversCount}
               </div>
-              <div className="text-sm text-gray-600 mt-1">Đang chờ duyệt</div>
+              <div className="text-sm text-gray-600 dark:text-slate-300 mt-1">Đang chờ duyệt</div>
               <div className="text-xs text-yellow-600 mt-2">Chờ xét duyệt hồ sơ</div>
             </div>
-            <div className="text-center p-6 bg-red-50 rounded-lg border border-red-200">
+            <div className="text-center p-6 bg-red-50 dark:bg-slate-800 rounded-lg border border-red-200 dark:border-red-400/40">
               <div className="text-3xl font-bold text-red-600">
                 {dashboardStats.rejectedDriversCount}
               </div>
-              <div className="text-sm text-gray-600 mt-1">Bị từ chối</div>
+              <div className="text-sm text-gray-600 dark:text-slate-300 mt-1">Bị từ chối</div>
               <div className="text-xs text-red-600 mt-2">Không đạt yêu cầu</div>
             </div>
           </div>

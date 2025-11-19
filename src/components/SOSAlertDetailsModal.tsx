@@ -136,7 +136,7 @@ export default function SOSAlertDetailsModal({
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.95, opacity: 0 }}
           onClick={(e) => e.stopPropagation()}
-          className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full my-8"
+          className="bg-white dark:bg-slate-900 dark:text-slate-100 rounded-2xl shadow-2xl max-w-4xl w-full my-8"
         >
           {loading ? (
             <div className="flex items-center justify-center py-20">
@@ -164,7 +164,7 @@ export default function SOSAlertDetailsModal({
                       </span>
                       {alert.escalationCount > 0 && (
                         <span className="px-3 py-1 rounded-full text-sm font-medium bg-orange-100 text-orange-800 border border-orange-300">
-                          Leo thang: {alert.escalationCount} lần
+                          Đã báo cáo: {alert.escalationCount} lần
                         </span>
                       )}
                     </div>
@@ -182,20 +182,20 @@ export default function SOSAlertDetailsModal({
               <div className="p-6 max-h-[70vh] overflow-y-auto">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
                   {/* User Info */}
-                  <div className="bg-gray-50 rounded-lg p-4">
+                  <div className="bg-gray-50 dark:bg-slate-800 rounded-lg p-4">
                     <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
                       <UserIcon className="h-5 w-5" />
                       Thông tin người dùng
                     </h3>
                     <div className="space-y-2 text-sm">
                       <div>
-                        <span className="text-gray-600">Tên:</span>
+                        <span className="text-gray-600 dark:text-slate-300">Tên:</span>
                         <span className="ml-2 font-medium text-gray-900">
                           {alert.userName || `User ${alert.userId}`}
                         </span>
                       </div>
                       <div>
-                        <span className="text-gray-600">User ID:</span>
+                        <span className="text-gray-600 dark:text-slate-300">User ID:</span>
                         <span className="ml-2 font-medium text-gray-900">
                           {alert.userId}
                         </span>
@@ -212,20 +212,20 @@ export default function SOSAlertDetailsModal({
                   </div>
 
                   {/* Location Info */}
-                  <div className="bg-gray-50 rounded-lg p-4">
+                  <div className="bg-gray-50 dark:bg-slate-800 rounded-lg p-4">
                     <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
                       <MapPinIcon className="h-5 w-5" />
                       Vị trí
                     </h3>
                     <div className="space-y-2 text-sm">
                       <div>
-                        <span className="text-gray-600">Latitude:</span>
+                        <span className="text-gray-600 dark:text-slate-300">Latitude:</span>
                         <span className="ml-2 font-medium text-gray-900">
                           {alert.currentLat.toFixed(6)}
                         </span>
                       </div>
                       <div>
-                        <span className="text-gray-600">Longitude:</span>
+                        <span className="text-gray-600 dark:text-slate-300">Longitude:</span>
                         <span className="ml-2 font-medium text-gray-900">
                           {alert.currentLng.toFixed(6)}
                         </span>
@@ -242,21 +242,21 @@ export default function SOSAlertDetailsModal({
                   </div>
 
                   {/* Time Info */}
-                  <div className="bg-gray-50 rounded-lg p-4">
+                  <div className="bg-gray-50 dark:bg-slate-800 rounded-lg p-4">
                     <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
                       <ClockIcon className="h-5 w-5" />
                       Thời gian
                     </h3>
                     <div className="space-y-2 text-sm">
                       <div>
-                        <span className="text-gray-600">Tạo:</span>
+                        <span className="text-gray-600 dark:text-slate-300">Tạo:</span>
                         <span className="ml-2 font-medium text-gray-900">
                           {formatDate(alert.createdAt)}
                         </span>
                       </div>
                       {alert.acknowledgedAt && (
                         <div>
-                          <span className="text-gray-600">Xác nhận:</span>
+                          <span className="text-gray-600 dark:text-slate-300">Xác nhận:</span>
                           <span className="ml-2 font-medium text-gray-900">
                             {formatDate(alert.acknowledgedAt)}
                           </span>
@@ -264,7 +264,7 @@ export default function SOSAlertDetailsModal({
                       )}
                       {alert.resolvedAt && (
                         <div>
-                          <span className="text-gray-600">Giải quyết:</span>
+                          <span className="text-gray-600 dark:text-slate-300">Giải quyết:</span>
                           <span className="ml-2 font-medium text-gray-900">
                             {formatDate(alert.resolvedAt)}
                           </span>
@@ -275,7 +275,7 @@ export default function SOSAlertDetailsModal({
 
                   {/* Emergency Contacts */}
                   {alert.contactInfo && alert.contactInfo.length > 0 && (
-                    <div className="bg-gray-50 rounded-lg p-4">
+                    <div className="bg-gray-50 dark:bg-slate-800 rounded-lg p-4">
                       <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
                         <PhoneIcon className="h-5 w-5" />
                         Liên hệ khẩn cấp
@@ -291,7 +291,7 @@ export default function SOSAlertDetailsModal({
                                 </span>
                               )}
                             </div>
-                            <div className="text-gray-600">{contact.phone}</div>
+                            <div className="text-gray-600 dark:text-slate-300">{contact.phone}</div>
                           </div>
                         ))}
                       </div>

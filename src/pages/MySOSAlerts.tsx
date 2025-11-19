@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
   ExclamationTriangleIcon,
@@ -39,9 +39,17 @@ export default function MySOSAlerts() {
     loadAlerts();
   }, [loadAlerts]);
 
-  const activeAlert = alerts.find(
-    alert => alert.status === 'ACTIVE' || alert.status === 'ESCALATED'
+  const activeAlert = useMemo(() =>
+    alerts.find(alert => alert.status === 'ACTIVE' || alert.status === 'ESCALATED'),
+    [alerts]
   );
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      loadAlerts();
+    }, activeAlert ? 10000 : 30000);
+    return () => clearInterval(interval);
+  }, [loadAlerts, activeAlert]);
 
   const formatDate = (date: string) => {
     try {
@@ -102,7 +110,7 @@ export default function MySOSAlerts() {
 
           {/* Active Alert Warning */}
           {activeAlert && (
-            <div className="mt-6 p-4 bg-red-50 border-2 border-red-200 rounded-lg animate-pulse">
+            <div className="mt-6 p-4 bg-red-50 dark:bg-red-900/30 border-2 border-red-200 dark:border-red-500/50 rounded-lg animate-pulse">
               <div className="flex items-start gap-3">
                 <ExclamationTriangleIcon className="h-6 w-6 text-red-600 flex-shrink-0" />
                 <div className="flex-1">
@@ -136,7 +144,7 @@ export default function MySOSAlerts() {
           >
             <option value="all">Tất cả</option>
             <option value="ACTIVE">Đang hoạt động</option>
-            <option value="ESCALATED">Đã leo thang</option>
+            <option value="ESCALATED">Đã báo cáo</option>
             <option value="ACKNOWLEDGED">Đã xác nhận</option>
             <option value="RESOLVED">Đã giải quyết</option>
             <option value="FALSE_ALARM">Báo động giả</option>
@@ -236,7 +244,7 @@ export default function MySOSAlerts() {
                   {alert.escalationCount > 0 && (
                     <div className="mb-4 p-3 bg-orange-50 border border-orange-200 rounded-lg">
                       <p className="text-sm text-orange-800">
-                        ⚠️ Đã leo thang {alert.escalationCount} lần
+                        ⚠️ Đã báo cáo {alert.escalationCount} lần
                       </p>
                     </div>
                   )}
