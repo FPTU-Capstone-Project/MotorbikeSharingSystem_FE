@@ -103,45 +103,46 @@ export async function markAlertAsFalseAlarm(alertId: number, notes?: string): Pr
  * Transform backend SOS alert response to frontend SOSAlert type
  */
 function transformSosAlert(backendAlert: any): SOSAlert {
-  // Map backend status to frontend status
-  const statusMap: Record<string, SOSAlert['status']> = {
-    'ACTIVE': 'active',
-    'RESOLVED': 'resolved',
-    'FALSE_ALARM': 'false_alarm',
-    'ACKNOWLEDGED': 'resolved', // Treat acknowledged as resolved for frontend
-    'ESCALATED': 'active', // Treat escalated as active for frontend
-  };
-
   // Parse location from backend format
-  let location = {
+  const location = {
     lat: backendAlert.currentLat || 0,
     lng: backendAlert.currentLng || 0,
     address: backendAlert.description || 'Vị trí không xác định',
   };
 
-  // Try to parse address from description or contactInfo if available
-  if (backendAlert.contactInfo) {
-    try {
-      // Parse contactInfo but don't use it yet - reserved for future use
-      JSON.parse(backendAlert.contactInfo);
-      // Extract address if available in contact info
-    } catch (e) {
-      // Ignore parse errors
-    }
-  }
-
   return {
-    id: String(backendAlert.sosId),
-    userId: String(backendAlert.triggeredBy || ''),
-    rideId: backendAlert.sharedRideId ? String(backendAlert.sharedRideId) : undefined,
-    location,
-    status: statusMap[backendAlert.status] || 'active',
-    description: backendAlert.description || 'Báo động SOS',
+    id: String(backendAlert.sosId || backendAlert.id),
+    userId: String(backendAlert.triggeredBy || backendAlert.userId || ''),
+    triggeredByUserId: String(backendAlert.triggeredBy || backendAlert.userId || ''),
+    currentLat: backendAlert.currentLat || 0,
+    currentLng: backendAlert.currentLng || 0,
+    sharedRideId: backendAlert.sharedRideId ? String(backendAlert.sharedRideId) : undefined,
+    description: backendAlert.description,
+    status: backendAlert.status || 'ACTIVE',
+    contactInfo: backendAlert.contactInfo,
+    rideSnapshot: backendAlert.rideSnapshot,
+    fallbackContactUsed: backendAlert.fallbackContactUsed || false,
+    autoCallTriggered: backendAlert.autoCallTriggered || false,
+    campusSecurityNotified: backendAlert.campusSecurityNotified || false,
+    acknowledgementDeadline: backendAlert.acknowledgementDeadline,
+    acknowledgedAt: backendAlert.acknowledgedAt,
+    acknowledgedByUserId: backendAlert.acknowledgedBy ? String(backendAlert.acknowledgedBy) : undefined,
+    acknowledgedByName: backendAlert.acknowledgedByName,
+    resolvedAt: backendAlert.resolvedAt,
+    resolvedByUserId: backendAlert.resolvedBy ? String(backendAlert.resolvedBy) : undefined,
+    resolvedByName: backendAlert.resolvedByName,
+    resolutionNotes: backendAlert.resolutionNotes,
+    lastEscalatedAt: backendAlert.lastEscalatedAt,
+    nextEscalationAt: backendAlert.nextEscalationAt,
+    escalationCount: backendAlert.escalationCount || 0,
     createdAt: backendAlert.createdAt || new Date().toISOString(),
-    resolvedAt: backendAlert.resolvedAt || undefined,
+    updatedAt: backendAlert.updatedAt,
+    userName: backendAlert.triggeredByName || backendAlert.userName,
+    userPhone: backendAlert.userPhone,
+    location,
+    // Legacy compatibility
+    rideId: backendAlert.sharedRideId ? String(backendAlert.sharedRideId) : undefined,
     resolvedBy: backendAlert.resolvedByName || (backendAlert.resolvedBy ? String(backendAlert.resolvedBy) : undefined),
-    // Store user name if available from backend
-    userName: backendAlert.triggeredByName,
   };
 }
 

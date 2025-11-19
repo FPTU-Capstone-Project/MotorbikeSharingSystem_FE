@@ -99,21 +99,108 @@ export interface Payment {
   rideId?: string
 }
 
+// SOS Alert Types - Based on backend implementation
+export type SosAlertStatus = 'ACTIVE' | 'ESCALATED' | 'ACKNOWLEDGED' | 'RESOLVED' | 'FALSE_ALARM';
+
+export type SosAlertEventType = 
+  | 'CREATED'
+  | 'ORIGINATOR_NOTIFIED'
+  | 'CONTACT_NOTIFIED'
+  | 'ADMIN_NOTIFIED'
+  | 'CAMPUS_SECURITY_NOTIFIED'
+  | 'ESCALATED'
+  | 'ACKNOWLEDGED'
+  | 'NOTE_ADDED'
+  | 'RESOLVED'
+  | 'FALLBACK_CONTACT_USED'
+  | 'DISPATCH_REQUESTED';
+
+export interface EmergencyContact {
+  id: number;
+  userId: number;
+  name: string;
+  phone: string;
+  relationship?: string;
+  isPrimary: boolean;
+  createdAt: string;
+  updatedAt?: string;
+}
+
+export interface SosAlertEvent {
+  id: number;
+  alertId: number;
+  eventType: SosAlertEventType;
+  description: string;
+  metadata?: Record<string, any>;
+  timestamp: string;
+}
+
 export interface SOSAlert {
-  id: string
-  userId: string
-  rideId?: string
-  location: {
-    lat: number
-    lng: number
-    address: string
-  }
-  status: 'active' | 'resolved' | 'false_alarm'
-  description?: string
-  createdAt: string
-  resolvedAt?: string
-  resolvedBy?: string
-  userName?: string // User name from backend
+  id: string;
+  userId: string;
+  triggeredByUserId: string;
+  sharedRideId?: string;
+  currentLat: number;
+  currentLng: number;
+  description?: string;
+  status: SosAlertStatus;
+  contactInfo?: EmergencyContact[];
+  rideSnapshot?: any;
+  fallbackContactUsed: boolean;
+  autoCallTriggered: boolean;
+  campusSecurityNotified: boolean;
+  acknowledgementDeadline?: string;
+  acknowledgedAt?: string;
+  acknowledgedByUserId?: string;
+  acknowledgedByName?: string;
+  resolvedAt?: string;
+  resolvedByUserId?: string;
+  resolvedByName?: string;
+  resolutionNotes?: string;
+  lastEscalatedAt?: string;
+  nextEscalationAt?: string;
+  escalationCount: number;
+  createdAt: string;
+  updatedAt?: string;
+  
+  // Helper fields from backend
+  userName?: string;
+  userPhone?: string;
+  location?: {
+    lat: number;
+    lng: number;
+    address?: string;
+  };
+  timeline?: SosAlertEvent[];
+  
+  // Legacy compatibility
+  rideId?: string;
+  resolvedBy?: string;
+}
+
+export interface TriggerSosRequest {
+  sharedRideId?: number;
+  currentLat: number;
+  currentLng: number;
+  description?: string;
+  rideSnapshot?: any;
+  forceFallbackCall?: boolean;
+}
+
+export interface AcknowledgeSosRequest {
+  note?: string;
+}
+
+export interface ResolveSosRequest {
+  resolutionNotes?: string;
+  falseAlarm?: boolean;
+}
+
+export interface EmergencyContactRequest {
+  name: string;
+  phone: string;
+  relationship?: string;
+  isPrimary?: boolean;
 }
 
 export interface Analytics {

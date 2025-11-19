@@ -3,13 +3,11 @@ import { motion } from 'framer-motion';
 import {
   ExclamationTriangleIcon,
   ShieldCheckIcon,
-  PhoneIcon,
-  MapPinIcon,
-  CheckCircleIcon,
-  XMarkIcon,
   ClockIcon,
+  CheckCircleIcon,
   UserIcon,
   EyeIcon,
+  MapPinIcon,
 } from '@heroicons/react/24/outline';
 import { SOSAlert } from '../types';
 import toast from 'react-hot-toast';
@@ -17,26 +15,27 @@ import StatSummaryCard from '../components/StatSummaryCard';
 import { formatUserId } from '../utils/formatters';
 import {
   getSafetyDashboardStats,
-  getSafetyAlertsList,
-  markAlertAsResolved,
-  markAlertAsFalseAlarm,
   SafetyDashboardStats,
-  SafetyAlertsListParams,
 } from '../services/safetyService';
+import {
+  getAllSOSAlerts,
+  formatSOSStatus,
+  getStatusColorClass,
+} from '../services/sosService';
 import Pagination from '../components/Pagination';
+import SOSAlertDetailsModal from '../components/SOSAlertDetailsModal';
 
 export default function SafetyManagement() {
   const [sosAlerts, setSOSAlerts] = useState<SOSAlert[]>([]);
   const [dashboardStats, setDashboardStats] = useState<SafetyDashboardStats | null>(null);
-  const [filterStatus, setFilterStatus] = useState<'all' | SOSAlert['status']>('all');
-  const [selectedAlert, setSelectedAlert] = useState<SOSAlert | null>(null);
+  const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [selectedAlertId, setSelectedAlertId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadingAlerts, setLoadingAlerts] = useState(false);
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
   const [totalPages, setTotalPages] = useState(0);
   const [totalRecords, setTotalRecords] = useState(0);
-  const [userNames, setUserNames] = useState<{ [key: string]: string }>({});
 
   // Load dashboard stats
   const loadDashboardStats = useCallback(async () => {
@@ -53,33 +52,19 @@ export default function SafetyManagement() {
   const loadAlerts = useCallback(async () => {
     try {
       setLoadingAlerts(true);
-      const statusMap: Record<string, 'ACTIVE' | 'RESOLVED' | 'FALSE_ALARM' | 'ACKNOWLEDGED' | 'ESCALATED' | undefined> = {
-        'all': undefined,
-        'active': 'ACTIVE',
-        'resolved': 'RESOLVED',
-        'false_alarm': 'FALSE_ALARM',
-      };
-
-      const params: SafetyAlertsListParams = {
-        status: statusMap[filterStatus],
+      
+      const params = {
+        status: filterStatus === 'all' ? undefined : filterStatus,
         page,
         pageSize,
         sortBy: 'createdAt',
-        sortDir: 'desc',
+        sortDir: 'desc' as const,
       };
 
-      const response = await getSafetyAlertsList(params);
+      const response = await getAllSOSAlerts(params);
       setSOSAlerts(response.alerts);
       setTotalPages(response.totalPages);
       setTotalRecords(response.totalRecords);
-
-      // Extract user names from alerts
-      const names: { [key: string]: string } = {};
-      response.alerts.forEach(alert => {
-        // Use userName from backend if available, otherwise use userId as fallback
-        names[alert.userId] = alert.userName || `User ${alert.userId}`;
-      });
-      setUserNames(names);
     } catch (error: any) {
       console.error('Failed to load alerts:', error);
       toast.error(error?.message || 'Không tải được danh sách báo động');
@@ -96,76 +81,32 @@ export default function SafetyManagement() {
       setLoading(false);
     };
     loadData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [loadDashboardStats, loadAlerts]);
 
   // Reload alerts when filter/page changes
   useEffect(() => {
     if (!loading) {
       loadAlerts();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filterStatus, page, pageSize]);
+  }, [filterStatus, page, pageSize, loading, loadAlerts]);
 
-  const filteredAlerts = useMemo(() => sosAlerts, [sosAlerts]); // Already filtered by backend
-  const activeAlerts = useMemo(() => sosAlerts.filter(alert => alert.status === 'active'), [sosAlerts]);
+  // Background refresh to simulate realtime updates
+  useEffect(() => {
+    const interval = setInterval(() => {
+      loadDashboardStats();
+      loadAlerts();
+    }, 10000);
+    return () => clearInterval(interval);
+  }, [loadDashboardStats, loadAlerts]);
 
-  const handleResolveAlert = async (alertId: string) => {
-    try {
-      await markAlertAsResolved(Number(alertId));
-      toast.success('Đã đánh dấu báo động SOS là đã xử lý');
-      // Reload data
-      await Promise.all([loadDashboardStats(), loadAlerts()]);
-      if (selectedAlert?.id === alertId) {
-        setSelectedAlert(null);
-      }
-    } catch (error: any) {
-      console.error('Failed to resolve alert:', error);
-      toast.error(error?.message || 'Không thể đánh dấu đã xử lý');
-    }
-  };
+  const activeAlerts = useMemo(() => 
+    sosAlerts?.filter(alert => alert.status === 'ACTIVE' || alert.status === 'ESCALATED') || [], 
+    [sosAlerts]
+  );
 
-  const handleMarkFalseAlarm = async (alertId: string) => {
-    try {
-      await markAlertAsFalseAlarm(Number(alertId));
-      toast.success('Đã đánh dấu báo động là báo giả');
-      // Reload data
-      await Promise.all([loadDashboardStats(), loadAlerts()]);
-      if (selectedAlert?.id === alertId) {
-        setSelectedAlert(null);
-      }
-    } catch (error: any) {
-      console.error('Failed to mark false alarm:', error);
-      toast.error(error?.message || 'Không thể đánh dấu báo giả');
-    }
-  };
-
-  const getStatusBadge = (status: SOSAlert['status']) => {
-    const styles = {
-      active: 'bg-red-100 text-red-800 animate-pulse',
-      resolved: 'bg-green-100 text-green-800',
-      false_alarm: 'bg-gray-100 text-gray-800',
-    };
-    return styles[status];
-  };
-
-  const getStatusIcon = (status: SOSAlert['status']) => {
-    switch (status) {
-      case 'active':
-        return <ExclamationTriangleIcon className="h-5 w-5 text-red-500" />;
-      case 'resolved':
-        return <CheckCircleIcon className="h-5 w-5 text-green-500" />;
-      case 'false_alarm':
-        return <XMarkIcon className="h-5 w-5 text-gray-500" />;
-      default:
-        return null;
-    }
-  };
-
-  const statusLabels: Record<SOSAlert['status'], string> = {
-    active: 'Đang khẩn cấp',
-    resolved: 'Đã xử lý',
-    false_alarm: 'Báo giả',
+  const handleAlertUpdated = () => {
+    loadDashboardStats();
+    loadAlerts();
   };
 
   const summaryCards = useMemo(() => dashboardStats ? [
@@ -208,7 +149,7 @@ export default function SafetyManagement() {
   ] : [], [dashboardStats]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 text-gray-900 dark:text-slate-100">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -217,17 +158,13 @@ export default function SafetyManagement() {
             Theo dõi báo động SOS, trạng thái xác thực tài xế và sự cố an toàn
           </p>
         </div>
-        <button className="btn-primary flex items-center mt-4 sm:mt-0">
-          <PhoneIcon className="h-5 w-5 mr-2" />
-          Danh bạ khẩn cấp
-        </button>
       </div>
 
       {/* Safety Metrics */}
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-stretch">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="card animate-pulse h-full">
+            <div key={i} className="card animate-pulse h-full bg-white dark:bg-slate-900">
               <div className="h-24 bg-gray-200 rounded"></div>
             </div>
           ))}
@@ -261,42 +198,33 @@ export default function SafetyManagement() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="relative rounded-lg p-6 border border-red-200 bg-red-50 dark:border-transparent dark:bg-transparent overflow-hidden"
+          className="relative rounded-lg p-6 border border-red-200 dark:border-red-500/50 bg-red-50 dark:bg-red-900/30 overflow-hidden"
         >
-          {/* Dark-only mesh red gradient background */}
-          <div className="hidden dark:block absolute inset-0 -z-0 mesh-gradient-danger animate-mesh" />
           <div className="relative flex items-center mb-4">
-            <ExclamationTriangleIcon className="h-6 w-6 text-red-600 dark:text-white mr-3" />
-            <h2 className="text-lg font-semibold text-red-800 dark:text-white">Báo động khẩn cấp đang mở</h2>
+            <ExclamationTriangleIcon className="h-6 w-6 text-red-600 mr-3" />
+            <h2 className="text-lg font-semibold text-red-800">Báo động khẩn cấp đang mở</h2>
           </div>
           <div className="space-y-3">
             {activeAlerts.map(alert => (
-              <div key={alert.id} className="bg-white dark:surface-1 rounded-lg p-4 shadow-sm">
+              <div key={alert.id} className="bg-white dark:bg-slate-800 rounded-lg p-4 shadow-sm">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
                     <div className="h-3 w-3 bg-red-500 rounded-full animate-pulse"></div>
                     <div>
-                      <p className="font-medium text-gray-900 dark:text-slate-100">{userNames[alert.userId]}</p>
-                      <p className="text-sm text-gray-600 dark:text-slate-300">{alert.location.address}</p>
-                      <p className="text-sm text-red-600 dark:text-rose-200">{alert.description}</p>
+                      <p className="font-medium text-gray-900">{alert.userName || `User ${alert.userId}`}</p>
+                      <p className="text-sm text-gray-600 dark:text-slate-300">
+                        {alert.location?.address || `${alert.currentLat.toFixed(4)}, ${alert.currentLng.toFixed(4)}`}
+                      </p>
+                      <p className="text-sm text-red-600">{alert.description}</p>
                     </div>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <button className="btn-secondary text-sm">
-                      <MapPinIcon className="h-4 w-4 mr-1" />
-                      Xem bản đồ
-                    </button>
                     <button
-                      onClick={() => handleResolveAlert(alert.id)}
-                      className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700"
+                      onClick={() => setSelectedAlertId(Number(alert.id))}
+                      className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 flex items-center gap-1"
                     >
-                      Đã xử lý
-                    </button>
-                    <button
-                      onClick={() => handleMarkFalseAlarm(alert.id)}
-                      className="bg-gray-600 text-white px-3 py-1 rounded text-sm hover:bg-gray-700"
-                    >
-                      Báo giả
+                      <EyeIcon className="h-4 w-4" />
+                      Chi tiết
                     </button>
                   </div>
                 </div>
@@ -311,18 +239,23 @@ export default function SafetyManagement() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.4 }}
-        className="card"
+        className="card bg-white dark:bg-slate-900 dark:text-slate-100"
       >
         <div className="flex flex-col sm:flex-row sm:items-center space-y-4 sm:space-y-0 sm:space-x-4">
           <select
             className="input-field"
             value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value as any)}
+            onChange={(e) => {
+              setFilterStatus(e.target.value);
+              setPage(0);
+            }}
           >
             <option value="all">Tất cả trạng thái</option>
-            <option value="active">Đang khẩn cấp</option>
-            <option value="resolved">Đã xử lý</option>
-            <option value="false_alarm">Báo giả</option>
+            <option value="ACTIVE">Đang hoạt động</option>
+            <option value="ESCALATED">Đã báo cáo</option>
+            <option value="ACKNOWLEDGED">Đã xác nhận</option>
+            <option value="RESOLVED">Đã giải quyết</option>
+            <option value="FALSE_ALARM">Báo động giả</option>
           </select>
         </div>
       </motion.div>
@@ -335,40 +268,45 @@ export default function SafetyManagement() {
         className="card overflow-hidden"
       >
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+          <table className="min-w-full divide-y divide-gray-200 dark:divide-slate-700">
+            <thead className="bg-gray-50 dark:bg-slate-800">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-300 uppercase tracking-wider">
                   Thông tin báo động
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-300 uppercase tracking-wider">
                   Người gửi
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-300 uppercase tracking-wider">
                   Vị trí
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-300 uppercase tracking-wider">
                   Trạng thái
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-300 uppercase tracking-wider">
                   Thời gian
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-300 uppercase tracking-wider">
                   Thao tác
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {filteredAlerts.map((alert) => (
-                <tr key={alert.id} className="hover:bg-gray-50 transition-colors">
+            <tbody className="bg-white dark:bg-slate-900 divide-y divide-gray-200 dark:divide-slate-800">
+              {sosAlerts && sosAlerts.map((alert) => (
+                <tr key={alert.id} className="hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div>
-                      <div className="text-sm font-medium text-gray-900">#{alert.id}</div>
-                      <div className="text-sm text-gray-600 max-w-xs truncate">
-                        {alert.description}
+                      <div className="text-sm font-medium text-gray-900 dark:text-slate-100">#{alert.id}</div>
+                      <div className="text-sm text-gray-600 dark:text-slate-300 max-w-xs truncate">
+                        {alert.description || 'Không có mô tả'}
                       </div>
-                      {alert.rideId && (
-                        <div className="text-xs text-blue-600">Chuyến: {alert.rideId}</div>
+                      {alert.sharedRideId && (
+                        <div className="text-xs text-blue-600">Chuyến: {alert.sharedRideId}</div>
+                      )}
+                      {alert.escalationCount > 0 && (
+                        <div className="text-xs text-orange-600">
+                          Đã báo cáo: {alert.escalationCount} lần
+                        </div>
                       )}
                     </div>
                   </td>
@@ -378,8 +316,8 @@ export default function SafetyManagement() {
                         <UserIcon className="h-4 w-4 text-gray-600" />
                       </div>
                       <div className="ml-3">
-                        <div className="text-sm font-medium text-gray-900">
-                          {userNames[alert.userId] || `User ${alert.userId}`}
+                        <div className="text-sm font-medium text-gray-900 dark:text-slate-100">
+                          {alert.userName || `User ${alert.userId}`}
                         </div>
                         <div className="text-sm text-gray-500">ID: {formatUserId(alert.userId)}</div>
                       </div>
@@ -389,29 +327,26 @@ export default function SafetyManagement() {
                     <div className="flex items-center">
                       <MapPinIcon className="h-4 w-4 text-gray-400 mr-2" />
                       <div className="max-w-xs">
-                        <div className="text-sm text-gray-900 truncate">
-                          {alert.location.address}
+                        <div className="text-sm text-gray-900 dark:text-slate-100 truncate">
+                          {alert.location?.address || 'Không có địa chỉ'}
                         </div>
-                        <div className="text-xs text-gray-500">
-                          {alert.location.lat.toFixed(4)}, {alert.location.lng.toFixed(4)}
+                        <div className="text-xs text-gray-500 dark:text-slate-400">
+                          {alert.currentLat.toFixed(4)}, {alert.currentLng.toFixed(4)}
                         </div>
                       </div>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      {getStatusIcon(alert.status)}
-                      <span className={`ml-2 inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadge(alert.status)}`}>
-                        {statusLabels[alert.status]}
-                      </span>
-                    </div>
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full border ${getStatusColorClass(alert.status)}`}>
+                      {formatSOSStatus(alert.status)}
+                    </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div>
-                      <div className="text-sm text-gray-900">
+                      <div className="text-sm text-gray-900 dark:text-slate-100">
                         {new Date(alert.createdAt).toLocaleDateString('vi-VN')}
                       </div>
-                      <div className="text-xs text-gray-500">
+                      <div className="text-xs text-gray-500 dark:text-slate-400">
                         {new Date(alert.createdAt).toLocaleTimeString('vi-VN', {
                           hour: '2-digit',
                           minute: '2-digit',
@@ -419,7 +354,7 @@ export default function SafetyManagement() {
                       </div>
                       {alert.resolvedAt && (
                         <div className="text-xs text-green-600 mt-1">
-                          Đã xử lý lúc: {new Date(alert.resolvedAt).toLocaleTimeString('vi-VN', {
+                          Xử lý: {new Date(alert.resolvedAt).toLocaleTimeString('vi-VN', {
                             hour: '2-digit',
                             minute: '2-digit',
                           })}
@@ -428,30 +363,13 @@ export default function SafetyManagement() {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <div className="flex items-center space-x-2">
-                      <button
-                        onClick={() => setSelectedAlert(alert)}
-                        className="text-blue-600 hover:text-blue-900 p-1 rounded"
-                      >
-                        <EyeIcon className="h-4 w-4" />
-                      </button>
-                      {alert.status === 'active' && (
-                        <>
-                          <button
-                            onClick={() => handleResolveAlert(alert.id)}
-                            className="text-green-600 hover:text-green-900 p-1 rounded"
-                          >
-                            <CheckCircleIcon className="h-4 w-4" />
-                          </button>
-                          <button
-                            onClick={() => handleMarkFalseAlarm(alert.id)}
-                            className="text-gray-600 hover:text-gray-900 p-1 rounded"
-                          >
-                            <XMarkIcon className="h-4 w-4" />
-                          </button>
-                        </>
-                      )}
-                    </div>
+                    <button
+                      onClick={() => setSelectedAlertId(Number(alert.id))}
+                      className="text-blue-600 hover:text-blue-900 p-1 rounded flex items-center gap-1"
+                    >
+                      <EyeIcon className="h-4 w-4" />
+                      <span>Chi tiết</span>
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -464,9 +382,9 @@ export default function SafetyManagement() {
             <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
             <p className="mt-2 text-gray-500">Đang tải...</p>
           </div>
-        ) : filteredAlerts.length === 0 ? (
+        ) : (!sosAlerts || sosAlerts.length === 0) ? (
           <div className="text-center py-12">
-            <p className="text-gray-500">Không tìm thấy báo động SOS phù hợp tiêu chí lọc.</p>
+            <p className="text-gray-500">Không tìm thấy báo động SOS phù hợp.</p>
           </div>
         ) : null}
         
@@ -491,168 +409,51 @@ export default function SafetyManagement() {
       </motion.div>
 
       {/* Driver Verification Section */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.6 }}
-        className="card"
-      >
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Xác thực an toàn tài xế</h3>
-          <button className="btn-secondary">Quản lý kiểm duyệt</button>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="text-center p-6 bg-green-50 dark:bg-green-900/30 rounded-lg border border-green-200 dark:border-green-800">
-            <div className="text-3xl font-bold text-green-600 dark:text-green-400">
-              {dashboardStats?.approvedDriversCount ?? '—'}
-            </div>
-            <div className="text-sm text-gray-600 dark:text-gray-300 mt-1">Tài xế đã duyệt</div>
-            <div className="text-xs text-green-600 dark:text-green-400 mt-2">Đã kiểm tra lý lịch</div>
+      {dashboardStats && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6 }}
+          className="card bg-white dark:bg-slate-900 dark:text-slate-100"
+        >
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-lg font-semibold text-gray-900">Xác thực an toàn tài xế</h3>
           </div>
-          <div className="text-center p-6 bg-yellow-50 dark:bg-yellow-900/30 rounded-lg border border-yellow-200 dark:border-yellow-800">
-            <div className="text-3xl font-bold text-yellow-600 dark:text-yellow-400">
-              {dashboardStats?.pendingDriversCount ?? '—'}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="text-center p-6 bg-green-50 dark:bg-slate-800 rounded-lg border border-green-200 dark:border-green-400/40">
+              <div className="text-3xl font-bold text-green-600">
+                {dashboardStats.approvedDriversCount}
+              </div>
+              <div className="text-sm text-gray-600 dark:text-slate-300 mt-1">Tài xế đã duyệt</div>
+              <div className="text-xs text-green-600 mt-2">Đã kiểm tra lý lịch</div>
             </div>
-            <div className="text-sm text-gray-600 dark:text-gray-300 mt-1">Đang chờ duyệt</div>
-            <div className="text-xs text-yellow-600 dark:text-yellow-400 mt-2">Chờ xét duyệt hồ sơ</div>
-          </div>
-          <div className="text-center p-6 bg-red-50 dark:bg-red-900/30 rounded-lg border border-red-200 dark:border-red-800">
-            <div className="text-3xl font-bold text-red-600 dark:text-red-400">
-              {dashboardStats?.rejectedDriversCount ?? '—'}
+            <div className="text-center p-6 bg-yellow-50 dark:bg-slate-800 rounded-lg border border-yellow-200 dark:border-yellow-400/40">
+              <div className="text-3xl font-bold text-yellow-600">
+                {dashboardStats.pendingDriversCount}
+              </div>
+              <div className="text-sm text-gray-600 dark:text-slate-300 mt-1">Đang chờ duyệt</div>
+              <div className="text-xs text-yellow-600 mt-2">Chờ xét duyệt hồ sơ</div>
             </div>
-            <div className="text-sm text-gray-600 dark:text-gray-300 mt-1">Bị từ chối</div>
-            <div className="text-xs text-red-600 dark:text-red-400 mt-2">Không đạt yêu cầu</div>
+            <div className="text-center p-6 bg-red-50 dark:bg-slate-800 rounded-lg border border-red-200 dark:border-red-400/40">
+              <div className="text-3xl font-bold text-red-600">
+                {dashboardStats.rejectedDriversCount}
+              </div>
+              <div className="text-sm text-gray-600 dark:text-slate-300 mt-1">Bị từ chối</div>
+              <div className="text-xs text-red-600 mt-2">Không đạt yêu cầu</div>
+            </div>
           </div>
-        </div>
-      </motion.div>
+        </motion.div>
+      )}
 
       {/* Alert Detail Modal */}
-      {selectedAlert && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-center justify-center">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="relative bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto"
-          >
-            <div className="px-6 py-4 border-b border-gray-200">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-gray-900">
-                  Chi tiết báo động SOS - #{selectedAlert.id}
-                </h3>
-                <button
-                  onClick={() => setSelectedAlert(null)}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  <XMarkIcon className="h-6 w-6" />
-                </button>
-              </div>
-            </div>
-            
-            <div className="px-6 py-4 space-y-6">
-              {/* Alert Info */}
-              <div>
-                <h4 className="font-medium text-gray-900 mb-3">Thông tin báo động</h4>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm text-gray-500">Trạng thái</p>
-                    <div className="flex items-center mt-1">
-                      {getStatusIcon(selectedAlert.status)}
-                      <span className="ml-2 font-semibold">
-                        {statusLabels[selectedAlert.status]}
-                      </span>
-                    </div>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Khởi tạo</p>
-                    <p className="font-semibold">
-                      {new Date(selectedAlert.createdAt).toLocaleString('vi-VN')}
-                    </p>
-                  </div>
-                </div>
-                <div className="mt-4">
-                  <p className="text-sm text-gray-500">Mô tả</p>
-                  <p className="font-medium text-gray-900 mt-1">{selectedAlert.description}</p>
-                </div>
-              </div>
-
-              {/* User Info */}
-              <div>
-                <h4 className="font-medium text-gray-900 mb-3">Thông tin người gửi</h4>
-                <div className="p-4 bg-gray-50 rounded-lg">
-                  <p className="font-semibold text-gray-900">{userNames[selectedAlert.userId] || `User ${selectedAlert.userId}`}</p>
-                  <p className="text-sm text-gray-600">Mã người dùng: {formatUserId(selectedAlert.userId)}</p>
-                  {selectedAlert.rideId && (
-                    <p className="text-sm text-blue-600">Chuyến liên quan: {selectedAlert.rideId}</p>
-                  )}
-                </div>
-              </div>
-
-              {/* Location Info */}
-              <div>
-                <h4 className="font-medium text-gray-900 mb-3">Vị trí</h4>
-                <div className="p-4 bg-gray-50 rounded-lg">
-                  <p className="font-medium text-gray-900">{selectedAlert.location.address}</p>
-                  <p className="text-sm text-gray-600 mt-1">
-                    Tọa độ: {selectedAlert.location.lat}, {selectedAlert.location.lng}
-                  </p>
-                  <button className="btn-primary mt-3 text-sm">
-                    <MapPinIcon className="h-4 w-4 mr-1" />
-                    Mở trên bản đồ
-                  </button>
-                </div>
-              </div>
-
-              {/* Resolution Info */}
-              {selectedAlert.resolvedAt && (
-                <div>
-                  <h4 className="font-medium text-gray-900 mb-3">Thông tin xử lý</h4>
-                  <div className="p-4 bg-green-50 rounded-lg">
-                    <p className="text-sm text-gray-600">Thời gian xử lý:</p>
-                    <p className="font-semibold">
-                      {new Date(selectedAlert.resolvedAt).toLocaleString('vi-VN')}
-                    </p>
-                    {selectedAlert.resolvedBy && (
-                      <p className="text-sm text-gray-600 mt-1">
-                        Người xử lý: {selectedAlert.resolvedBy}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div className="px-6 py-4 border-t border-gray-200 flex justify-end space-x-3">
-              {selectedAlert.status === 'active' && (
-                <>
-                  <button
-                    onClick={() => {
-                      handleResolveAlert(selectedAlert.id);
-                      setSelectedAlert(null);
-                    }}
-                    className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
-                  >
-                    Đánh dấu đã xử lý
-                  </button>
-                  <button
-                    onClick={() => {
-                      handleMarkFalseAlarm(selectedAlert.id);
-                      setSelectedAlert(null);
-                    }}
-                    className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700"
-                  >
-                    Báo giả
-                  </button>
-                </>
-              )}
-              <button
-                onClick={() => setSelectedAlert(null)}
-                className="btn-secondary"
-              >
-                Đóng
-              </button>
-            </div>
-          </motion.div>
-        </div>
+      {selectedAlertId !== null && (
+        <SOSAlertDetailsModal
+          alertId={selectedAlertId}
+          isOpen={true}
+          onClose={() => setSelectedAlertId(null)}
+          onAlertUpdated={handleAlertUpdated}
+          isAdmin={true}
+        />
       )}
     </div>
   );
