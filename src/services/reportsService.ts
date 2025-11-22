@@ -65,8 +65,14 @@ const toNumber = (value: any): number => {
 };
 
 export const reportsService = {
-  async getWalletDashboardStats(): Promise<WalletDashboardStats> {
-    const data = await apiFetch<any>(API_ENDPOINTS.REPORTS.DASHBOARD);
+  async getWalletDashboardStats(startDate?: string, endDate?: string): Promise<WalletDashboardStats> {
+    const params = new URLSearchParams();
+    if (startDate) params.append('startDate', startDate);
+    if (endDate) params.append('endDate', endDate);
+    const url = params.toString()
+      ? `${API_ENDPOINTS.REPORTS.DASHBOARD}?${params.toString()}`
+      : API_ENDPOINTS.REPORTS.DASHBOARD;
+    const data = await apiFetch<any>(url);
     return {
       totalActiveWallets: data?.totalActiveWallets ?? 0,
       totalWalletBalance: toNumber(data?.totalWalletBalance),

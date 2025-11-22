@@ -44,6 +44,35 @@ const formatGrowthValue = (value?: number | null) => {
   return `${value > 0 ? '+' : ''}${formatted}%`;
 };
 
+const computePresetRange = (preset: 'today' | 'week' | 'month'): { from: string; to: string } => {
+  const now = new Date();
+  const end = formatDateParam(now);
+  if (preset === 'today') {
+    return { from: end, to: end };
+  }
+  if (preset === 'week') {
+    const start = new Date(now);
+    const day = start.getDay();
+    const diff = day === 0 ? 6 : day - 1; // Monday as start
+    start.setDate(start.getDate() - diff);
+    return { from: formatDateParam(start), to: end };
+  }
+  if (preset === 'month') {
+    const start = new Date(now.getFullYear(), now.getMonth(), 1);
+    return { from: formatDateParam(start), to: end };
+  }
+  return { from: '', to: '' };
+};
+
+const isWithinThreeMonths = (from: string, to: string) => {
+  if (!from || !to) return true;
+  const fromDate = new Date(from);
+  const toDate = new Date(to);
+  if (Number.isNaN(fromDate.getTime()) || Number.isNaN(toDate.getTime())) return false;
+  const diffDays = (toDate.getTime() - fromDate.getTime()) / (1000 * 60 * 60 * 24);
+  return diffDays <= 93 && diffDays >= 0;
+};
+
 const formatDateTime = (isoString?: string) => {
   if (!isoString) return '—';
   const date = new Date(isoString);
@@ -58,6 +87,10 @@ export default function PaymentManagement() {
   const [filterType, setFilterType] = useState<'all' | string>('all');
   const [filterStatus, setFilterStatus] = useState<'all' | string>('all');
   const [filterDirection, setFilterDirection] = useState<'all' | 'IN' | 'OUT' | 'INTERNAL'>('all');
+  const initialRange = computePresetRange('week');
+  const [dateFrom, setDateFrom] = useState<string>(initialRange.from);
+  const [dateTo, setDateTo] = useState<string>(initialRange.to);
+  const [datePreset, setDatePreset] = useState<'today' | 'week' | 'month' | 'custom'>('week');
   const [currentPage, setCurrentPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
   const [pagination, setPagination] = useState({
@@ -76,20 +109,28 @@ export default function PaymentManagement() {
   const [insightsError, setInsightsError] = useState<string | null>(null);
   const [insightRange, setInsightRange] = useState<{ start: string; end: string }>({ start: '', end: '' });
   const [ledgerView, setLedgerView] = useState<'USER' | 'SYSTEM'>('USER');
+  const [pendingFrom, setPendingFrom] = useState<string>(initialRange.from);
+  const [pendingTo, setPendingTo] = useState<string>(initialRange.to);
 
   // Load transactions on component mount
   useEffect(() => {
     loadTransactions();
-  }, [currentPage, pageSize, filterType, filterStatus, filterDirection]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => {
     loadInsights();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [currentPage, pageSize, filterType, filterStatus, filterDirection, dateFrom, dateTo, datePreset]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadTransactions = async () => {
     try {
       setLoading(true);
       setError(null);
+      if (dateFrom && dateTo && !isWithinThreeMonths(dateFrom, dateTo)) {
+        toast.error('Khoảng thời gian không được vượt quá 3 tháng và phải hợp lệ.');
+        setLoading(false);
+        return;
+      }
+      if (datePreset === 'custom' && (!dateFrom || !dateTo)) {
+        setLoading(false);
+        return;
+      }
 
       const filters = {
         page: currentPage,
@@ -99,6 +140,8 @@ export default function PaymentManagement() {
         ...(filterType !== 'all' && { type: filterType }),
         ...(filterStatus !== 'all' && { status: filterStatus }),
         ...(filterDirection !== 'all' && { direction: filterDirection }),
+        ...(dateFrom && { dateFrom }),
+        ...(dateTo && { dateTo }),
       };
 
       const response = await transactionService.getAllTransactions(filters);
@@ -120,15 +163,27 @@ export default function PaymentManagement() {
     try {
       setInsightsLoading(true);
       setInsightsError(null);
-      const end = new Date();
-      const start = new Date();
-      start.setDate(end.getDate() - 6);
-      const startDate = formatDateParam(start);
-      const endDate = formatDateParam(end);
+      let startDate = dateFrom;
+      let endDate = dateTo;
+      if (!startDate || !endDate) {
+        const fallback = computePresetRange('week');
+        startDate = fallback.from;
+        endDate = fallback.to;
+        setDateFrom(fallback.from);
+        setDateTo(fallback.to);
+        setDatePreset('week');
+        setPendingFrom(fallback.from);
+        setPendingTo(fallback.to);
+      }
+      if (!isWithinThreeMonths(startDate, endDate)) {
+        toast.error('Khoảng thời gian không được vượt quá 3 tháng và phải hợp lệ.');
+        setInsightsLoading(false);
+        return;
+      }
       setInsightRange({ start: startDate, end: endDate });
 
       const [dashboard, trends, commission] = await Promise.all([
-        reportsService.getWalletDashboardStats(),
+        reportsService.getWalletDashboardStats(startDate, endDate),
         reportsService.getTopUpTrends({ startDate, endDate, interval: 'daily' }),
         reportsService.getCommissionReport({ startDate, endDate }),
       ]);
@@ -326,17 +381,90 @@ export default function PaymentManagement() {
   const liabilityCoverageGap = dashboardStats?.liabilityCoverageGap ?? 0;
   const coverageLabel = liabilityCoverageGap >= 0 ? 'Hệ thống dư so với người dùng' : 'Hệ thống thiếu so với người dùng';
   const coverageClass = liabilityCoverageGap >= 0 ? 'text-emerald-600' : 'text-red-600';
+  const rangeLabel = dateFrom && dateTo ? `${formatDateLabel(dateFrom)} - ${formatDateLabel(dateTo)}` : 'Không có bộ lọc thời gian';
+  const handlePresetSelection = (preset: 'today' | 'week' | 'month') => {
+    const range = computePresetRange(preset);
+    setDatePreset(preset);
+    setDateFrom(range.from);
+    setDateTo(range.to);
+    setPendingFrom(range.from);
+    setPendingTo(range.to);
+    setCurrentPage(0);
+  };
+
+  const handleApplyCustomRange = () => {
+    if (!pendingFrom || !pendingTo) {
+      toast.error('Vui lòng chọn đủ ngày bắt đầu và kết thúc');
+      return;
+    }
+    if (!isWithinThreeMonths(pendingFrom, pendingTo)) {
+      toast.error('Khoảng thời gian không được vượt quá 3 tháng và phải hợp lệ.');
+      return;
+    }
+    setDatePreset('custom');
+    setDateFrom(pendingFrom);
+    setDateTo(pendingTo);
+    setCurrentPage(0);
+  };
 
   return (
     <>
       <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Quản lí tài chính</h1>
           <p className="mt-2 text-gray-600">
             Theo dõi dòng tiền ví nội bộ, kiểm soát nạp/rút và trạng thái các giao dịch tài chính
           </p>
+          <p className="text-sm text-gray-500">Khoảng thời gian: {rangeLabel}</p>
+        </div>
+        <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center sm:gap-3">
+          <div className="flex flex-wrap gap-2">
+            {(['today', 'week', 'month'] as const).map((preset) => (
+              <button
+                key={preset}
+                onClick={() => handlePresetSelection(preset)}
+                className={`px-3 py-2 text-sm rounded-lg border ${
+                  datePreset === preset
+                    ? 'bg-indigo-600 text-white border-indigo-600'
+                    : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
+                }`}
+              >
+                {preset === 'today' && 'Hôm nay'}
+                {preset === 'week' && 'Tuần này'}
+                {preset === 'month' && 'Tháng này'}
+              </button>
+            ))}
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-500">Từ</span>
+            <input
+              type="date"
+              className="input-field"
+              value={pendingFrom}
+              onChange={(e) => {
+                setPendingFrom(e.target.value);
+                setDatePreset('custom');
+              }}
+            />
+            <span className="text-sm text-gray-500">Đến</span>
+            <input
+              type="date"
+              className="input-field"
+              value={pendingTo}
+              onChange={(e) => {
+                setPendingTo(e.target.value);
+                setDatePreset('custom');
+              }}
+            />
+            <button
+              onClick={handleApplyCustomRange}
+              className="px-3 py-2 text-sm rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition"
+            >
+              Áp dụng
+            </button>
+          </div>
         </div>
       </div>
 
@@ -352,7 +480,7 @@ export default function PaymentManagement() {
             detail: `${numberFormatter.format(dashboardStats?.totalActiveWallets ?? 0)} ví đang hoạt động`,
           },
           {
-            label: 'Nạp ví hôm nay',
+            label: 'Nạp ví',
             value: insightsLoading ? 'Đang tải...' : formatCurrencyValue(dashboardStats?.totalTopupsToday),
             icon: ArrowDownIcon,
             gradient: 'from-blue-600 to-indigo-600',
@@ -360,7 +488,7 @@ export default function PaymentManagement() {
             detail: `${numberFormatter.format(dashboardStats?.totalTransactionsToday ?? 0)} giao dịch ghi nhận`,
           },
           {
-            label: 'Rút tiền hôm nay',
+            label: 'Rút tiền',
             value: insightsLoading ? 'Đang tải...' : formatCurrencyValue(dashboardStats?.totalPayoutsToday),
             icon: ArrowUpIcon,
             gradient: 'from-amber-500 to-orange-500',
@@ -395,59 +523,6 @@ export default function PaymentManagement() {
         ))}
       </div>
 
-      {dashboardStats && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="card"
-        >
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div>
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Trạng thái ví hệ thống</h2>
-              <p className="text-sm text-gray-500 dark:text-slate-300">
-                So sánh tổng số dư ví người dùng với số dư các ví hệ thống (MASTER, COMMISSION)
-              </p>
-            </div>
-            <div className="text-right">
-              <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-slate-400">Chênh lệch so với số dư người dùng</p>
-              <p className={`text-2xl font-bold dark:text-white ${coverageClass}`}>
-                {formatCurrencyValue(liabilityCoverageGap)}
-              </p>
-              <p className="text-xs text-gray-500 dark:text-slate-400">{coverageLabel}</p>
-            </div>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-            <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 dark:bg-slate-900/60 dark:border-slate-800">
-              <p className="text-sm text-gray-500 dark:text-slate-300">Tổng số dư ví người dùng</p>
-              <p className="text-lg font-semibold text-gray-900 dark:text-white">
-                {formatCurrencyValue(dashboardStats.totalWalletBalance)}
-              </p>
-              <p className="text-xs text-gray-500 dark:text-slate-400 mt-1">
-                {numberFormatter.format(dashboardStats.totalActiveWallets ?? 0)} ví hoạt động
-              </p>
-            </div>
-            <div className="p-4 rounded-xl bg-indigo-50 border border-indigo-100 dark:bg-indigo-900/40 dark:border-indigo-800">
-              <p className="text-sm text-gray-500 dark:text-slate-200">Ví hệ thống MASTER</p>
-              <p className="text-lg font-semibold text-gray-900 dark:text-white">
-                {formatCurrencyValue(systemMasterBalance)}
-              </p>
-              <p className="text-xs text-gray-500 dark:text-slate-300 mt-1">
-                Dòng tiền thực nhận/chi ra qua PSP
-              </p>
-            </div>
-            <div className="p-4 rounded-xl bg-rose-50 border border-rose-100 dark:bg-rose-900/40 dark:border-rose-800">
-              <p className="text-sm text-gray-500 dark:text-slate-200">Ví hoa hồng (COMMISSION)</p>
-              <p className="text-lg font-semibold text-gray-900 dark:text-white">
-                {formatCurrencyValue(systemCommissionBalance)}
-              </p>
-              <p className="text-xs text-gray-500 dark:text-slate-300 mt-1">
-                Tổng hoa hồng đã ghi nhận từ chuyến đi
-              </p>
-            </div>
-          </div>
-        </motion.div>
-      )}
 
       {insightsError && (
         <div className="card border border-amber-300 bg-amber-50 text-amber-800">
