@@ -395,7 +395,7 @@ export default function PaymentManagement() {
         ))}
       </div>
 
-      {dashboardStats && (
+      {/* {dashboardStats && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -447,7 +447,7 @@ export default function PaymentManagement() {
             </div>
           </div>
         </motion.div>
-      )}
+      )} */}
 
       {insightsError && (
         <div className="card border border-amber-300 bg-amber-50 text-amber-800">
