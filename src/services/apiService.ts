@@ -197,7 +197,7 @@ export const rideService = {
   getAllRides: (page = 0, size = 10, status?: string) => {
     const params = new URLSearchParams({ page: page.toString(), size: size.toString() });
     if (status) params.append('status', status);
-    return apiFetch<PageResponse<Ride>>(`/admin/rides?${params}`);
+    return apiFetch<PageResponse<Ride>>(`/rides/admin?${params}`);
   },
 
   // Get ride by ID
