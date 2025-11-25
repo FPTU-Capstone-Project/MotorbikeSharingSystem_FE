@@ -404,7 +404,6 @@ function transformSosAlertResponse(alert: any): SOSAlert {
     createdAt: alert.createdAt || new Date().toISOString(),
     updatedAt: alert.updatedAt,
     userName: alert.triggeredByName || alert.userName,
-    userPhone: alert.userPhone,
     location: {
       lat: alert.currentLat ?? 0,
       lng: alert.currentLng ?? 0,
@@ -413,5 +412,8 @@ function transformSosAlertResponse(alert: any): SOSAlert {
     rideId: alert.sharedRideId ? String(alert.sharedRideId) : undefined,
     resolvedBy: alert.resolvedByName || (alert.resolvedBy ? String(alert.resolvedBy) : undefined),
     timeline,
+    userPhone: alert.triggeredByPhone || alert.userPhone,
+    riderPhone: alert.riderPhone || alert.userPhone,
+    driverPhone: alert.driverPhone,
   } as SOSAlert;
 }

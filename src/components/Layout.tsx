@@ -1,5 +1,5 @@
-import React, { useState, useCallback, memo } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import React, { useState, useCallback, memo } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   HomeIcon,
   UsersIcon,
@@ -14,32 +14,31 @@ import {
   DocumentCheckIcon,
   ArrowRightOnRectangleIcon,
   DocumentTextIcon,
-} from '@heroicons/react/24/outline';
-import { MotorbikeIcon } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { cn } from '../utils/cn';
-import { useAuth } from '../contexts/AuthContext';
-import SessionStatus from './SessionStatus';
-import ThemeToggle from './ThemeToggle';
-import toast from 'react-hot-toast';
- 
+} from "@heroicons/react/24/outline";
+import { MotorbikeIcon } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { cn } from "../utils/cn";
+import { useAuth } from "../contexts/AuthContext";
+import SessionStatus from "./SessionStatus";
+import ThemeToggle from "./ThemeToggle";
+import toast from "react-hot-toast";
 
 interface LayoutProps {
   children: React.ReactNode;
 }
 
 const navigation = [
-  { name: 'Tổng quan', href: '/dashboard', icon: HomeIcon },
-  { name: 'Người dùng', href: '/users', icon: UsersIcon },
-  { name: 'Tuyến đường', href: '/routes', icon: MapIcon },
-  { name: 'Quản lý xác minh', href: '/verification', icon: DocumentCheckIcon },
-  { name: 'Quản lý xe', href: '/vehicle-verification', icon: MotorbikeIcon },
-  { name: 'Chuyến đi', href: '/rides', icon: MapIcon },
-  { name: 'Tài chính', href: '/payments', icon: CreditCardIcon },
-  { name: 'Cấu hình giá', href: '/pricing', icon: DocumentTextIcon },
-  { name: 'Báo cáo', href: '/reports', icon: DocumentTextIcon },
-  { name: 'An toàn', href: '/safety', icon: ShieldCheckIcon },
-  { name: 'Phân tích', href: '/analytics', icon: ChartBarIcon },
+  { name: "Tổng quan", href: "/dashboard", icon: HomeIcon },
+  { name: "Người dùng", href: "/users", icon: UsersIcon },
+  { name: "Tuyến đường", href: "/routes", icon: MapIcon },
+  { name: "Quản lý xác minh", href: "/verification", icon: DocumentCheckIcon },
+  { name: "Quản lý xe", href: "/vehicle-verification", icon: MotorbikeIcon },
+  { name: "Chuyến đi chia sẻ", href: "/rides", icon: MapIcon },
+  { name: "Tài chính", href: "/payments", icon: CreditCardIcon },
+  { name: "Cấu hình giá", href: "/pricing", icon: DocumentTextIcon },
+  { name: "Báo cáo", href: "/reports", icon: DocumentTextIcon },
+  { name: "An toàn", href: "/safety", icon: ShieldCheckIcon },
+  { name: "Phân tích", href: "/analytics", icon: ChartBarIcon },
 ];
 
 const Layout = memo(({ children }: LayoutProps) => {
@@ -58,12 +57,19 @@ const Layout = memo(({ children }: LayoutProps) => {
 
   const handleLogout = useCallback(() => {
     logout();
-    toast.success('Đăng xuất thành công');
-    navigate('/login');
+    toast.success("Đăng xuất thành công");
+    navigate("/login");
   }, [logout, navigate]);
 
   return (
-    <div className="flex h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-950 dark:via-indigo-950/40 dark:to-slate-950 transition-all ease-in-out" style={{ willChange: 'background-color', transform: 'translateZ(0)', transitionDuration: '400ms' }}>
+    <div
+      className="flex h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-950 dark:via-indigo-950/40 dark:to-slate-950 transition-all ease-in-out"
+      style={{
+        willChange: "background-color",
+        transform: "translateZ(0)",
+        transitionDuration: "400ms",
+      }}
+    >
       {/* Dark-mode mesh gradient background */}
       <div className="hidden dark:block fixed inset-0 -z-10 mesh-gradient-dark animate-mesh" />
       {/* Mobile sidebar overlay */}
@@ -85,10 +91,10 @@ const Layout = memo(({ children }: LayoutProps) => {
       <AnimatePresence>
         {sidebarOpen && (
           <motion.div
-            initial={{ x: '-100%' }}
+            initial={{ x: "-100%" }}
             animate={{ x: 0 }}
-            exit={{ x: '-100%' }}
-            transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+            exit={{ x: "-100%" }}
+            transition={{ type: "spring", damping: 30, stiffness: 300 }}
             className="fixed inset-y-0 left-0 z-50 w-72 bg-white/95 backdrop-blur-xl shadow-2xl lg:hidden border-r border-white/20 dark:bg-slate-900/95 dark:border-slate-800/80 dark:shadow-black/40"
           >
             <div className="flex items-center justify-between h-20 px-6 border-b border-gray-100 dark:border-slate-800/80">
@@ -97,8 +103,12 @@ const Layout = memo(({ children }: LayoutProps) => {
                   <span className="text-white font-bold text-lg">M</span>
                 </div>
                 <div>
-                  <h1 className="text-xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent dark:from-white dark:to-slate-200">MSSUS</h1>
-                  <p className="text-xs text-gray-500 font-medium dark:text-slate-400">Cổng quản trị</p>
+                  <h1 className="text-xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent dark:from-white dark:to-slate-200">
+                    MSSUS
+                  </h1>
+                  <p className="text-xs text-gray-500 font-medium dark:text-slate-400">
+                    Cổng quản trị
+                  </p>
                 </div>
               </div>
               <button
@@ -129,8 +139,12 @@ const Layout = memo(({ children }: LayoutProps) => {
                   <span className="text-white font-bold text-xl">M</span>
                 </div>
                 <div>
-                  <h1 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent dark:from-white dark:to-slate-200">MSSUS</h1>
-                  <p className="text-sm text-gray-500 font-medium dark:text-slate-400">Cổng quản trị</p>
+                  <h1 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent dark:from-white dark:to-slate-200">
+                    MSSUS
+                  </h1>
+                  <p className="text-sm text-gray-500 font-medium dark:text-slate-400">
+                    Trang quản trị
+                  </p>
                 </div>
               </div>
             </div>
@@ -142,7 +156,14 @@ const Layout = memo(({ children }: LayoutProps) => {
       {/* Main content */}
       <div className="flex flex-col flex-1 overflow-hidden">
         {/* Top bar */}
-        <header className="bg-white/80 backdrop-blur-xl border-b border-white/20 shadow-sm dark:bg-slate-950/60 dark:border-slate-800 dark:shadow-black/30 transition-all ease-in-out" style={{ willChange: 'background-color, border-color', transform: 'translateZ(0)', transitionDuration: '400ms' }}>
+        <header
+          className="bg-white/80 backdrop-blur-xl border-b border-white/20 shadow-sm dark:bg-slate-950/60 dark:border-slate-800 dark:shadow-black/30 transition-all ease-in-out"
+          style={{
+            willChange: "background-color, border-color",
+            transform: "translateZ(0)",
+            transitionDuration: "400ms",
+          }}
+        >
           <div className="flex items-center justify-between h-20 px-6">
             <div className="flex items-center">
               <button
@@ -176,15 +197,15 @@ const Layout = memo(({ children }: LayoutProps) => {
               <div className="flex items-center space-x-3 bg-gray-50/80 rounded-2xl px-4 py-2 border border-gray-200/60 hover:bg-white/80 transition-all duration-200 dark:bg-slate-900/70 dark:border-slate-700/80 dark:hover:bg-slate-800/80">
                 <div className="h-10 w-10 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-900/30">
                   <span className="text-sm font-bold text-white">
-                    {user?.fullName?.charAt(0)?.toUpperCase() || 'A'}
+                    {user?.fullName?.charAt(0)?.toUpperCase() || "A"}
                   </span>
                 </div>
                 <div>
                   <span className="text-sm font-semibold text-gray-900 dark:text-slate-100">
-                    {user?.fullName || 'Quản trị viên'}
+                    {user?.fullName || "Quản trị viên"}
                   </span>
                   <p className="text-xs text-gray-500 dark:text-slate-400">
-                    {user?.email || 'Tài khoản quản trị'}
+                    {user?.email || "Tài khoản quản trị"}
                   </p>
                 </div>
               </div>
@@ -211,73 +232,83 @@ const Layout = memo(({ children }: LayoutProps) => {
   );
 });
 
-Layout.displayName = 'Layout';
+Layout.displayName = "Layout";
 
-const SidebarContent = memo(({ location, closeSidebar }: { location: any; closeSidebar?: () => void }) => {
-  return (
-    <nav className="flex-1 px-6 py-8 space-y-3 text-slate-600 dark:text-slate-300 transition-colors duration-300">
-      {navigation.map((item, index) => {
-        const isActive = location.pathname === item.href;
-        return (
-          <motion.div
-            key={item.name}
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: index * 0.05, duration: 0.3 }}
-          >
-            <Link
-              to={item.href}
-              onClick={closeSidebar}
-              className={cn(
-                'group flex items-center px-4 py-3 text-sm font-semibold rounded-2xl transition-all duration-300 relative overflow-hidden',
-                isActive
-                  ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg transform scale-105'
-                  : 'text-gray-600 hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-100 hover:text-gray-900 hover:scale-105 dark:text-slate-300 dark:hover:from-slate-800 dark:hover:to-slate-900 dark:hover:text-white'
-              )}
+const SidebarContent = memo(
+  ({
+    location,
+    closeSidebar,
+  }: {
+    location: any;
+    closeSidebar?: () => void;
+  }) => {
+    return (
+      <nav className="flex-1 px-6 py-8 space-y-3 text-slate-600 dark:text-slate-300 transition-colors duration-300">
+        {navigation.map((item, index) => {
+          const isActive = location.pathname === item.href;
+          return (
+            <motion.div
+              key={item.name}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: index * 0.05, duration: 0.3 }}
             >
-              {isActive && (
-                <motion.div
-                  layoutId="activeBackground"
-                  className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl"
-                  initial={false}
-                  transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                />
-              )}
-              <item.icon
+              <Link
+                to={item.href}
+                onClick={closeSidebar}
                 className={cn(
-                  'relative mr-4 h-5 w-5 transition-all duration-300',
-                  isActive 
-                    ? 'text-white drop-shadow-sm' 
-                    : 'text-gray-400 group-hover:text-indigo-600 group-hover:scale-110 dark:text-slate-400 dark:group-hover:text-indigo-400'
+                  "group flex items-center px-4 py-3 text-sm font-semibold rounded-2xl transition-all duration-300 relative overflow-hidden",
+                  isActive
+                    ? "bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg transform scale-105"
+                    : "text-gray-600 hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-100 hover:text-gray-900 hover:scale-105 dark:text-slate-300 dark:hover:from-slate-800 dark:hover:to-slate-900 dark:hover:text-white"
                 )}
-                aria-hidden="true"
-              />
-              <span className="relative">{item.name}</span>
-              {isActive && (
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  className="ml-auto w-2 h-2 bg-white/60 rounded-full"
+              >
+                {isActive && (
+                  <motion.div
+                    layoutId="activeBackground"
+                    className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl"
+                    initial={false}
+                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                  />
+                )}
+                <item.icon
+                  className={cn(
+                    "relative mr-4 h-5 w-5 transition-all duration-300",
+                    isActive
+                      ? "text-white drop-shadow-sm"
+                      : "text-gray-400 group-hover:text-indigo-600 group-hover:scale-110 dark:text-slate-400 dark:group-hover:text-indigo-400"
+                  )}
+                  aria-hidden="true"
                 />
-              )}
-            </Link>
-          </motion.div>
-        );
-      })}
-      
-      <div className="pt-8 mt-8 border-t border-gray-100 dark:border-slate-800/80">
-        <div className="px-4 py-3">
-          <div className="flex items-center space-x-3 text-xs text-gray-500 dark:text-slate-400">
-            <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse shadow-green-500/50"></div>
-            <span>Trạng thái hệ thống: Hoạt động</span>
-          </div>
-          <p className="text-xs text-gray-400 mt-2 dark:text-slate-500">v2.1.0 • Cập nhật 2 giờ trước</p>
-        </div>
-      </div>
-    </nav>
-  );
-});
+                <span className="relative">{item.name}</span>
+                {isActive && (
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    className="ml-auto w-2 h-2 bg-white/60 rounded-full"
+                  />
+                )}
+              </Link>
+            </motion.div>
+          );
+        })}
 
-SidebarContent.displayName = 'SidebarContent';
+        <div className="pt-8 mt-8 border-t border-gray-100 dark:border-slate-800/80">
+          <div className="px-4 py-3">
+            <div className="flex items-center space-x-3 text-xs text-gray-500 dark:text-slate-400">
+              <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse shadow-green-500/50"></div>
+              <span>Trạng thái hệ thống: Hoạt động</span>
+            </div>
+            <p className="text-xs text-gray-400 mt-2 dark:text-slate-500">
+              v2.1.0 • Cập nhật 2 giờ trước
+            </p>
+          </div>
+        </div>
+      </nav>
+    );
+  }
+);
+
+SidebarContent.displayName = "SidebarContent";
 
 export default Layout;

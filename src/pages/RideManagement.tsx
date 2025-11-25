@@ -86,7 +86,6 @@ const formatDurationMinutes = (minutes?: number | string | null) => {
 
 const formatDateTime = (raw?: string | null) => {
   if (!raw) return "—";
-  // Strip timezone/offset and fractional seconds, then format without shifting time
   const trimmed = raw
     .replace(/([+-]\d{2}:?\d{2}|Z)$/i, "")
     .replace(/\.\d+$/, "");
@@ -107,20 +106,6 @@ const normalizeRideStatus = (status?: string | null): RideStatusDisplay => {
   }
   if (value === "scheduled") return "scheduled";
   return "pending";
-};
-
-const riderNames: { [key: string]: string } = {
-  user_001: "John Doe",
-  user_002: "Jane Smith",
-  user_003: "Bob Wilson",
-  user_004: "Alice Johnson",
-  user_005: "Mike Brown",
-};
-
-const driverNames: { [key: string]: string } = {
-  driver_001: "David Lee",
-  driver_002: "Emma Davis",
-  driver_003: "Chris Taylor",
 };
 
 type TrackingSnapshot = {
@@ -619,8 +604,8 @@ export default function RideManagement() {
         mapRef.current = null;
       }
       setMapReady(false);
-      setTrackingPolyline([]);
-      setPlannedPolyline([]);
+      if (trackingPolyline.length) setTrackingPolyline([]);
+      if (plannedPolyline.length) setPlannedPolyline([]);
       setDriverPosition(null);
       setRiderPosition(null);
       pickupMarkerRef.current = null;
@@ -770,8 +755,7 @@ export default function RideManagement() {
     setCurrentPage(0);
   }, [filterType, filterStatus]);
 
-  const typeLabels: Record<Ride["type"], string> = {
-    solo: "Đi riêng",
+  const typeLabels: Partial<Record<Ride["type"], string>> = {
     shared: "Đi chung",
   };
 
@@ -846,7 +830,7 @@ export default function RideManagement() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">
-            Quản lý chuyến đi
+            Quản lý chuyến đi chia sẻ
           </h1>
           <p className="mt-2 text-gray-600">Theo dõi chuyến đi</p>
         </div>
@@ -945,7 +929,7 @@ export default function RideManagement() {
                   Trạng thái
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Cước phí
+                  Doanh thu
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Thao tác
@@ -1011,24 +995,12 @@ export default function RideManagement() {
                       >
                         {statusLabels[ride.status]}
                       </span>
-                      <br />
-                      <span
-                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getTypeBadge(
-                          ride.type
-                        )}`}
-                      >
-                        {typeLabels[ride.type]}
-                      </span>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div>
                       <div className="text-sm font-medium text-gray-900">
                         {ride.fare.toLocaleString("vi-VN")}đ
-                      </div>
-                      <div className="text-xs text-gray-500">
-                        {/* Payment status not provided in summary; show placeholder */}
-                        --
                       </div>
                     </div>
                   </td>
@@ -1161,7 +1133,7 @@ export default function RideManagement() {
                     accent: "bg-amber-100 text-amber-700",
                   },
                   {
-                    label: "Chi phí",
+                    label: "Doanh thu",
                     value: formatCurrency(totalFare),
                     icon: CurrencyDollarIcon,
                     accent: "bg-emerald-100 text-emerald-700",

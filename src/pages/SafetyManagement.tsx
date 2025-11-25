@@ -25,6 +25,20 @@ import {
 import Pagination from "../components/Pagination";
 import SOSAlertDetailsModal from "../components/SOSAlertDetailsModal";
 
+const formatUtc = (
+  value?: string,
+  options?: Intl.DateTimeFormatOptions,
+  fallback = "—"
+) => {
+  if (!value) return fallback;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return new Intl.DateTimeFormat("vi-VN", {
+    timeZone: "UTC",
+    ...options,
+  }).format(date);
+};
+
 export default function SafetyManagement() {
   const [sosAlerts, setSOSAlerts] = useState<SOSAlert[]>([]);
   const [dashboardStats, setDashboardStats] =
@@ -390,29 +404,27 @@ export default function SafetyManagement() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div>
                         <div className="text-sm text-gray-900 dark:text-slate-100">
-                          {new Date(alert.createdAt).toLocaleDateString(
-                            "vi-VN"
-                          )}
+                          {formatUtc(alert.createdAt, {
+                            year: "numeric",
+                            month: "2-digit",
+                            day: "2-digit",
+                          })}
                         </div>
                         <div className="text-xs text-gray-500 dark:text-slate-400">
-                          {new Date(alert.createdAt).toLocaleTimeString(
-                            "vi-VN",
-                            {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            }
-                          )}
+                          {formatUtc(alert.createdAt, {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                            hour12: false,
+                          })}
                         </div>
                         {alert.resolvedAt && (
                           <div className="text-xs text-green-600 mt-1">
                             Xử lý:{" "}
-                            {new Date(alert.resolvedAt).toLocaleTimeString(
-                              "vi-VN",
-                              {
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              }
-                            )}
+                            {formatUtc(alert.resolvedAt, {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                              hour12: false,
+                            })}
                           </div>
                         )}
                       </div>
