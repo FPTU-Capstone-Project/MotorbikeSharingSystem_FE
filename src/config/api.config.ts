@@ -86,6 +86,14 @@ export const API_ENDPOINTS = {
     SUSPEND: (userId: number) => `/admin/users/${userId}/suspend`,
     ACTIVATE: (userId: number) => `/admin/users/${userId}/activate`,
   },
+  NOTIFICATIONS: {
+    LIST: '/notifications',
+    BY_ID: (id: number) => `/notifications/${id}`,
+    MARK_READ: (id: number) => `/notifications/${id}/read`,
+    MARK_ALL_READ: '/notifications/read-all',
+    DELETE: (id: number) => `/notifications/${id}`,
+    DELETE_ALL: '/notifications',
+  },
   LOCATIONS: {
     POIS: '/locations/pois',
   },

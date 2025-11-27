@@ -242,6 +242,23 @@ export interface Notification {
   rideId?: string
 }
 
+export interface NotificationSummary {
+  notifId: number;
+  title: string;
+  message: string;
+  isRead: boolean;
+  createdAt: string;
+  type: 'SYSTEM' | 'RIDE' | 'PAYMENT' | 'PROMOTION' | 'ALERT' | string;
+  priority: 'LOW' | 'MEDIUM' | 'HIGH';
+}
+
+export interface NotificationDetail extends NotificationSummary {
+  payload?: string;
+  readAt?: string;
+  sentAt?: string;
+  expiresAt?: string;
+}
+
 export interface Vehicle {
   id: string
   driverId: string

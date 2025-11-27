@@ -26,6 +26,7 @@ const TokenExpiryTest = lazy(() => import('./pages/TokenExpiryTest'));
 const ReportManagement = lazy(() => import('./pages/ReportManagement'));
 const RouteManagement = lazy(() => import('./pages/RouteManagement'));
 const PricingManagement = lazy(() => import('./pages/PricingManagement'));
+const NotificationCenter = lazy(() => import('./pages/NotificationCenter'));
 
 function App() {
   return (
@@ -142,6 +143,16 @@ function App() {
                       <ProtectedRoute>
                         <Layout>
                           <Analytics />
+                        </Layout>
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/notifications"
+                    element={
+                      <ProtectedRoute>
+                        <Layout>
+                          <NotificationCenter />
                         </Layout>
                       </ProtectedRoute>
                     }

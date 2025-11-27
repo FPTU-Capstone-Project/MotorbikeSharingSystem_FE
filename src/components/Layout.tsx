@@ -1,4 +1,4 @@
-import React, { useState, useCallback, memo } from "react";
+import React, { useState, useCallback, memo, useEffect, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   HomeIcon,
@@ -22,6 +22,8 @@ import { useAuth } from "../contexts/AuthContext";
 import SessionStatus from "./SessionStatus";
 import ThemeToggle from "./ThemeToggle";
 import toast from "react-hot-toast";
+import { notificationService } from "../services/notificationService";
+import { NotificationDetail, NotificationSummary } from "../types";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -39,6 +41,7 @@ const navigation = [
   { name: "Báo cáo", href: "/reports", icon: DocumentTextIcon },
   { name: "An toàn", href: "/safety", icon: ShieldCheckIcon },
   { name: "Phân tích", href: "/analytics", icon: ChartBarIcon },
+  { name: "Thông báo", href: "/notifications", icon: BellIcon },
 ];
 
 const Layout = memo(({ children }: LayoutProps) => {
@@ -46,6 +49,11 @@ const Layout = memo(({ children }: LayoutProps) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const [showNoti, setShowNoti] = useState(false);
+  const [notifications, setNotifications] = useState<NotificationSummary[]>([]);
+  const [notiLoading, setNotiLoading] = useState(false);
+  const [selectedNoti, setSelectedNoti] = useState<NotificationDetail | null>(null);
+  const notiRef = useRef<HTMLDivElement | null>(null);
 
   const closeSidebar = useCallback(() => {
     setSidebarOpen(false);
@@ -60,6 +68,79 @@ const Layout = memo(({ children }: LayoutProps) => {
     toast.success("Đăng xuất thành công");
     navigate("/login");
   }, [logout, navigate]);
+
+  const loadNotifications = useCallback(async () => {
+    try {
+      setNotiLoading(true);
+      const res = await notificationService.list(0, 5);
+      setNotifications(res.data || []);
+    } catch (err) {
+      console.error(err);
+      toast.error("Không tải được thông báo");
+    } finally {
+      setNotiLoading(false);
+    }
+  }, []);
+
+  const handleMarkAllRead = useCallback(async () => {
+    try {
+      await notificationService.markAllRead();
+      setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+      setSelectedNoti((prev) => (prev ? { ...prev, isRead: true } : prev));
+    } catch {
+      toast.error("Không thể đánh dấu tất cả đã đọc");
+    }
+  }, []);
+
+  const handleMarkRead = useCallback(async (id: number) => {
+    try {
+      await notificationService.markRead(id);
+      setNotifications((prev) => prev.map((n) => (n.notifId === id ? { ...n, isRead: true } : n)));
+      setSelectedNoti((prev) => (prev && prev.notifId === id ? { ...prev, isRead: true } : prev));
+    } catch {
+      toast.error("Không thể đánh dấu đã đọc");
+    }
+  }, []);
+
+  const handleDelete = useCallback(async (id: number) => {
+    try {
+      await notificationService.delete(id);
+      setNotifications((prev) => prev.filter((n) => n.notifId !== id));
+      if (selectedNoti?.notifId === id) {
+        setSelectedNoti(null);
+      }
+    } catch {
+      toast.error("Không thể xóa thông báo");
+    }
+  }, [selectedNoti]);
+
+  const openDetail = useCallback(async (id: number) => {
+    try {
+      const detail = await notificationService.get(id);
+      setSelectedNoti(detail);
+      if (!detail.isRead) {
+        await handleMarkRead(id);
+      }
+    } catch {
+      toast.error("Không thể mở thông báo");
+    }
+  }, [handleMarkRead]);
+
+  useEffect(() => {
+    if (showNoti) {
+      loadNotifications();
+    }
+  }, [showNoti, loadNotifications]);
+
+  useEffect(() => {
+    const onClick = (e: MouseEvent) => {
+      if (showNoti && notiRef.current && !notiRef.current.contains(e.target as Node)) {
+        setShowNoti(false);
+      }
+    };
+    document.addEventListener("mousedown", onClick);
+    return () => document.removeEventListener("mousedown", onClick);
+  }, [showNoti]);
 
   return (
     <div
@@ -157,7 +238,7 @@ const Layout = memo(({ children }: LayoutProps) => {
       <div className="flex flex-col flex-1 overflow-hidden">
         {/* Top bar */}
         <header
-          className="bg-white/80 backdrop-blur-xl border-b border-white/20 shadow-sm dark:bg-slate-950/60 dark:border-slate-800 dark:shadow-black/30 transition-all ease-in-out"
+          className="relative z-30 bg-white/80 backdrop-blur-xl border-b border-white/20 shadow-sm dark:bg-slate-950/60 dark:border-slate-800 dark:shadow-black/30 transition-all ease-in-out"
           style={{
             willChange: "background-color, border-color",
             transform: "translateZ(0)",
@@ -188,12 +269,121 @@ const Layout = memo(({ children }: LayoutProps) => {
             <div className="flex items-center space-x-6">
               <SessionStatus className="hidden lg:block text-sm" />
               <ThemeToggle className="hidden lg:inline-flex" />
-              <button className="relative p-3 text-gray-400 hover:text-gray-600 hover:bg-gray-100/80 rounded-xl transition-all duration-200 group dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-800/80">
-                <BellIcon className="h-6 w-6" />
-                <span className="absolute -top-1 -right-1 h-5 w-5 bg-gradient-to-r from-red-500 to-pink-500 rounded-full flex items-center justify-center text-xs text-white font-semibold shadow-lg animate-pulse">
-                  3
-                </span>
-              </button>
+              <div className="relative" ref={notiRef}>
+                <button
+                  className="relative p-3 text-gray-400 hover:text-gray-600 hover:bg-gray-100/80 rounded-xl transition-all duration-200 group dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-800/80"
+                  onClick={() => setShowNoti((prev) => !prev)}
+                >
+                  <BellIcon className="h-6 w-6" />
+                  {notifications.some((n) => !n.isRead) && (
+                    <span className="absolute -top-1 -right-1 h-5 w-5 bg-gradient-to-r from-red-500 to-pink-500 rounded-full flex items-center justify-center text-xs text-white font-semibold shadow-lg">
+                      {notifications.filter((n) => !n.isRead).length}
+                    </span>
+                  )}
+                </button>
+                {showNoti && (
+                  <div className="absolute right-0 mt-3 w-96 bg-white shadow-2xl rounded-2xl border border-gray-100 p-4 z-[2000] dark:bg-slate-900 dark:border-slate-800 max-h-[70vh] overflow-y-auto">
+                    <div className="flex items-center justify-between mb-3">
+                      <div>
+                        <p className="text-sm font-semibold text-gray-900 dark:text-slate-100">Thông báo</p>
+                        <p className="text-xs text-gray-500 dark:text-slate-400">
+                          {notifications.filter((n) => !n.isRead).length} chưa đọc
+                        </p>
+                      </div>
+                      <button
+                        className="text-xs text-indigo-600 hover:text-indigo-800"
+                        onClick={handleMarkAllRead}
+                        disabled={notiLoading}
+                      >
+                        Đánh dấu tất cả đã đọc
+                      </button>
+                    </div>
+                    <div className="space-y-2 max-h-80 overflow-y-auto">
+                      {notiLoading ? (
+                        <div className="text-sm text-gray-500 py-6 text-center">Đang tải...</div>
+                      ) : notifications.length === 0 ? (
+                        <div className="text-sm text-gray-500 py-6 text-center">Không có thông báo</div>
+                      ) : (
+                        notifications.map((n) => (
+                          <div
+                            key={n.notifId}
+                            className={`p-3 rounded-xl border transition cursor-pointer ${
+                              n.isRead
+                                ? "border-transparent hover:bg-gray-50 dark:hover:bg-slate-800/80"
+                                : "border-indigo-100 bg-indigo-50/70 dark:bg-indigo-950/40"
+                            }`}
+                            onClick={() => openDetail(n.notifId)}
+                          >
+                            <div className="flex justify-between items-start">
+                              <div>
+                                <p className="text-sm font-semibold text-gray-900 dark:text-slate-100">{n.title}</p>
+                                <p className="text-xs text-gray-600 dark:text-slate-400 line-clamp-2">{n.message}</p>
+                                <p className="text-[11px] text-gray-400 mt-1">
+                                  {new Date(n.createdAt).toLocaleString("vi-VN")}
+                                </p>
+                              </div>
+                              {!n.isRead && (
+                                <span className="px-2 py-0.5 rounded-full bg-orange-100 text-orange-700 text-[11px] font-semibold">
+                                  Mới
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2 mt-2 text-xs">
+                              <button
+                                className="text-indigo-600 hover:text-indigo-800"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleMarkRead(n.notifId);
+                                }}
+                                disabled={notiLoading}
+                              >
+                                Đã đọc
+                              </button>
+                              <span className="text-gray-300">•</span>
+                              <button
+                                className="text-rose-500 hover:text-rose-700"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDelete(n.notifId);
+                                }}
+                                disabled={notiLoading}
+                              >
+                                Xóa
+                              </button>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                    <div className="mt-3 flex items-center justify-between text-xs text-indigo-700">
+                      <button
+                        className="hover:underline"
+                        onClick={() => {
+                          setShowNoti(false);
+                          navigate("/notifications");
+                        }}
+                      >
+                        Xem tất cả
+                      </button>
+                      <button
+                        className="hover:underline"
+                        onClick={() => {
+                          setShowNoti(false);
+                          setSelectedNoti(null);
+                        }}
+                      >
+                        Đóng
+                      </button>
+                    </div>
+                    {selectedNoti && (
+                      <div className="mt-3 rounded-xl border border-gray-100 bg-gray-50 p-3 dark:bg-slate-800/80 dark:border-slate-700">
+                        <p className="text-sm font-semibold text-gray-900 dark:text-slate-100">{selectedNoti.title}</p>
+                        <p className="text-xs text-gray-600 dark:text-slate-400 mt-1">{selectedNoti.message}</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
               <div className="flex items-center space-x-3 bg-gray-50/80 rounded-2xl px-4 py-2 border border-gray-200/60 hover:bg-white/80 transition-all duration-200 dark:bg-slate-900/70 dark:border-slate-700/80 dark:hover:bg-slate-800/80">
                 <div className="h-10 w-10 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-900/30">
                   <span className="text-sm font-bold text-white">
