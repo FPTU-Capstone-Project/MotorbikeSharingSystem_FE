@@ -749,7 +749,26 @@ const RouteManagement: React.FC = () => {
                     </button>
                     <span className="text-sm text-gray-500">Nhấp bản đồ hoặc tìm kiếm để chọn</span>
                   </div>
-                  <div className="h-72 rounded-xl overflow-hidden border border-slate-200" ref={mapContainerRef} />
+                  <div className="relative h-72 rounded-xl overflow-hidden border border-slate-200">
+                    <div
+                      ref={mapContainerRef}
+                      className="absolute inset-0 w-full h-full"
+                    />
+                    <div className="absolute top-3 left-3 bg-white/90 backdrop-blur rounded-lg shadow px-3 py-2 text-xs text-slate-700 space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="h-2.5 w-2.5 rounded-full bg-green-600" />
+                        <span>Điểm đi</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="h-2.5 w-2.5 rounded-full bg-blue-600" />
+                        <span>Điểm đến</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="h-0.5 w-6 bg-blue-500 rounded-full" />
+                        <span>Tuyến đường</span>
+                      </div>
+                    </div>
+                  </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div className="space-y-2">
                       <label className="form-label">Tìm kiếm điểm đi</label>
@@ -846,8 +865,22 @@ const RouteManagement: React.FC = () => {
               <button className="text-gray-500" onClick={() => setDetailModalOpen(false)}>✕</button>
             </div>
             <div className="p-6 space-y-4 text-sm">
-              <div className="h-64 rounded-xl overflow-hidden border border-slate-100 dark:border-slate-800">
-                <div ref={detailMapContainerRef} className="w-full h-full" />
+              <div className="relative h-64 rounded-xl overflow-hidden border border-slate-100 dark:border-slate-800">
+                <div ref={detailMapContainerRef} className="absolute inset-0 w-full h-full" />
+                <div className="absolute top-3 left-3 bg-white/90 backdrop-blur rounded-lg shadow px-3 py-2 text-xs text-slate-700 space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="h-2.5 w-2.5 rounded-full bg-green-600" />
+                    <span>Điểm đi</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="h-2.5 w-2.5 rounded-full bg-blue-600" />
+                    <span>Điểm đến</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="h-0.5 w-6 bg-blue-500 rounded-full" />
+                    <span>Tuyến đường</span>
+                  </div>
+                </div>
               </div>
               <div>
                 <p className="text-xs text-gray-500">Tên tuyến</p>

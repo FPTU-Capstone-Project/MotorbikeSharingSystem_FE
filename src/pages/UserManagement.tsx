@@ -529,23 +529,29 @@ export default function UserManagement() {
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex flex-col space-y-2">
-                              <div className="flex flex-wrap gap-2">
-                                {renderProfileChip('Hành khách', user.rider_profile?.status)}
-                                {renderProfileChip('Tài xế', user.driver_profile?.status)}
+                            {user.user_type === 'ADMIN' ? (
+                              <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-indigo-100 text-indigo-800">
+                                Quản trị viên
+                              </span>
+                            ) : (
+                              <div className="flex flex-col space-y-2">
+                                <div className="flex flex-wrap gap-2">
+                                  {renderProfileChip('Hành khách', user.rider_profile?.status)}
+                                  {renderProfileChip('Tài xế', user.driver_profile?.status)}
+                                </div>
+                                <button
+                                  className="inline-flex items-center text-xs font-semibold text-indigo-600 hover:text-indigo-800"
+                                  onClick={() => setExpandedUserId(isExpanded ? null : user.user_id)}
+                                >
+                                  {isExpanded ? 'Thu gọn hồ sơ' : 'Xem chi tiết hồ sơ'}
+                                  {isExpanded ? (
+                                    <ChevronUpIcon className="h-4 w-4 ml-1" />
+                                  ) : (
+                                    <ChevronDownIcon className="h-4 w-4 ml-1" />
+                                  )}
+                                </button>
                               </div>
-                              <button
-                                className="inline-flex items-center text-xs font-semibold text-indigo-600 hover:text-indigo-800"
-                                onClick={() => setExpandedUserId(isExpanded ? null : user.user_id)}
-                              >
-                                {isExpanded ? 'Thu gọn hồ sơ' : 'Xem chi tiết hồ sơ'}
-                                {isExpanded ? (
-                                  <ChevronUpIcon className="h-4 w-4 ml-1" />
-                                ) : (
-                                  <ChevronDownIcon className="h-4 w-4 ml-1" />
-                                )}
-                              </button>
-                            </div>
+                            )}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${userStatusMeta.classes}`}>
@@ -553,7 +559,9 @@ export default function UserManagement() {
                             </span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            {isVerified ? (
+                            {user.user_type === 'ADMIN' ? (
+                              <span className="text-sm text-gray-400">—</span>
+                            ) : isVerified ? (
                               <div className="flex items-center text-green-600">
                                 <CheckCircleIcon className="h-5 w-5 mr-1" />
                                 <span className="text-sm">Đã xác thực</span>
@@ -569,17 +577,7 @@ export default function UserManagement() {
                             {new Date(user.created_at).toLocaleDateString()}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <div className="flex items-center space-x-2">
-                              <button className="text-blue-600 hover:text-blue-900 p-1 rounded flex items-center"
-                                title="Xem chi tiết người dùng">
-                                <EyeIcon className="h-4 w-4" />
-                              </button>
-                              <button className="text-green-600 hover:text-green-900 p-1 rounded flex items-center"
-                                title="Xuất dữ liệu người dùng">
-                                <ArrowDownOnSquareStackIcon className="h-4 w-4" />
-                              </button>
-                              
-                              {/* Show suspend button for active users, activate button for suspended users */}
+                            <div className="flex items-center justify-end space-x-2">
                               {user.status.toLowerCase() === 'suspended' ? (
                                 <button className="text-green-600 hover:text-green-900 p-1 rounded flex items-center"
                                   onClick={() => handleActivateUser(user.user_id, user.full_name || `Người dùng ${user.user_id}`)}
@@ -596,7 +594,7 @@ export default function UserManagement() {
                             </div>
                           </td>
                         </motion.tr>
-                        {isExpanded && (
+                        {isExpanded && user.user_type !== 'ADMIN' && (
                           <tr>
                             <td colSpan={6} className="px-6 pb-6 pt-0 bg-gray-50">
                               <div className="mt-2 grid gap-4 md:grid-cols-2">
