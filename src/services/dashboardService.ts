@@ -54,8 +54,12 @@ export interface RecentActivityItem {
 /**
  * Get dashboard statistics
  */
-export async function getDashboardStats(): Promise<DashboardStats> {
-  const data = await apiFetch<any>('/dashboard/stats');
+export async function getDashboardStats(startDate?: string, endDate?: string): Promise<DashboardStats> {
+  const params = [];
+  if (startDate) params.push(`startDate=${startDate}`);
+  if (endDate) params.push(`endDate=${endDate}`);
+  const query = params.length ? `?${params.join('&')}` : '';
+  const data = await apiFetch<any>(`/dashboard/stats${query}`);
   
   // Convert backend BigDecimal/numbers to JavaScript numbers
   return {

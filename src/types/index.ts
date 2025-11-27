@@ -450,13 +450,13 @@ export interface DriverProfile {
 
 export interface UserManagementItem {
   email: string
-  phone: string
-  status: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED'
+  phone?: string
+  status: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED' | 'PENDING' | 'EMAIL_VERIFYING'
   user_id: number
   full_name: string
-  student_id: string
+  student_id?: string
   user_type: 'USER' | 'ADMIN' | 'MODERATOR'
-  profile_photo_url: string
+  profile_photo_url?: string
   email_verified: boolean
   phone_verified: boolean
   created_at: string

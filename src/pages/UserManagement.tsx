@@ -10,11 +10,13 @@ import {
   NoSymbolIcon,
   ArrowPathIcon,
   ExclamationTriangleIcon,
+  ChevronDownIcon,
+  ChevronUpIcon,
 } from '@heroicons/react/24/outline';
 import { Bike, Plus } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { UserManagementItem } from '../types';
-import { getAllUsers, suspendUser, activateUser } from '../services/profileService';
+import { getAllUsers, suspendUser, activateUser, createUser, CreateUserPayload } from '../services/profileService';
 import Pagination from '../components/Pagination';
 import toast from 'react-hot-toast';
 import StatSummaryCard from '../components/StatSummaryCard';
@@ -30,6 +32,10 @@ export default function UserManagement() {
   const [size, setSize] = useState(20);
   const [totalPages, setTotalPages] = useState(1);
   const [totalRecords, setTotalRecords] = useState(0);
+  const [expandedUserId, setExpandedUserId] = useState<number | null>(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [createPayload, setCreatePayload] = useState<CreateUserPayload>({ email: '', userType: 'USER' });
+  const [createLoading, setCreateLoading] = useState(false);
 
   // Load users from API with pagination
   useEffect(() => {
@@ -58,16 +64,101 @@ export default function UserManagement() {
       (user.student_id || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       String(user.user_id).includes(searchTerm);
 
-    // Determine user role based on profiles
-    const userRole = user.driver_profile ? 'driver' : 'rider';
-    const matchesRole = filterRole === 'all' || userRole === filterRole;
+    const hasRider = !!user.rider_profile;
+    const hasDriver = !!user.driver_profile;
+    const matchesRole =
+      filterRole === 'all' ||
+      (filterRole === 'driver' ? hasDriver : hasRider);
 
-    // Map status to match filter options
-    const userStatus = user.status.toLowerCase();
-    const matchesStatus = filterStatus === 'all' || userStatus === filterStatus;
+    const userStatus = (user.status || '').toLowerCase();
+    const matchesStatus =
+      filterStatus === 'all' ||
+      userStatus === filterStatus ||
+      (filterStatus === 'inactive' && (userStatus === 'pending' || userStatus === 'email_verifying'));
 
     return matchesSearch && matchesRole && matchesStatus;
   });
+
+  const getUserStatusMeta = (status: string) => {
+    const normalized = (status || '').toUpperCase();
+    switch (normalized) {
+      case 'ACTIVE':
+        return { label: 'Đang hoạt động', classes: 'bg-green-100 text-green-800' };
+      case 'SUSPENDED':
+        return { label: 'Tạm khóa', classes: 'bg-red-100 text-red-800' };
+      case 'INACTIVE':
+        return { label: 'Không hoạt động', classes: 'bg-gray-100 text-gray-800' };
+      case 'PENDING':
+      case 'EMAIL_VERIFYING':
+        return { label: 'Chờ kích hoạt', classes: 'bg-amber-100 text-amber-800' };
+      default:
+        return { label: 'Không xác định', classes: 'bg-slate-100 text-slate-700' };
+    }
+  };
+
+  const getProfileStatusMeta = (status?: string) => {
+    const normalized = (status || '').toUpperCase();
+    switch (normalized) {
+      case 'ACTIVE':
+        return { label: 'Hoạt động', classes: 'bg-emerald-100 text-emerald-800' };
+      case 'PENDING':
+        return { label: 'Chờ duyệt', classes: 'bg-amber-100 text-amber-800' };
+      case 'INACTIVE':
+        return { label: 'Không hoạt động', classes: 'bg-gray-100 text-gray-800' };
+      case 'SUSPENDED':
+        return { label: 'Tạm khóa', classes: 'bg-red-100 text-red-800' };
+      case 'REJECTED':
+        return { label: 'Bị từ chối', classes: 'bg-rose-100 text-rose-800' };
+      default:
+        return { label: 'Chưa có', classes: 'bg-slate-100 text-slate-700' };
+    }
+  };
+
+  const renderProfileChip = (label: string, status?: string) => {
+    const meta = getProfileStatusMeta(status);
+    return (
+      <span className={`inline-flex items-center space-x-1 px-2 py-1 rounded-full text-xs font-medium ${meta.classes}`}>
+        <span>{label}</span>
+        <span className="opacity-80">• {meta.label}</span>
+      </span>
+    );
+  };
+
+  const renderProfileDetails = (
+    label: string,
+    profile?: UserManagementItem['rider_profile'] | UserManagementItem['driver_profile'],
+    extras?: React.ReactNode
+  ) => {
+    if (!profile) {
+      return (
+        <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50 p-4">
+          <div className="text-sm font-semibold text-slate-800">{label}</div>
+          <p className="text-sm text-slate-500 mt-1">Chưa tạo hồ sơ</p>
+        </div>
+      );
+    }
+
+    const meta = getProfileStatusMeta(profile.status);
+
+    return (
+      <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+        <div className="flex items-center justify-between">
+          <div className="text-sm font-semibold text-slate-900">{label}</div>
+          <span className={`px-2 py-1 rounded-full text-xs font-medium ${meta.classes}`}>{meta.label}</span>
+        </div>
+        <div className="mt-3 text-sm text-slate-600 space-y-1">
+          {'rider_id' in profile && (
+            <p>Mã hồ sơ: {profile.rider_id}</p>
+          )}
+          {'driver_id' in profile && (
+            <p>Mã hồ sơ: {profile.driver_id}</p>
+          )}
+          {profile.created_at && <p>Tạo ngày: {new Date(profile.created_at).toLocaleDateString()}</p>}
+          {extras}
+        </div>
+      </div>
+    );
+  };
 
   const handleSuspendUser = async (userId: number, userName: string) => {
     if (window.confirm(`Bạn có chắc chắn muốn tạm khóa người dùng "${userName}"?`)) {
@@ -105,10 +196,33 @@ export default function UserManagement() {
     }
   };
 
+  const handleCreateUser = async () => {
+    if (!createPayload.email?.trim()) {
+      toast.error('Vui lòng nhập email');
+      return;
+    }
+    try {
+      setCreateLoading(true);
+      await createUser(createPayload);
+      toast.success('Đã tạo tài khoản và gửi mật khẩu tới email');
+      setShowCreateModal(false);
+      setCreatePayload({ email: '', userType: 'USER' });
+      const response = await getAllUsers(page, size);
+      setUsers(response.data || []);
+      setTotalPages(response.pagination?.total_pages ?? 1);
+      setTotalRecords(response.pagination?.total_records ?? (response.data?.length || 0));
+    } catch (error) {
+      console.error('Failed to create user:', error);
+      toast.error('Không thể tạo tài khoản');
+    } finally {
+      setCreateLoading(false);
+    }
+  };
+
   const stats = [
     {
       label: 'Tổng số người dùng',
-      value: users.length,
+      value: totalRecords || users.length,
       icon: UsersIcon,
       gradient: 'from-blue-600 to-indigo-600',
       backgroundGradient: 'from-blue-50 to-blue-100',
@@ -157,10 +271,10 @@ export default function UserManagement() {
         <div className="mt-4 sm:mt-0">
           <button
             className="inline-flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-indigo-600 to-purple-600 shadow-lg hover:shadow-xl hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-4 focus:ring-indigo-200/50 transition-all duration-200"
-            onClick={() => toast.success('Open Create Staff modal (to be implemented)')}
+            onClick={() => setShowCreateModal(true)}
           >
             <Plus className="h-4 w-4" />
-            Tạo tài khoản nhân viên
+            Tạo tài khoản
           </button>
         </div>
         {/* Removed Add New User button as requested */}
@@ -240,6 +354,88 @@ export default function UserManagement() {
         </div>
       </motion.div>
 
+      <AnimatePresence>
+        {showCreateModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="w-full max-w-lg rounded-2xl bg-white shadow-2xl p-6"
+            >
+              <div className="flex items-start justify-between">
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900">Tạo tài khoản</h3>
+                  <p className="mt-1 text-sm text-gray-500">
+                    Nhập email và vai trò. Hệ thống sẽ tạo mật khẩu ngẫu nhiên và gửi tới email này.
+                  </p>
+                </div>
+                <button
+                  className="text-gray-400 hover:text-gray-600"
+                  onClick={() => setShowCreateModal(false)}
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div className="mt-6 space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                  <input
+                    type="email"
+                    className="input-field w-full"
+                    placeholder="user@example.com"
+                    value={createPayload.email}
+                    onChange={(e) => setCreatePayload({ ...createPayload, email: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Vai trò</label>
+                  <div className="flex space-x-3">
+                    {(['USER', 'ADMIN'] as const).map((role) => (
+                      <button
+                        key={role}
+                        type="button"
+                        onClick={() => setCreatePayload({ ...createPayload, userType: role })}
+                        className={`flex-1 rounded-xl border px-4 py-3 text-sm font-semibold transition ${
+                          createPayload.userType === role
+                            ? 'border-indigo-500 bg-indigo-50 text-indigo-700 shadow-sm'
+                            : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                        }`}
+                      >
+                        {role === 'USER' ? 'Người dùng' : 'Quản trị'}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-6 flex items-center justify-end space-x-3">
+                <button
+                  className="btn-secondary"
+                  onClick={() => setShowCreateModal(false)}
+                  disabled={createLoading}
+                >
+                  Hủy
+                </button>
+                <button
+                  className="btn-primary"
+                  onClick={handleCreateUser}
+                  disabled={createLoading}
+                >
+                  {createLoading ? 'Đang tạo...' : 'Tạo tài khoản'}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Users Table */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -255,7 +451,7 @@ export default function UserManagement() {
                   Người dùng
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Vai trò
+                  Hồ sơ
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Trạng thái
@@ -284,101 +480,133 @@ export default function UserManagement() {
                   </tr>
                 ) : (
                   filteredUsers.map((user, index) => {
-                    const userRole = user.driver_profile ? 'driver' : 'rider';
-                    const userRoleLabel = userRole === 'driver' ? 'Tài xế' : 'Hành khách';
                     const isVerified = user.email_verified && user.phone_verified;
-                    const statusLabel =
-                      user.status === 'ACTIVE'
-                        ? 'Đang hoạt động'
-                        : user.status === 'INACTIVE'
-                          ? 'Không hoạt động'
-                          : 'Tạm khóa';
+                    const userStatusMeta = getUserStatusMeta(user.status);
+                    const avatarFallback =
+                      (user.full_name || user.email || 'U').trim().charAt(0).toUpperCase() || 'U';
+                    const isExpanded = expandedUserId === user.user_id;
+                    const riderExtras = user.rider_profile ? (
+                      <>
+                        <p>Số chuyến: {user.rider_profile.total_rides?.toLocaleString?.('vi-VN') || 0}</p>
+                        <p>Tổng chi: {(user.rider_profile.total_spent ?? 0).toLocaleString('vi-VN')} đ</p>
+                      </>
+                    ) : null;
+                    const driverExtras = user.driver_profile ? (
+                      <>
+                        <p>Bằng lái: {user.driver_profile.license_number || 'Chưa cung cấp'}</p>
+                        <p>Chuyến chia sẻ: {user.driver_profile.total_shared_rides?.toLocaleString?.('vi-VN') || 0}</p>
+                        <p>Đánh giá: {user.driver_profile.rating_avg ?? '—'}</p>
+                      </>
+                    ) : null;
 
                     return (
-                      <motion.tr
-                        key={user.user_id}
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: 20 }}
-                        transition={{ delay: index * 0.05 }}
-                        className="hover:bg-gray-50 transition-colors"
-                      >
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center">
-                            <img
-                              className="h-10 w-10 rounded-full"
-                              src={user.profile_photo_url}
-                              alt=""
-                            />
-                            <div className="ml-4">
-                              <div className="text-sm font-medium text-gray-900">{user.full_name}</div>
-                              <div className="text-sm text-gray-500">{user.email}</div>
-                              <div className="text-xs text-gray-400">ID: {formatUserId(user.user_id)}</div>
+                      <React.Fragment key={user.user_id}>
+                        <motion.tr
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0, x: 20 }}
+                          transition={{ delay: index * 0.05 }}
+                          className="hover:bg-gray-50 transition-colors"
+                        >
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center">
+                              {user.profile_photo_url ? (
+                                <img
+                                  className="h-10 w-10 rounded-full object-cover"
+                                  src={user.profile_photo_url}
+                                  alt={user.full_name}
+                                />
+                              ) : (
+                                <div className="h-10 w-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white font-semibold">
+                                  <span className="text-sm">{avatarFallback}</span>
+                                </div>
+                              )}
+                              <div className="ml-4">
+                                <div className="text-sm font-medium text-gray-900">{user.full_name}</div>
+                                <div className="text-sm text-gray-500">{user.email}</div>
+                                <div className="text-xs text-gray-400">ID: {formatUserId(user.user_id)}</div>
+                              </div>
                             </div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${userRole === 'driver'
-                              ? 'bg-purple-100 text-purple-800'
-                              : 'bg-blue-100 text-blue-800'
-                            }`}>
-                            {userRoleLabel}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${user.status === 'ACTIVE'
-                              ? 'bg-green-100 text-green-800'
-                              : user.status === 'INACTIVE'
-                                ? 'bg-gray-100 text-gray-800'
-                                : 'bg-red-100 text-red-800'
-                            }`}>
-                            {statusLabel}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          {isVerified ? (
-                            <div className="flex items-center text-green-600">
-                              <CheckCircleIcon className="h-5 w-5 mr-1" />
-                              <span className="text-sm">Đã xác thực</span>
-                            </div>
-                          ) : (
-                            <div className="flex items-center text-yellow-600">
-                              <ExclamationTriangleIcon className="h-5 w-5 mr-1" />
-                              <span className="text-sm">Đang chờ</span>
-                            </div>
-                          )}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {new Date(user.created_at).toLocaleDateString()}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                          <div className="flex items-center space-x-2">
-                            <button className="text-blue-600 hover:text-blue-900 p-1 rounded flex items-center"
-                              title="Xem chi tiết người dùng">
-                              <EyeIcon className="h-4 w-4" />
-                            </button>
-                            <button className="text-green-600 hover:text-green-900 p-1 rounded flex items-center"
-                              title="Xuất dữ liệu người dùng">
-                              <ArrowDownOnSquareStackIcon className="h-4 w-4" />
-                            </button>
-                            
-                            {/* Show suspend button for active users, activate button for suspended users */}
-                            {user.status.toLowerCase() === 'suspended' ? (
-                              <button className="text-green-600 hover:text-green-900 p-1 rounded flex items-center"
-                                onClick={() => handleActivateUser(user.user_id, user.full_name || `Người dùng ${user.user_id}`)}
-                                title="Kích hoạt người dùng">
-                                <ArrowPathIcon className="h-4 w-4" />
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex flex-col space-y-2">
+                              <div className="flex flex-wrap gap-2">
+                                {renderProfileChip('Hành khách', user.rider_profile?.status)}
+                                {renderProfileChip('Tài xế', user.driver_profile?.status)}
+                              </div>
+                              <button
+                                className="inline-flex items-center text-xs font-semibold text-indigo-600 hover:text-indigo-800"
+                                onClick={() => setExpandedUserId(isExpanded ? null : user.user_id)}
+                              >
+                                {isExpanded ? 'Thu gọn hồ sơ' : 'Xem chi tiết hồ sơ'}
+                                {isExpanded ? (
+                                  <ChevronUpIcon className="h-4 w-4 ml-1" />
+                                ) : (
+                                  <ChevronDownIcon className="h-4 w-4 ml-1" />
+                                )}
                               </button>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${userStatusMeta.classes}`}>
+                              {userStatusMeta.label}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            {isVerified ? (
+                              <div className="flex items-center text-green-600">
+                                <CheckCircleIcon className="h-5 w-5 mr-1" />
+                                <span className="text-sm">Đã xác thực</span>
+                              </div>
                             ) : (
-                              <button className="text-yellow-600 hover:text-yellow-900 p-1 rounded flex items-center"
-                                onClick={() => handleSuspendUser(user.user_id, user.full_name || `Người dùng ${user.user_id}`)}
-                                title="Tạm khóa người dùng">
-                                <NoSymbolIcon className="h-4 w-4" />
-                              </button>
+                              <div className="flex items-center text-yellow-600">
+                                <ExclamationTriangleIcon className="h-5 w-5 mr-1" />
+                                <span className="text-sm">Đang chờ</span>
+                              </div>
                             )}
-                          </div>
-                        </td>
-                      </motion.tr>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {new Date(user.created_at).toLocaleDateString()}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <div className="flex items-center space-x-2">
+                              <button className="text-blue-600 hover:text-blue-900 p-1 rounded flex items-center"
+                                title="Xem chi tiết người dùng">
+                                <EyeIcon className="h-4 w-4" />
+                              </button>
+                              <button className="text-green-600 hover:text-green-900 p-1 rounded flex items-center"
+                                title="Xuất dữ liệu người dùng">
+                                <ArrowDownOnSquareStackIcon className="h-4 w-4" />
+                              </button>
+                              
+                              {/* Show suspend button for active users, activate button for suspended users */}
+                              {user.status.toLowerCase() === 'suspended' ? (
+                                <button className="text-green-600 hover:text-green-900 p-1 rounded flex items-center"
+                                  onClick={() => handleActivateUser(user.user_id, user.full_name || `Người dùng ${user.user_id}`)}
+                                  title="Kích hoạt người dùng">
+                                  <ArrowPathIcon className="h-4 w-4" />
+                                </button>
+                              ) : (
+                                <button className="text-yellow-600 hover:text-yellow-900 p-1 rounded flex items-center"
+                                  onClick={() => handleSuspendUser(user.user_id, user.full_name || `Người dùng ${user.user_id}`)}
+                                  title="Tạm khóa người dùng">
+                                  <NoSymbolIcon className="h-4 w-4" />
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        </motion.tr>
+                        {isExpanded && (
+                          <tr>
+                            <td colSpan={6} className="px-6 pb-6 pt-0 bg-gray-50">
+                              <div className="mt-2 grid gap-4 md:grid-cols-2">
+                                {renderProfileDetails('Hồ sơ hành khách', user.rider_profile, riderExtras)}
+                                {renderProfileDetails('Hồ sơ tài xế', user.driver_profile, driverExtras)}
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </React.Fragment>
                     );
                   })
                 )}

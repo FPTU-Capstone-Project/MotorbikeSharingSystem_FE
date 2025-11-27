@@ -5,16 +5,16 @@ import { API_ENDPOINTS } from "../config/api.config";
 export async function getAllUsers(
   page = 0,
   size = 10,
-  sortBy = 'userId',
+  sortBy = 'createdAt',
   sortDir = 'desc'
 ): Promise<PageResponse<UserManagementItem>> {
   const query = new URLSearchParams();
   query.set('page', String(page));
   query.set('size', String(size));
-  query.set('sortBy', sortBy);
-  query.set('sortDir', sortDir);
+  query.set('sort', `${sortBy},${sortDir}`);
 
-  return apiFetch<PageResponse<UserManagementItem>>(`/me/all?${query.toString()}`);
+  const endpoint = `${API_ENDPOINTS.USERS.ALL}?${query.toString()}`;
+  return apiFetch<PageResponse<UserManagementItem>>(endpoint);
 }
 
 
@@ -33,5 +33,17 @@ export async function activateUser(userId: number): Promise<void> {
   console.log('Activating user with endpoint:', endpoint, 'userId:', userId, 'token exists:', !!token);
   return apiFetch<void>(endpoint, {
     method: 'PATCH',
+  });
+}
+
+export interface CreateUserPayload {
+  email: string;
+  userType: 'USER' | 'ADMIN';
+}
+
+export async function createUser(payload: CreateUserPayload) {
+  return apiFetch<UserManagementItem>(API_ENDPOINTS.USERS.ALL, {
+    method: 'POST',
+    body: payload,
   });
 }
