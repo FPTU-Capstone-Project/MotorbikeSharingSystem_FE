@@ -311,13 +311,13 @@ export default function ReportManagement() {
             Xem xét và xử lý báo cáo từ người dùng
           </p>
         </div>
-        <button
+        {/* <button
           onClick={loadAnalytics}
           className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
         >
           <ChartBarIcon className="w-5 h-5" />
           <span>Tải lại thống kê</span>
-        </button>
+        </button> */}
       </div>
 
       {/* Analytics Cards */}

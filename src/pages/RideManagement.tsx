@@ -851,15 +851,15 @@ export default function RideManagement() {
             color: "bg-purple-500",
             icon: ClockIcon,
           },
-          {
-            label: "Tổng doanh thu",
-            value: `${rides
-              .filter((r) => r.status === "completed")
-              .reduce((sum, r) => sum + r.fare, 0)
-              .toLocaleString("vi-VN")}đ`,
-            color: "bg-yellow-500",
-            icon: CurrencyDollarIcon,
-          },
+          // {
+          //   label: "Giá cước",
+          //   value: `${rides
+          //     .filter((r) => r.status === "completed")
+          //     .reduce((sum, r) => sum + r.fare, 0)
+          //     .toLocaleString("vi-VN")}đ`,
+          //   color: "bg-yellow-500",
+          //   icon: CurrencyDollarIcon,
+          // },
         ].map((stat, index) => (
           <motion.div
             key={stat.label}
@@ -929,7 +929,7 @@ export default function RideManagement() {
                   Trạng thái
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Doanh thu
+                  Giá cước
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Thao tác
@@ -1133,7 +1133,7 @@ export default function RideManagement() {
                     accent: "bg-amber-100 text-amber-700",
                   },
                   {
-                    label: "Doanh thu",
+                    label: "Giá cước",
                     value: formatCurrency(totalFare),
                     icon: CurrencyDollarIcon,
                     accent: "bg-emerald-100 text-emerald-700",

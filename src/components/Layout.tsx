@@ -484,7 +484,7 @@ const SidebarContent = memo(
         })}
 
         <div className="pt-8 mt-8 border-t border-gray-100 dark:border-slate-800/80">
-          <div className="px-4 py-3">
+          {/* <div className="px-4 py-3">
             <div className="flex items-center space-x-3 text-xs text-gray-500 dark:text-slate-400">
               <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse shadow-green-500/50"></div>
               <span>Trạng thái hệ thống: Hoạt động</span>
@@ -492,7 +492,7 @@ const SidebarContent = memo(
             <p className="text-xs text-gray-400 mt-2 dark:text-slate-500">
               v2.1.0 • Cập nhật 2 giờ trước
             </p>
-          </div>
+          </div> */}
         </div>
       </nav>
     );

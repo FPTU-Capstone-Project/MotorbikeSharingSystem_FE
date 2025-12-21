@@ -151,7 +151,7 @@ export default function LoginPage() {
               >
                 Quản trị viên
               </button>
-              <button
+              {/* <button
                 type="button"
                 onClick={() => setLoginType('staff')}
                 className={`flex-1 px-4 py-3 rounded-lg font-medium transition-all duration-500 ${
@@ -161,7 +161,7 @@ export default function LoginPage() {
                 }`}
               >
                 Nhân viên
-              </button>
+              </button> */}
             </div>
           </div>
 
@@ -269,13 +269,13 @@ export default function LoginPage() {
           </form>
 
           {/* Demo Credentials */}
-          <div className="mt-8 p-4 bg-gray-100 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg transition-all duration-500">
+          {/* <div className="mt-8 p-4 bg-gray-100 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg transition-all duration-500">
             <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-2 transition-colors duration-500">Tài khoản quản trị dùng thử:</p>
             <div className="text-xs text-gray-600 dark:text-gray-400 space-y-1 transition-colors duration-500">
               <p>Email: <span className="font-mono font-semibold text-blue-600 dark:text-blue-400">admin@mssus.com</span></p>
               <p>Mật khẩu: <span className="font-mono font-semibold text-blue-600 dark:text-blue-400">Password1!</span></p>
             </div>
-          </div>
+          </div> */}
 
             {/* Footer */}
             <p className="mt-8 text-center text-xs text-gray-600 dark:text-gray-400">
