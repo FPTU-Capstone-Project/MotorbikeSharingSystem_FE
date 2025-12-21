@@ -305,7 +305,7 @@ export default function VehicleManagement() {
             Quản lý phương tiện, giấy tờ đăng ký, bảo hiểm và hình ảnh liên quan
           </p>
         </div>
-        <div className="mt-4 sm:mt-0">
+        {/* <div className="mt-4 sm:mt-0">
           <button
             className="inline-flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-indigo-600 to-purple-600 shadow-lg hover:shadow-xl hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-4 focus:ring-indigo-200/50 transition-all duration-200"
             onClick={openCreate}
@@ -313,7 +313,7 @@ export default function VehicleManagement() {
             <Plus className="h-4 w-4" />
             Thêm xe
           </button>
-        </div>
+        </div> */}
       </motion.div>
 
       {/* Stats Cards */}
@@ -480,11 +480,11 @@ export default function VehicleManagement() {
                       <button onClick={() => openDetailModal(verification)} className="text-blue-600 hover:text-blue-900 p-1 rounded flex items-center" title="Xem chi tiết">
                         <EyeIcon className="h-4 w-4" />
                       </button>
-                      <button onClick={() => openEdit(verification)} className="text-green-600 hover:text-green-900 p-1 rounded flex items-center" title="Chỉnh sửa">
+                      {/* <button onClick={() => openEdit(verification)} className="text-green-600 hover:text-green-900 p-1 rounded flex items-center" title="Chỉnh sửa">
                         <ArrowDownOnSquareStackIcon className="h-4 w-4" />
                       </button><button onClick={() => openDelete(verification)} className="text-red-600 hover:text-red-900 p-1 rounded flex items-center" title="Xóa">
                         <XCircleIcon className="h-4 w-4" />
-                      </button>
+                      </button> */}
                     </div>
                   </td>
                 </tr>

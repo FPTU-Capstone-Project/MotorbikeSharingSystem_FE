@@ -255,14 +255,14 @@ const Layout = memo(({ children }: LayoutProps) => {
               </button>
               <div className="ml-4 lg:ml-0">
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  {/* <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                     <MagnifyingGlassIcon className="h-5 w-5 text-gray-400 dark:text-slate-400" />
-                  </div>
-                  <input
+                  </div> */}
+                  {/* <input
                     className="w-80 pl-12 pr-4 py-3 bg-gray-50/80 border border-gray-200/60 rounded-2xl focus:ring-4 focus:ring-indigo-200/50 focus:border-indigo-300 transition-all duration-200 text-sm placeholder-gray-400 backdrop-blur-sm dark:bg-slate-900/60 dark:border-slate-700/60 dark:text-slate-100 dark:placeholder-slate-400 dark:focus:ring-indigo-500/40 dark:focus:border-indigo-400"
                     placeholder="Tìm kiếm người dùng, chuyến đi hoặc giao dịch..."
                     type="search"
-                  />
+                  /> */}
                 </div>
               </div>
             </div>
