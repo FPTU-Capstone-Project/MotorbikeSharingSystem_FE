@@ -305,22 +305,22 @@ export default function Dashboard() {
         bgGradient: "from-purple-50 to-indigo-100",
         details: formatCurrency(revenueWeek) + " trong tuần",
       },
-      {
-        name: "Thời gian phản hồi TB",
-        value: avgResponseTime > 0 ? `${avgResponseTime.toFixed(1)} phút` : "—",
-        change:
-          responseTimeChange !== 0
-            ? `${responseTimeChange > 0 ? "+" : ""}${responseTimeChange}s`
-            : "0s",
-        changeType:
-          responseTimeChange <= 0
-            ? ("decrease" as const)
-            : ("increase" as const),
-        icon: ClockIcon,
-        gradient: "from-orange-600 to-red-700",
-        bgGradient: "from-orange-50 to-red-100",
-        details: dashboardData.responseTimeDescription || "Chưa có dữ liệu",
-      },
+      // {
+      //   name: "Thời gian phản hồi TB",
+      //   value: avgResponseTime > 0 ? `${avgResponseTime.toFixed(1)} phút` : "—",
+      //   change:
+      //     responseTimeChange !== 0
+      //       ? `${responseTimeChange > 0 ? "+" : ""}${responseTimeChange}s`
+      //       : "0s",
+      //   changeType:
+      //     responseTimeChange <= 0
+      //       ? ("decrease" as const)
+      //       : ("increase" as const),
+      //   icon: ClockIcon,
+      //   gradient: "from-orange-600 to-red-700",
+      //   bgGradient: "from-orange-50 to-red-100",
+      //   details: dashboardData.responseTimeDescription || "Chưa có dữ liệu",
+      // },
     ];
   }, [dashboardData]);
 
@@ -725,7 +725,7 @@ export default function Dashboard() {
       </motion.div>
 
       {/* Recent Activity - Enhanced */}
-      <motion.div
+      {/* <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.5, duration: 0.4 }}
@@ -757,7 +757,7 @@ export default function Dashboard() {
             Xem tất cả hoạt động →
           </button>
         </div>
-      </motion.div>
+      </motion.div> */}
     </div>
   );
 }
