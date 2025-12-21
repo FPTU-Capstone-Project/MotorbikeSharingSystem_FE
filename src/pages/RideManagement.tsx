@@ -20,7 +20,6 @@ import maplibregl, {
 import "maplibre-gl/dist/maplibre-gl.css";
 import { Ride } from "../types";
 import toast from "react-hot-toast";
-import { goongService } from "../services/goongService";
 import { apiFetch } from "../utils/api";
 import { rideService } from "../services/apiService";
 import Pagination from "../components/Pagination";
@@ -619,12 +618,19 @@ export default function RideManagement() {
     if (!mapRef.current && mapContainerRef.current) {
       const map = new maplibregl.Map({
         container: mapContainerRef.current,
-        style: goongService.getStyleUrl(),
+        style: 'https://tiles.goong.io/assets/goong_map_web.json?api_key=HSFVF5OYPQRcB5mKoJvyYJuknI16LAzvrgtDARwO',
         center: [
           selectedRide.pickupLocation.lng || 106.809844,
           selectedRide.pickupLocation.lat || 10.84148,
         ],
         zoom: 13,
+        transformRequest: (url) => {
+          if (url.includes('tiles.goong.io') && !url.includes('api_key=')) {
+            const separator = url.includes('?') ? '&' : '?';
+            return { url: `${url}${separator}api_key=HSFVF5OYPQRcB5mKoJvyYJuknI16LAzvrgtDARwO` };
+          }
+          return { url };
+        },
       });
       map.addControl(new maplibregl.NavigationControl(), "top-right");
       map.on("load", () => setMapReady(true));

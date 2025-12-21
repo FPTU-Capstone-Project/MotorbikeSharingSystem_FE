@@ -30,7 +30,6 @@ import maplibregl, {
   LngLatBoundsLike,
 } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
-import { goongService } from "../services/goongService";
 
 interface SOSAlertDetailsModalProps {
   alertId: number;
@@ -513,19 +512,21 @@ export default function SOSAlertDetailsModal({
   useEffect(() => {
     if (!isOpen || loading || !rideDetail || !mapContainerRef.current) return;
     if (!mapRef.current) {
-      const styleUrl =
-        typeof goongService?.getStyleUrl === "function"
-          ? goongService.getStyleUrl()
-          : "https://demotiles.maplibre.org/style.json";
-
       mapRef.current = new maplibregl.Map({
         container: mapContainerRef.current,
-        style: styleUrl,
+        style: 'https://tiles.goong.io/assets/goong_map_web.json?api_key=HSFVF5OYPQRcB5mKoJvyYJuknI16LAzvrgtDARwO',
         center: [
           alert?.currentLng || 106.809844,
           alert?.currentLat || 10.84148,
         ],
         zoom: 14,
+        transformRequest: (url) => {
+          if (url.includes('tiles.goong.io') && !url.includes('api_key=')) {
+            const separator = url.includes('?') ? '&' : '?';
+            return { url: `${url}${separator}api_key=HSFVF5OYPQRcB5mKoJvyYJuknI16LAzvrgtDARwO` };
+          }
+          return { url };
+        },
       });
       mapRef.current.addControl(
         new maplibregl.NavigationControl(),
