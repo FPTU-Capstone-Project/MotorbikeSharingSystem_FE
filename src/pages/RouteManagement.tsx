@@ -225,9 +225,16 @@ const RouteManagement: React.FC = () => {
 
     const map = new maplibregl.Map({
       container: mapContainerRef.current,
-      style: goongService.getStyleUrl(),
+      style: 'https://tiles.goong.io/assets/goong_map_web.json?api_key=HSFVF5OYPQRcB5mKoJvyYJuknI16LAzvrgtDARwO',
       center: INITIAL_CENTER,
       zoom: 14,
+      transformRequest: (url) => {
+        if (url.includes('tiles.goong.io') && !url.includes('api_key=')) {
+          const separator = url.includes('?') ? '&' : '?';
+          return { url: `${url}${separator}api_key=HSFVF5OYPQRcB5mKoJvyYJuknI16LAzvrgtDARwO` };
+        }
+        return { url };
+      },
     });
     map.addControl(new maplibregl.NavigationControl(), 'top-right');
     map.on('click', (event: maplibregl.MapMouseEvent) => {
@@ -547,9 +554,16 @@ const RouteManagement: React.FC = () => {
     if (!detailMapRef.current && detailMapContainerRef.current) {
       const map = new maplibregl.Map({
         container: detailMapContainerRef.current,
-        style: goongService.getStyleUrl(),
+        style: 'https://tiles.goong.io/assets/goong_map_web.json?api_key=HSFVF5OYPQRcB5mKoJvyYJuknI16LAzvrgtDARwO',
         center: INITIAL_CENTER,
         zoom: 13,
+        transformRequest: (url) => {
+          if (url.includes('tiles.goong.io') && !url.includes('api_key=')) {
+            const separator = url.includes('?') ? '&' : '?';
+            return { url: `${url}${separator}api_key=HSFVF5OYPQRcB5mKoJvyYJuknI16LAzvrgtDARwO` };
+          }
+          return { url };
+        },
       });
       map.addControl(new maplibregl.NavigationControl(), 'top-right');
       detailMapRef.current = map;

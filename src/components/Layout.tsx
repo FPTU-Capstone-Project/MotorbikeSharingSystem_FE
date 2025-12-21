@@ -38,7 +38,7 @@ const navigation = [
   { name: "Chuyến đi chia sẻ", href: "/rides", icon: MapIcon },
   { name: "Tài chính", href: "/payments", icon: CreditCardIcon },
   { name: "Cấu hình giá", href: "/pricing", icon: DocumentTextIcon },
-  { name: "Báo cáo", href: "/reports", icon: DocumentTextIcon },
+  // { name: "Báo cáo", href: "/reports", icon: DocumentTextIcon },
   { name: "An toàn", href: "/safety", icon: ShieldCheckIcon },
   // { name: "Phân tích", href: "/analytics", icon: ChartBarIcon },
   { name: "Thông báo", href: "/notifications", icon: BellIcon },
