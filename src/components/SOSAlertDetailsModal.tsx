@@ -94,13 +94,21 @@ export default function SOSAlertDetailsModal({
             (rideData as any)?.polyline ||
             ((rideData as any)?.route_summary &&
               (rideData as any).route_summary.polyline);
-          setPlannedPolyline(decodePolyline(encodedRoute));
+          console.log('🗺️ SOS Alert - Encoded route:', encodedRoute?.substring(0, 50));
+          const decoded = decodePolyline(encodedRoute);
+          console.log('🗺️ SOS Alert - Decoded planned polyline points:', decoded.length);
+          setPlannedPolyline(decoded);
         } catch (err) {
           console.warn("Không tải được thông tin chuyến đi cho SOS:", err);
         }
         try {
           const snap = await apiFetch<any>(`/ride-tracking/${rideId}/snapshot`);
           setTrackingSnapshot(snap);
+          if (snap?.polyline) {
+            const trackingDecoded = decodePolyline(snap.polyline);
+            console.log('🗺️ SOS Alert - Decoded tracking polyline points:', trackingDecoded.length);
+            setTrackingPolyline(trackingDecoded);
+          }
         } catch (err) {
           console.warn("Không tải được tracking snapshot cho SOS:", err);
         }
@@ -458,32 +466,46 @@ export default function SOSAlertDetailsModal({
     dasharray?: number[]
   ) => {
     const map = mapRef.current;
-    if (!map || !mapReady) return;
+    if (!map || !mapReady) {
+      console.log(`🗺️ renderLineLayer(${id}) - Map not ready`);
+      return;
+    }
 
     if (map.getLayer(id)) map.removeLayer(id);
     if (map.getSource(id)) map.removeSource(id);
-    if (!coords || coords.length === 0) return;
+    if (!coords || coords.length === 0) {
+      console.log(`🗺️ renderLineLayer(${id}) - No coords`);
+      return;
+    }
 
-    map.addSource(id, {
-      type: "geojson",
-      data: {
-        type: "Feature",
-        properties: {},
-        geometry: { type: "LineString", coordinates: coords },
-      },
-    });
+    console.log(`🗺️ renderLineLayer(${id}) - Adding ${coords.length} points, color: ${color}`);
+    console.log(`🗺️ First 2 coords for ${id}:`, JSON.stringify(coords.slice(0, 2)));
 
-    map.addLayer({
-      id,
-      type: "line",
-      source: id,
-      paint: {
-        "line-color": color,
-        "line-width": width,
-        "line-opacity": opacity,
-        ...(dasharray ? { "line-dasharray": dasharray } : {}),
-      },
-    });
+    try {
+      map.addSource(id, {
+        type: "geojson",
+        data: {
+          type: "Feature",
+          properties: {},
+          geometry: { type: "LineString", coordinates: coords },
+        },
+      });
+
+      map.addLayer({
+        id,
+        type: "line",
+        source: id,
+        paint: {
+          "line-color": color,
+          "line-width": width,
+          "line-opacity": opacity,
+          ...(dasharray ? { "line-dasharray": dasharray } : {}),
+        },
+      });
+      console.log(`🗺️ renderLineLayer(${id}) - SUCCESS`);
+    } catch (error) {
+      console.error(`🗺️ renderLineLayer(${id}) - ERROR:`, error);
+    }
   };
 
   const fitMapToMarkers = (
@@ -491,14 +513,40 @@ export default function SOSAlertDetailsModal({
     points: Array<{ lng: number; lat: number } | null>
   ) => {
     const map = mapRef.current;
-    if (!map || !mapReady) return;
+    if (!map || !mapReady) {
+      console.log('🗺️ fitMapToMarkers skipped - map not ready');
+      return;
+    }
     const coords: [number, number][] = [];
-    line.forEach((c) => coords.push(c));
-    points.forEach((p) => {
-      if (p && !Number.isNaN(p.lat) && !Number.isNaN(p.lng))
-        coords.push([p.lng, p.lat]);
+
+    // Add polyline coords
+    line.forEach((c) => {
+      if (Array.isArray(c) && c.length === 2 &&
+          typeof c[0] === 'number' && typeof c[1] === 'number' &&
+          !Number.isNaN(c[0]) && !Number.isNaN(c[1]) &&
+          Math.abs(c[0]) <= 180 && Math.abs(c[1]) <= 90) {
+        coords.push(c);
+      }
     });
-    if (coords.length === 0) return;
+
+    // Add marker points (with strict validation)
+    points.forEach((p, idx) => {
+      if (p && typeof p.lat === 'number' && typeof p.lng === 'number' &&
+          !Number.isNaN(p.lat) && !Number.isNaN(p.lng) &&
+          Math.abs(p.lng) <= 180 && Math.abs(p.lat) <= 90) {
+        console.log(`🗺️ Adding marker point ${idx}:`, [p.lng, p.lat]);
+        coords.push([p.lng, p.lat]);
+      } else {
+        console.log(`🗺️ SKIPPED invalid marker point ${idx}:`, p);
+      }
+    });
+
+    console.log('🗺️ fitMapToMarkers - total valid coords:', coords.length);
+    if (coords.length === 0) {
+      console.log('🗺️ No coords to fit');
+      return;
+    }
+    console.log('🗺️ Sample coords (first 3):', JSON.stringify(coords.slice(0, 3)));
     const bounds = coords.reduce(
       (b, c) => b.extend(c),
       new maplibregl.LngLatBounds(
@@ -506,7 +554,10 @@ export default function SOSAlertDetailsModal({
         coords[0]
       ) as maplibregl.LngLatBounds
     );
-    map.fitBounds(bounds as LngLatBoundsLike, { padding: 40, duration: 0 });
+    const boundsArray = bounds.toArray();
+    console.log('🗺️ Fitting bounds [[sw], [ne]]:', JSON.stringify(boundsArray));
+    console.log('🗺️ SW (bottom-left):', boundsArray[0], 'NE (top-right):', boundsArray[1]);
+    map.fitBounds(bounds as LngLatBoundsLike, { padding: 50, duration: 500, maxZoom: 15 });
   };
 
   useEffect(() => {
@@ -608,53 +659,37 @@ export default function SOSAlertDetailsModal({
       "#f59e0b"
     );
 
-    renderLineLayer(
-      "sos-planned-route",
-      plannedPolyline.length ? plannedPolyline : decodedRoute,
-      "#94A3B8",
-      3,
-      0.7,
-      [1.5, 1.5]
-    );
-    renderLineLayer("sos-tracking-route", decodedTracking, "#2563EB", 4, 0.95);
+    // Render planned route (dotted line)
+    const plannedCoords = plannedPolyline.length > 0 ? plannedPolyline : decodedRoute;
+    console.log('🗺️ Rendering planned route, points:', plannedCoords.length);
+    if (plannedCoords.length > 0) {
+      renderLineLayer(
+        "sos-planned-route",
+        plannedCoords,
+        "#94A3B8",
+        3,
+        0.7,
+        [1.5, 1.5]
+      );
+    }
 
-    fitMapToMarkers(activeLine, [
-      alert ? { lat: alert.currentLat, lng: alert.currentLng } : null,
-      startLocation
-        ? {
-            lat: startLocation.lat ?? startLocation.latitude,
-            lng: startLocation.lng ?? startLocation.longitude,
-          }
-        : null,
-      endLocation
-        ? {
-            lat: endLocation.lat ?? endLocation.latitude,
-            lng: endLocation.lng ?? endLocation.longitude,
-          }
-        : null,
-      trackingSnapshot &&
-      trackingSnapshot.driverLat != null &&
-      trackingSnapshot.driverLng != null
-        ? {
-            lat: Number(trackingSnapshot.driverLat),
-            lng: Number(trackingSnapshot.driverLng),
-          }
-        : null,
-      trackingSnapshot &&
-      trackingSnapshot.riderLat != null &&
-      trackingSnapshot.riderLng != null
-        ? {
-            lat: Number(trackingSnapshot.riderLat),
-            lng: Number(trackingSnapshot.riderLng),
-          }
-        : null,
-    ]);
+    // Render tracking route (solid line) on top
+    console.log('🗺️ Rendering tracking route, points:', decodedTracking.length);
+    if (decodedTracking.length > 0) {
+      renderLineLayer("sos-tracking-route", decodedTracking, "#2563EB", 4, 0.95);
+    }
+
+    // Only fit to polyline coordinates to avoid invalid marker positions
+    if (activeLine.length > 0) {
+      fitMapToMarkers(activeLine, []);
+    }
     map.resize();
   }, [
     alert,
     startLocation,
     endLocation,
     trackingSnapshot,
+    plannedPolyline,
     decodedRoute,
     decodedTracking,
     activeLine,
