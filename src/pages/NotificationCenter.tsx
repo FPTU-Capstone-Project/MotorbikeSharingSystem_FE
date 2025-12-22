@@ -5,6 +5,7 @@ import { notificationService } from "../services/notificationService";
 import { NotificationDetail, NotificationSummary } from "../types";
 import toast from "react-hot-toast";
 import Pagination from "../components/Pagination";
+import { formatDateTime } from "../utils/dateUtils";
 
 const priorityColors: Record<string, string> = {
   HIGH: "bg-rose-100 text-rose-700",
@@ -222,7 +223,7 @@ export default function NotificationCenter() {
                         </div>
                         <p className="text-sm text-gray-600 mt-1 line-clamp-2">{notif.message}</p>
                         <p className="text-xs text-gray-400 mt-2">
-                          {new Date(notif.createdAt).toLocaleString("vi-VN")}
+                          {formatDateTime(notif.createdAt)}
                         </p>
                       </div>
                       <div className="flex items-center gap-2">
@@ -301,10 +302,10 @@ export default function NotificationCenter() {
                 </div>
               )}
               <div className="text-sm text-gray-500 space-y-1">
-                <p>Gửi lúc: {selected.sentAt ? new Date(selected.sentAt).toLocaleString("vi-VN") : "—"}</p>
-                <p>Tạo lúc: {selected.createdAt ? new Date(selected.createdAt).toLocaleString("vi-VN") : "—"}</p>
-                <p>Đọc lúc: {selected.readAt ? new Date(selected.readAt).toLocaleString("vi-VN") : "—"}</p>
-                <p>Hết hạn: {selected.expiresAt ? new Date(selected.expiresAt).toLocaleString("vi-VN") : "—"}</p>
+                <p>Gửi lúc: {formatDateTime(selected.sentAt)}</p>
+                <p>Tạo lúc: {formatDateTime(selected.createdAt)}</p>
+                <p>Đọc lúc: {formatDateTime(selected.readAt)}</p>
+                <p>Hết hạn: {formatDateTime(selected.expiresAt)}</p>
               </div>
               {!selected.isRead && (
                 <button

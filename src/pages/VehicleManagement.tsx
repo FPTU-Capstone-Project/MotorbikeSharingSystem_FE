@@ -19,6 +19,7 @@ import { vehicleService } from '../services/vehicleService';
 import Pagination from '../components/Pagination';
 import toast from 'react-hot-toast';
 import StatSummaryCard from '../components/StatSummaryCard';
+import { formatDate, formatTime, formatDateTime, isExpired } from '../utils/dateUtils';
 
 export default function VehicleManagement() {
   const [verifications, setVerifications] = useState<VehicleVerification[]>([]);
@@ -435,13 +436,13 @@ export default function VehicleManagement() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-900">
-                      {new Date(verification.insuranceExpiry).toLocaleDateString('vi-VN')}
+                      {formatDate(verification.insuranceExpiry)}
                     </div>
-                    <div className={`text-xs ${new Date(verification.insuranceExpiry) < new Date()
+                    <div className={`text-xs ${isExpired(verification.insuranceExpiry)
                         ? 'text-red-600 font-semibold'
                         : 'text-green-600'
                       }`}>
-                      {new Date(verification.insuranceExpiry) < new Date() ? 'Hết hạn' : 'Còn hiệu lực'}
+                      {isExpired(verification.insuranceExpiry) ? 'Hết hạn' : 'Còn hiệu lực'}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -470,9 +471,9 @@ export default function VehicleManagement() {
                     })()}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {new Date(verification.submittedAt).toLocaleDateString('vi-VN')}
+                    {formatDate(verification.submittedAt)}
                     <div className="text-xs text-gray-400">
-                      {new Date(verification.submittedAt).toLocaleTimeString('vi-VN')}
+                      {formatTime(verification.submittedAt)}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -598,18 +599,18 @@ export default function VehicleManagement() {
                         </div>
                         <div>
                           <p className="text-sm text-gray-500">Hạn bảo hiểm</p>
-                          <p className={`text-base font-medium ${new Date(selectedVerification.insuranceExpiry) < new Date()
+                          <p className={`text-base font-medium ${isExpired(selectedVerification.insuranceExpiry)
                               ? 'text-red-600'
                               : 'text-green-600'
                             }`}>
-                            {new Date(selectedVerification.insuranceExpiry).toLocaleDateString('vi-VN')}
-                            {new Date(selectedVerification.insuranceExpiry) < new Date() && ' (Hết hạn)'}
+                            {formatDate(selectedVerification.insuranceExpiry)}
+                            {isExpired(selectedVerification.insuranceExpiry) && ' (Hết hạn)'}
                           </p>
                         </div>
                         <div>
                           <p className="text-sm text-gray-500">Thời điểm gửi</p>
                           <p className="text-base font-medium text-gray-900">
-                            {new Date(selectedVerification.submittedAt).toLocaleString('vi-VN')}
+                            {formatDateTime(selectedVerification.submittedAt)}
                           </p>
                         </div>
                       </div>
@@ -624,7 +625,7 @@ export default function VehicleManagement() {
                             <div>
                               <p className="text-sm text-gray-500">Thời điểm duyệt</p>
                               <p className="text-base font-medium text-gray-900">
-                                {selectedVerification.verifiedAt && new Date(selectedVerification.verifiedAt).toLocaleString('vi-VN')}
+                                {formatDateTime(selectedVerification.verifiedAt)}
                               </p>
                             </div>
                           </div>

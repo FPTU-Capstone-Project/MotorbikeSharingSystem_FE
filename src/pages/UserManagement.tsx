@@ -21,6 +21,7 @@ import Pagination from '../components/Pagination';
 import toast from 'react-hot-toast';
 import StatSummaryCard from '../components/StatSummaryCard';
 import { formatUserId } from '../utils/formatters';
+import { formatDate } from '../utils/dateUtils';
 
 export default function UserManagement() {
   const [users, setUsers] = useState<UserManagementItem[]>([]);
@@ -153,7 +154,7 @@ export default function UserManagement() {
           {'driver_id' in profile && (
             <p>Mã hồ sơ: {profile.driver_id}</p>
           )}
-          {profile.created_at && <p>Tạo ngày: {new Date(profile.created_at).toLocaleDateString()}</p>}
+          {profile.created_at && <p>Tạo ngày: {formatDate(profile.created_at)}</p>}
           {extras}
         </div>
       </div>
@@ -574,7 +575,7 @@ export default function UserManagement() {
                             )}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {new Date(user.created_at).toLocaleDateString()}
+                            {formatDate(user.created_at)}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                             <div className="flex items-center justify-end space-x-2">

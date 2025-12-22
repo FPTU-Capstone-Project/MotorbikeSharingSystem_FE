@@ -7,6 +7,12 @@ import {
 } from '@heroicons/react/24/outline';
 import { cn } from '../utils/cn';
 import { ChatMessage, ChatThread, User } from '../types';
+import { 
+  formatRelativeTime as formatRelativeTimeUtil, 
+  formatDateLabel as formatDateLabelUtil, 
+  formatTime as formatTimeUtil,
+  parseBackendTimestamp 
+} from '../utils/dateUtils';
 
 interface ChatConversation {
   user: User;
@@ -799,33 +805,10 @@ const initialConversations: ChatConversation[] = [
 
 const sortedInitialConversations = sortConversations(initialConversations);
 
-const formatRelativeTime = (iso: string) => {
-  const now = new Date();
-  const target = new Date(iso);
-  const diff = now.getTime() - target.getTime();
-  const minutes = Math.round(Math.abs(diff) / 60000);
-  if (minutes < 1) return 'Vừa xong';
-  if (minutes < 60) return `${minutes} phút trước`;
-  const hours = Math.round(minutes / 60);
-  if (hours < 24) return `${hours} giờ trước`;
-  const days = Math.round(hours / 24);
-  if (days === 1) return 'Hôm qua';
-  if (days < 7) return `${days} ngày trước`;
-  return target.toLocaleDateString('vi-VN');
-};
-
-const formatDateLabel = (iso: string) => {
-  const date = new Date(iso);
-  const today = new Date();
-  const diffDays = Math.floor((today.setHours(0, 0, 0, 0) - date.setHours(0, 0, 0, 0)) / (1000 * 60 * 60 * 24));
-  if (diffDays === 0) return 'Hôm nay';
-  if (diffDays === 1) return 'Hôm qua';
-  return date.toLocaleDateString('vi-VN', { weekday: 'long', day: '2-digit', month: '2-digit' });
-};
-
-const formatTime = (iso: string) => {
-  return new Date(iso).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
-};
+// Use centralized date utilities with proper Vietnam timezone handling
+const formatRelativeTime = (iso: string) => formatRelativeTimeUtil(iso, '');
+const formatDateLabel = (iso: string) => formatDateLabelUtil(iso, '');
+const formatTime = (iso: string) => formatTimeUtil(iso, { hour: '2-digit', minute: '2-digit', second: undefined }, '');
 
 const UserChat: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');

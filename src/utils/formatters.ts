@@ -1,16 +1,25 @@
 /**
  * Formatter Utilities
  * Common formatting functions for display
+ * 
+ * NOTE: For date/time formatting with proper Vietnam timezone,
+ * use the centralized utilities from ../utils/dateUtils.ts instead.
  */
 
+import { parseBackendTimestamp } from './dateUtils';
+
+const DEFAULT_LOCALE = 'vi-VN';
+
 /**
- * Format date to readable string
+ * Format date to readable string (relative time in Vietnamese)
  */
 export const formatDate = (dateString: string | undefined): string => {
   if (!dateString) return 'N/A';
   
   try {
-    const date = new Date(dateString);
+    const date = parseBackendTimestamp(dateString);
+    if (!date) return dateString;
+    
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
     const diffMins = Math.floor(diffMs / 60000);
@@ -18,19 +27,19 @@ export const formatDate = (dateString: string | undefined): string => {
     const diffDays = Math.floor(diffMs / 86400000);
 
     // Less than 1 minute
-    if (diffMins < 1) return 'Just now';
+    if (diffMins < 1) return 'Vừa xong';
     
     // Less than 1 hour
-    if (diffMins < 60) return `${diffMins} minute${diffMins > 1 ? 's' : ''} ago`;
+    if (diffMins < 60) return `${diffMins} phút trước`;
     
     // Less than 24 hours
-    if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+    if (diffHours < 24) return `${diffHours} giờ trước`;
     
     // Less than 7 days
-    if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+    if (diffDays < 7) return `${diffDays} ngày trước`;
     
     // Format as date
-    return date.toLocaleDateString('en-US', {
+    return date.toLocaleDateString(DEFAULT_LOCALE, {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
@@ -49,8 +58,10 @@ export const formatDateShort = (dateString: string | undefined): string => {
   if (!dateString) return 'N/A';
   
   try {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
+    const date = parseBackendTimestamp(dateString);
+    if (!date) return dateString;
+    
+    return date.toLocaleDateString(DEFAULT_LOCALE, {
       month: 'short',
       day: 'numeric',
       year: 'numeric'
@@ -67,8 +78,10 @@ export const formatTime = (dateString: string | undefined): string => {
   if (!dateString) return 'N/A';
   
   try {
-    const date = new Date(dateString);
-    return date.toLocaleTimeString('en-US', {
+    const date = parseBackendTimestamp(dateString);
+    if (!date) return dateString;
+    
+    return date.toLocaleTimeString(DEFAULT_LOCALE, {
       hour: '2-digit',
       minute: '2-digit'
     });

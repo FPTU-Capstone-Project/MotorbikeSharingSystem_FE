@@ -18,6 +18,7 @@ import { approveDriverVehicle, rejectDriver } from '../services/verificationServ
 import { vehicleService } from '../services/vehicleService';
 import toast from 'react-hot-toast';
 import StatSummaryCard from '../components/StatSummaryCard';
+import { formatDate, formatTime, formatDateTime, isExpired } from '../utils/dateUtils';
 
 // Load from backend
 
@@ -441,13 +442,13 @@ export default function VehicleManagement() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-900">
-                      {new Date(verification.insuranceExpiry).toLocaleDateString('en-US')}
+                      {formatDate(verification.insuranceExpiry)}
                     </div>
-                    <div className={`text-xs ${new Date(verification.insuranceExpiry) < new Date()
+                    <div className={`text-xs ${isExpired(verification.insuranceExpiry)
                         ? 'text-red-600 font-semibold'
                         : 'text-green-600'
                       }`}>
-                      {new Date(verification.insuranceExpiry) < new Date() ? 'Expired' : 'Valid'}
+                      {isExpired(verification.insuranceExpiry) ? 'Hết hạn' : 'Còn hiệu lực'}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -469,9 +470,9 @@ export default function VehicleManagement() {
                     })()}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {new Date(verification.submittedAt).toLocaleDateString('en-US')}
+                    {formatDate(verification.submittedAt)}
                     <div className="text-xs text-gray-400">
-                      {new Date(verification.submittedAt).toLocaleTimeString('en-US')}
+                      {formatTime(verification.submittedAt)}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -602,19 +603,19 @@ export default function VehicleManagement() {
                           <p className="text-base font-medium text-gray-900">{selectedVerification.year}</p>
                         </div>
                         <div>
-                          <p className="text-sm text-gray-500">Insurance Expiry</p>
-                          <p className={`text-base font-medium ${new Date(selectedVerification.insuranceExpiry) < new Date()
+                          <p className="text-sm text-gray-500">Hạn bảo hiểm</p>
+                          <p className={`text-base font-medium ${isExpired(selectedVerification.insuranceExpiry)
                               ? 'text-red-600'
                               : 'text-green-600'
                             }`}>
-                            {new Date(selectedVerification.insuranceExpiry).toLocaleDateString('en-US')}
-                            {new Date(selectedVerification.insuranceExpiry) < new Date() && ' (Expired)'}
+                            {formatDate(selectedVerification.insuranceExpiry)}
+                            {isExpired(selectedVerification.insuranceExpiry) && ' (Hết hạn)'}
                           </p>
                         </div>
                         <div>
-                          <p className="text-sm text-gray-500">Submitted At</p>
+                          <p className="text-sm text-gray-500">Ngày gửi</p>
                           <p className="text-base font-medium text-gray-900">
-                            {new Date(selectedVerification.submittedAt).toLocaleString('en-US')}
+                            {formatDateTime(selectedVerification.submittedAt)}
                           </p>
                         </div>
                       </div>
@@ -627,9 +628,9 @@ export default function VehicleManagement() {
                               <p className="text-base font-medium text-gray-900">{selectedVerification.verifiedBy}</p>
                             </div>
                             <div>
-                              <p className="text-sm text-gray-500">Reviewed At</p>
+                              <p className="text-sm text-gray-500">Duyệt lúc</p>
                               <p className="text-base font-medium text-gray-900">
-                                {selectedVerification.verifiedAt && new Date(selectedVerification.verifiedAt).toLocaleString('en-US')}
+                                {formatDateTime(selectedVerification.verifiedAt)}
                               </p>
                             </div>
                           </div>

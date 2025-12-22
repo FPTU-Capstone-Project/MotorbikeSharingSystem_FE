@@ -24,20 +24,14 @@ import {
 } from "../services/sosService";
 import Pagination from "../components/Pagination";
 import SOSAlertDetailsModal from "../components/SOSAlertDetailsModal";
+import { formatDateTime } from "../utils/dateUtils";
 
-const formatUtc = (
+// Use centralized date formatting with proper Vietnam timezone
+const formatVNDateTime = (
   value?: string,
   options?: Intl.DateTimeFormatOptions,
   fallback = "—"
-) => {
-  if (!value) return fallback;
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-  return new Intl.DateTimeFormat("vi-VN", {
-    timeZone: "UTC",
-    ...options,
-  }).format(date);
-};
+) => formatDateTime(value, options, fallback);
 
 export default function SafetyManagement() {
   const [sosAlerts, setSOSAlerts] = useState<SOSAlert[]>([]);
@@ -404,14 +398,14 @@ export default function SafetyManagement() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div>
                         <div className="text-sm text-gray-900 dark:text-slate-100">
-                          {formatUtc(alert.createdAt, {
+                          {formatVNDateTime(alert.createdAt, {
                             year: "numeric",
                             month: "2-digit",
                             day: "2-digit",
                           })}
                         </div>
                         <div className="text-xs text-gray-500 dark:text-slate-400">
-                          {formatUtc(alert.createdAt, {
+                          {formatVNDateTime(alert.createdAt, {
                             hour: "2-digit",
                             minute: "2-digit",
                             hour12: false,
@@ -420,7 +414,7 @@ export default function SafetyManagement() {
                         {alert.resolvedAt && (
                           <div className="text-xs text-green-600 mt-1">
                             Xử lý:{" "}
-                            {formatUtc(alert.resolvedAt, {
+                            {formatVNDateTime(alert.resolvedAt, {
                               hour: "2-digit",
                               minute: "2-digit",
                               hour12: false,

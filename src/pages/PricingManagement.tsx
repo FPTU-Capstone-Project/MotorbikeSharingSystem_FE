@@ -18,6 +18,7 @@ import {
   PricingConfigStatus,
   CreatePricingConfigPayload,
 } from '../types/pricing.types';
+import { formatDateTime } from '../utils/dateUtils';
 
 type StatusFilter = PricingConfigStatus | 'all';
 
@@ -312,10 +313,10 @@ export default function PricingManagement() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">{renderStatus(config.status)}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                    {config.validFrom ? new Date(config.validFrom).toLocaleString() : 'Chưa đặt'}
+                    {config.validFrom ? formatDateTime(config.validFrom) : 'Chưa đặt'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                    {config.validUntil ? new Date(config.validUntil).toLocaleString() : '—'}
+                    {config.validUntil ? formatDateTime(config.validUntil) : '—'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                     {(config.systemCommissionRate * 100).toFixed(1)}%
@@ -401,13 +402,13 @@ export default function PricingManagement() {
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-gray-600">Hiệu lực từ</span>
                   <span className="font-medium text-gray-900">
-                    {selected.validFrom ? new Date(selected.validFrom).toLocaleString() : 'Chưa đặt'}
+                    {selected.validFrom ? formatDateTime(selected.validFrom) : 'Chưa đặt'}
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-gray-600">Hiệu lực đến</span>
                   <span className="font-medium text-gray-900">
-                    {selected.validUntil ? new Date(selected.validUntil).toLocaleString() : '—'}
+                    {selected.validUntil ? formatDateTime(selected.validUntil) : '—'}
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-sm">

@@ -18,6 +18,12 @@ import { reportsService, WalletDashboardStats, TopUpTrendResponse as WalletTopUp
 import Pagination from '../components/Pagination';
 import toast from 'react-hot-toast';
 import StatSummaryCard from '../components/StatSummaryCard';
+import { 
+  formatDate as formatDateUtil, 
+  formatDateTime as formatDateTimeUtil, 
+  formatDateForInput,
+  getPresetDateRange 
+} from '../utils/dateUtils';
 
 const currencyFormatter = new Intl.NumberFormat('vi-VN');
 const numberFormatter = new Intl.NumberFormat();
@@ -29,14 +35,9 @@ const formatCurrencyValue = (value?: number | null, defaultLabel = '—') => {
   return `${currencyFormatter.format(value)}đ`;
 };
 
-const formatDateParam = (date: Date) => date.toISOString().split('T')[0];
+const formatDateParam = (date: Date) => formatDateForInput(date);
 
-const formatDateLabel = (isoString?: string) => {
-  if (!isoString) return '—';
-  const date = new Date(isoString);
-  if (Number.isNaN(date.getTime())) return '—';
-  return date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
-};
+const formatDateLabel = (isoString?: string) => formatDateUtil(isoString);
 
 const formatGrowthValue = (value?: number | null) => {
   if (value === null || value === undefined) return '—';
@@ -44,25 +45,7 @@ const formatGrowthValue = (value?: number | null) => {
   return `${value > 0 ? '+' : ''}${formatted}%`;
 };
 
-const computePresetRange = (preset: 'today' | 'week' | 'month'): { from: string; to: string } => {
-  const now = new Date();
-  const end = formatDateParam(now);
-  if (preset === 'today') {
-    return { from: end, to: end };
-  }
-  if (preset === 'week') {
-    const start = new Date(now);
-    const day = start.getDay();
-    const diff = day === 0 ? 6 : day - 1; // Monday as start
-    start.setDate(start.getDate() - diff);
-    return { from: formatDateParam(start), to: end };
-  }
-  if (preset === 'month') {
-    const start = new Date(now.getFullYear(), now.getMonth(), 1);
-    return { from: formatDateParam(start), to: end };
-  }
-  return { from: '', to: '' };
-};
+const computePresetRange = (preset: 'today' | 'week' | 'month') => getPresetDateRange(preset);
 
 const isWithinThreeMonths = (from: string, to: string) => {
   if (!from || !to) return true;
@@ -73,12 +56,7 @@ const isWithinThreeMonths = (from: string, to: string) => {
   return diffDays <= 93 && diffDays >= 0;
 };
 
-const formatDateTime = (isoString?: string) => {
-  if (!isoString) return '—';
-  const date = new Date(isoString);
-  if (Number.isNaN(date.getTime())) return '—';
-  return date.toLocaleString('vi-VN');
-};
+const formatDateTime = (isoString?: string) => formatDateTimeUtil(isoString);
 
 export default function PaymentManagement() {
   const [transactions, setTransactions] = useState<TransactionResponse[]>([]);
@@ -873,11 +851,7 @@ export default function PaymentManagement() {
                           </div>
                         )}
                       <div className="text-xs text-gray-400">
-                          {new Date(transaction.createdAt).toLocaleDateString('vi-VN')} lúc{' '}
-                          {new Date(transaction.createdAt).toLocaleTimeString('vi-VN', {
-                          hour: '2-digit', 
-                          minute: '2-digit' 
-                        })}
+                          {formatDateTime(transaction.createdAt)}
                       </div>
                     </div>
                   </td>
@@ -1263,14 +1237,14 @@ export default function PaymentManagement() {
                         <div>
                           <p className="text-sm text-gray-500">Tạo lúc</p>
                           <p className="text-base font-medium text-gray-900">
-                            {new Date(selectedTransaction.createdAt).toLocaleString('vi-VN')}
+                            {formatDateTime(selectedTransaction.createdAt)}
                           </p>
                         </div>
                         {selectedTransaction.updatedAt && (
                 <div>
                             <p className="text-sm text-gray-500">Cập nhật lúc</p>
                             <p className="text-base font-medium text-gray-900">
-                              {new Date(selectedTransaction.updatedAt).toLocaleString('vi-VN')}
+                              {formatDateTime(selectedTransaction.updatedAt)}
                             </p>
                           </div>
                         )}

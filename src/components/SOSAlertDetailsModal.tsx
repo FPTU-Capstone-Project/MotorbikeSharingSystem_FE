@@ -24,6 +24,7 @@ import { SOSAlert } from "../types";
 import SOSAlertTimeline from "./SOSAlertTimeline";
 import { rideService } from "../services/apiService";
 import { apiFetch } from "../utils/api";
+import { formatDateTimeShort } from "../utils/dateUtils";
 import maplibregl, {
   Map as MapLibreMap,
   LngLatLike,
@@ -310,25 +311,8 @@ export default function SOSAlertDetailsModal({
     }
   };
 
-  const formatDate = (date?: string) => {
-    if (!date) return "N/A";
-    const d = new Date(date);
-    if (Number.isNaN(d.getTime())) return date;
-    const dayPart = new Intl.DateTimeFormat("vi-VN", {
-      timeZone: "UTC",
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    }).format(d);
-    const timePart = new Intl.DateTimeFormat("vi-VN", {
-      timeZone: "UTC",
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-      hour12: false,
-    }).format(d);
-    return `${dayPart}, ${timePart}`;
-  };
+  // Use centralized date formatting with proper Vietnam timezone
+  const formatDate = (date?: string) => formatDateTimeShort(date, "N/A");
 
   const decodePolyline = (encoded?: string | null): [number, number][] => {
     if (!encoded) return [];

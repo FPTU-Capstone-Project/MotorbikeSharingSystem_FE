@@ -15,6 +15,7 @@ import { vi } from 'date-fns/locale';
 import { getSOSAlertTimeline, formatEventType, getEventIconColor } from '../services/sosService';
 import { SosAlertEvent } from '../types';
 import toast from 'react-hot-toast';
+import { parseBackendTimestamp } from '../utils/dateUtils';
 
 interface SOSAlertTimelineProps {
   alertId: number;
@@ -87,7 +88,10 @@ export default function SOSAlertTimeline({
 
   const formatTimestamp = (timestamp: string) => {
     try {
-      return format(new Date(timestamp), 'dd MMM yyyy, HH:mm:ss', { locale: vi });
+      // Use parseBackendTimestamp to handle Vietnam time with 'Z' suffix correctly
+      const date = parseBackendTimestamp(timestamp);
+      if (!date) return timestamp;
+      return format(date, 'dd MMM yyyy, HH:mm:ss', { locale: vi });
     } catch {
       return timestamp;
     }

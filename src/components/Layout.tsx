@@ -24,6 +24,7 @@ import ThemeToggle from "./ThemeToggle";
 import toast from "react-hot-toast";
 import { notificationService } from "../services/notificationService";
 import { NotificationDetail, NotificationSummary } from "../types";
+import { formatDateTime } from "../utils/dateUtils";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -38,7 +39,7 @@ const navigation = [
   { name: "Chuyến đi chia sẻ", href: "/rides", icon: MapIcon },
   { name: "Tài chính", href: "/payments", icon: CreditCardIcon },
   { name: "Cấu hình giá", href: "/pricing", icon: DocumentTextIcon },
-  // { name: "Báo cáo", href: "/reports", icon: DocumentTextIcon },
+  { name: "Báo cáo", href: "/reports", icon: DocumentTextIcon },
   { name: "An toàn", href: "/safety", icon: ShieldCheckIcon },
   // { name: "Phân tích", href: "/analytics", icon: ChartBarIcon },
   { name: "Thông báo", href: "/notifications", icon: BellIcon },
@@ -319,7 +320,7 @@ const Layout = memo(({ children }: LayoutProps) => {
                                 <p className="text-sm font-semibold text-gray-900 dark:text-slate-100">{n.title}</p>
                                 <p className="text-xs text-gray-600 dark:text-slate-400 line-clamp-2">{n.message}</p>
                                 <p className="text-[11px] text-gray-400 mt-1">
-                                  {new Date(n.createdAt).toLocaleString("vi-VN")}
+                                  {formatDateTime(n.createdAt)}
                                 </p>
                               </div>
                               {!n.isRead && (

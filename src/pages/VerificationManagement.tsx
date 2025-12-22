@@ -16,6 +16,7 @@ import { approveVerification, rejectVerification } from '../services/verificatio
 import Pagination from '../components/Pagination';
 import StatSummaryCard from '../components/StatSummaryCard';
 import { formatUserId } from '../utils/formatters';
+import { formatDate, formatTime, formatDateTime } from '../utils/dateUtils';
 
 // Helper functions to format IDs
 const formatVerificationId = (id: number): string => {
@@ -469,51 +470,17 @@ export default function VerificationManagement() {
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {(() => {
-                      // Backend sends UTC with 'Z' suffix, but it's actually Vietnam time
-                      // Remove 'Z' and treat as local Vietnam time
-                      const timestamp = v.created_at.replace('Z', '');
-                      const date = new Date(timestamp);
-                      return date.toLocaleDateString('vi-VN', {
-                        year: 'numeric',
-                        month: '2-digit',
-                        day: '2-digit'
-                      });
-                    })()}
+                    {formatDate(v.created_at)}
                     <div className="text-xs text-gray-400">
-                      {(() => {
-                        const timestamp = v.created_at.replace('Z', '');
-                        const date = new Date(timestamp);
-                        return date.toLocaleTimeString('vi-VN', {
-                          hour: '2-digit',
-                          minute: '2-digit',
-                          second: '2-digit'
-                        });
-                      })()}
+                      {formatTime(v.created_at)}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {v.verified_at ? (
                       <>
-                        {(() => {
-                          const timestamp = v.verified_at.replace('Z', '');
-                          const date = new Date(timestamp);
-                          return date.toLocaleDateString('vi-VN', {
-                            year: 'numeric',
-                            month: '2-digit',
-                            day: '2-digit'
-                          });
-                        })()}
+                        {formatDate(v.verified_at)}
                         <div className="text-xs text-gray-400">
-                          {(() => {
-                            const timestamp = v.verified_at.replace('Z', '');
-                            const date = new Date(timestamp);
-                            return date.toLocaleTimeString('vi-VN', {
-                              hour: '2-digit',
-                              minute: '2-digit',
-                              second: '2-digit'
-                            });
-                          })()}
+                          {formatTime(v.verified_at)}
                         </div>
                       </>
                     ) : (
@@ -614,35 +581,13 @@ export default function VerificationManagement() {
                         <div>
                           <p className="text-sm text-gray-500">Tạo lúc</p>
                           <p className="text-base font-medium text-gray-900">
-                            {(() => {
-                              const timestamp = selected.created_at.replace('Z', '');
-                              const date = new Date(timestamp);
-                              return date.toLocaleString('vi-VN', {
-                                year: 'numeric',
-                                month: '2-digit',
-                                day: '2-digit',
-                                hour: '2-digit',
-                                minute: '2-digit',
-                                second: '2-digit'
-                              });
-                            })()}
+                            {formatDateTime(selected.created_at)}
                           </p>
                         </div>
                         <div>
                           <p className="text-sm text-gray-500">Duyệt lúc</p>
                           <p className="text-base font-medium text-gray-900">
-                            {selected.verified_at ? (() => {
-                              const timestamp = selected.verified_at.replace('Z', '');
-                              const date = new Date(timestamp);
-                              return date.toLocaleString('vi-VN', {
-                                year: 'numeric',
-                                month: '2-digit',
-                                day: '2-digit',
-                                hour: '2-digit',
-                                minute: '2-digit',
-                                second: '2-digit'
-                              });
-                            })() : '—'}
+                            {formatDateTime(selected.verified_at)}
                           </p>
                         </div>
 
@@ -697,7 +642,7 @@ export default function VerificationManagement() {
                             <div>
                               <p className="text-sm text-gray-500">Duyệt lúc</p>
                               <p className="text-base font-medium text-gray-900">
-                                {selected.verified_at ? new Date(selected.verified_at).toLocaleString('vi-VN') : '—'}
+                                {formatDateTime(selected.verified_at)}
                               </p>
                             </div>
                           </div>
@@ -970,21 +915,13 @@ export default function VerificationManagement() {
                         <div>
                           <p className="text-sm text-gray-500">Tạo lúc</p>
                           <p className="text-base font-medium text-gray-900">
-                            {(() => {
-                              const ts = (cur.created_at || '').replace?.('Z','') || cur.created_at;
-                              const d = ts ? new Date(ts) : null;
-                              return d ? d.toLocaleString('vi-VN', { year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', second:'2-digit' }) : '—';
-                            })()}
+                            {formatDateTime(cur.created_at)}
                           </p>
                         </div>
                         <div>
                           <p className="text-sm text-gray-500">Duyệt lúc</p>
                           <p className="text-base font-medium text-gray-900">
-                            {cur.verified_at ? (() => {
-                              const ts = (cur.verified_at || '').replace?.('Z','') || cur.verified_at;
-                              const d = ts ? new Date(ts) : null;
-                              return d ? d.toLocaleString('vi-VN', { year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', second:'2-digit' }) : '—';
-                            })() : '—'}
+                            {formatDateTime(cur.verified_at)}
                           </p>
                         </div>
                       </div>

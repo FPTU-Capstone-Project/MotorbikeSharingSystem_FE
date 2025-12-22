@@ -28,6 +28,7 @@ import Pagination from '../components/Pagination';
 import StatSummaryCard from '../components/StatSummaryCard';
 import ReportChatModal from '../components/ReportChatModal';
 import { formatUserId } from '../utils/formatters';
+import { formatDate, formatDateTime } from '../utils/dateUtils';
 
 // Helper functions
 const formatReportId = (id: number): string => {
@@ -551,7 +552,7 @@ export default function ReportManagement() {
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                        {new Date(report.createdAt).toLocaleDateString('vi-VN')}
+                        {formatDate(report.createdAt)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <div className="flex items-center justify-end gap-2">
@@ -699,7 +700,7 @@ export default function ReportManagement() {
                       Ngày tạo
                     </label>
                     <p className="text-sm text-gray-900 dark:text-white">
-                      {new Date(selected.createdAt).toLocaleString('vi-VN')}
+                      {formatDateTime(selected.createdAt)}
                     </p>
                   </div>
                 </div>
@@ -774,7 +775,7 @@ export default function ReportManagement() {
                     </p>
                     {selected.driverRespondedAt && (
                       <p className="text-xs text-blue-600 dark:text-blue-400 mt-2">
-                        {new Date(selected.driverRespondedAt).toLocaleString('vi-VN')}
+                        {formatDateTime(selected.driverRespondedAt)}
                       </p>
                     )}
                   </div>
@@ -790,7 +791,7 @@ export default function ReportManagement() {
                       {selected.escalationReason}
                     </p>
                     <p className="text-xs text-amber-600 dark:text-amber-400 mt-2">
-                      {new Date(selected.escalatedAt).toLocaleString('vi-VN')}
+                      {formatDateTime(selected.escalatedAt)}
                     </p>
                   </div>
                 )}
@@ -819,8 +820,7 @@ export default function ReportManagement() {
                     {selected.resolverName && (
                       <p className="text-xs text-green-600 dark:text-green-400 mt-2">
                         Bởi: {selected.resolverName} -{' '}
-                        {selected.resolvedAt &&
-                          new Date(selected.resolvedAt).toLocaleString('vi-VN')}
+                        {formatDateTime(selected.resolvedAt)}
                       </p>
                     )}
                   </div>

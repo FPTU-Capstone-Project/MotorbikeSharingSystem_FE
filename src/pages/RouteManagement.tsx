@@ -13,6 +13,7 @@ import {
   RouteTemplate,
   PoiLocation,
 } from '../types/routes.types';
+import { formatDate, formatDateTime } from '../utils/dateUtils';
 
 const INITIAL_CENTER: [number, number] = [106.809844, 10.84148];
 const PAGE_SIZE_OPTIONS = [5, 10, 20];
@@ -652,9 +653,9 @@ const RouteManagement: React.FC = () => {
                       {route.defaultPrice ? `${route.defaultPrice.toLocaleString('vi-VN')} đ` : '--'}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">
-                      {route.validFrom ? new Date(route.validFrom).toLocaleDateString('vi-VN') : '--'}
+                      {route.validFrom ? formatDate(route.validFrom) : '--'}
                       <br />
-                      {route.validUntil ? `Đến ${new Date(route.validUntil).toLocaleDateString('vi-VN')}` : 'Không giới hạn'}
+                      {route.validUntil ? `Đến ${formatDate(route.validUntil)}` : 'Không giới hạn'}
                     </td>
                     <td className="px-4 py-3 text-right">
                       <button
@@ -724,7 +725,7 @@ const RouteManagement: React.FC = () => {
                       <span className="font-medium text-gray-600">Phiên bản giá</span>
                       {pricingContext && (
                         <span className="text-xs text-gray-500">
-                          {new Date(pricingContext.version).toLocaleString('vi-VN')}
+                          {formatDateTime(pricingContext.version)}
                         </span>
                       )}
                     </div>
@@ -935,7 +936,7 @@ const RouteManagement: React.FC = () => {
                   <p className="text-xs text-gray-500">Phiên bản giá</p>
                   <p className="font-semibold">
                     {selectedRoute.pricingPreview?.pricingVersion
-                      ? new Date(selectedRoute.pricingPreview.pricingVersion).toLocaleString('vi-VN')
+                      ? formatDateTime(selectedRoute.pricingPreview.pricingVersion)
                       : '--'}
                   </p>
                 </div>
@@ -944,13 +945,13 @@ const RouteManagement: React.FC = () => {
                 <div>
                   <p className="text-xs text-gray-500">Hiệu lực từ</p>
                   <p className="font-semibold">
-                    {selectedRoute.validFrom ? new Date(selectedRoute.validFrom).toLocaleString('vi-VN') : '--'}
+                    {selectedRoute.validFrom ? formatDateTime(selectedRoute.validFrom) : '--'}
                   </p>
                 </div>
                 <div>
                   <p className="text-xs text-gray-500">Hiệu lực đến</p>
                   <p className="font-semibold">
-                    {selectedRoute.validUntil ? new Date(selectedRoute.validUntil).toLocaleString('vi-VN') : 'Không giới hạn'}
+                    {selectedRoute.validUntil ? formatDateTime(selectedRoute.validUntil) : 'Không giới hạn'}
                   </p>
                 </div>
               </div>
