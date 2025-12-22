@@ -77,6 +77,14 @@ export interface UserReportSummary {
   driverId?: number;
   createdAt: string;
   updatedAt: string;
+  // Chat tracking timestamps
+  reporterChatStartedAt?: string;
+  reporterLastReplyAt?: string;
+  reportedChatStartedAt?: string;
+  reportedLastReplyAt?: string;
+  // Auto-close info
+  autoClosedAt?: string;
+  autoClosedReason?: string;
 }
 
 export interface UserReportDetails extends UserReportSummary {
@@ -94,6 +102,9 @@ export interface UserReportDetails extends UserReportSummary {
   escalatedAt?: string;
   escalationReason?: string;
   resolvedAt?: string;
+  // Chat tracking timestamps (inherited from UserReportSummary)
+  // reporterChatStartedAt, reporterLastReplyAt, reportedChatStartedAt, reportedLastReplyAt
+  // autoClosedAt, autoClosedReason
 }
 
 export interface ReportAnalytics {
