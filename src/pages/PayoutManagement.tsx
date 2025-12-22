@@ -11,6 +11,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { walletService, PayoutProcessResponse } from '../services/walletService';
 import { transactionService, TransactionResponse } from '../services/transactionService';
+import { formatDateTime } from '../utils/dateUtils';
 import Pagination from '../components/Pagination';
 import toast from 'react-hot-toast';
 
@@ -18,17 +19,6 @@ const currencyFormatter = new Intl.NumberFormat('vi-VN');
 
 const formatCurrency = (value: number): string => {
   return `${currencyFormatter.format(value)}đ`;
-};
-
-const formatDateTime = (isoString: string): string => {
-  const date = new Date(isoString);
-  return date.toLocaleString('vi-VN', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
 };
 
 const getStatusBadge = (status: string) => {
@@ -472,7 +462,15 @@ export default function PayoutManagement() {
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-500">{formatDateTime(payout.requestedAt)}</div>
+                          <div className="text-sm text-gray-500">
+                            {formatDateTime(payout.requestedAt, {
+                              day: '2-digit',
+                              month: '2-digit',
+                              year: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })}
+                          </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                           <div className="flex items-center space-x-2">
@@ -577,7 +575,13 @@ export default function PayoutManagement() {
                         <div>
                           <p className="text-sm text-gray-500">Ngày yêu cầu</p>
                           <p className="text-base font-medium text-gray-900">
-                            {formatDateTime(selectedPayout.requestedAt)}
+                            {formatDateTime(selectedPayout.requestedAt, {
+                              day: '2-digit',
+                              month: '2-digit',
+                              year: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })}
                           </p>
                         </div>
                       </div>
