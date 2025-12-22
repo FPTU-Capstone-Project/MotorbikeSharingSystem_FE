@@ -14,6 +14,9 @@ import {
   DocumentCheckIcon,
   ArrowRightOnRectangleIcon,
   DocumentTextIcon,
+  ChevronDownIcon,
+  ChevronRightIcon,
+  ArrowUpIcon,
 } from "@heroicons/react/24/outline";
 import { MotorbikeIcon } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -37,7 +40,15 @@ const navigation = [
   { name: "Quản lý xác minh", href: "/verification", icon: DocumentCheckIcon },
   { name: "Quản lý xe", href: "/vehicle-verification", icon: MotorbikeIcon },
   { name: "Chuyến đi chia sẻ", href: "/rides", icon: MapIcon },
-  { name: "Tài chính", href: "/payments", icon: CreditCardIcon },
+  {
+    name: "Tài chính",
+    href: "/payments",
+    icon: CreditCardIcon,
+    submenu: [
+      { name: "Quản lý tài chính", href: "/payments", icon: CreditCardIcon },
+      { name: "Quản lý rút tiền", href: "/payouts", icon: ArrowUpIcon },
+    ],
+  },
   { name: "Cấu hình giá", href: "/pricing", icon: DocumentTextIcon },
   { name: "Báo cáo", href: "/reports", icon: DocumentTextIcon },
   { name: "An toàn", href: "/safety", icon: ShieldCheckIcon },
@@ -433,10 +444,34 @@ const SidebarContent = memo(
     location: any;
     closeSidebar?: () => void;
   }) => {
+    const [expandedMenus, setExpandedMenus] = useState<Set<string>>(new Set());
+
+    const toggleMenu = (menuName: string) => {
+      setExpandedMenus((prev) => {
+        const newSet = new Set(prev);
+        if (newSet.has(menuName)) {
+          newSet.delete(menuName);
+        } else {
+          newSet.add(menuName);
+        }
+        return newSet;
+      });
+    };
+
+    // Auto-expand Finance menu if on payments or payouts page
+    useEffect(() => {
+      if (location.pathname === '/payments' || location.pathname === '/payouts') {
+        setExpandedMenus((prev) => new Set(prev).add('Tài chính'));
+      }
+    }, [location.pathname]);
+
     return (
       <nav className="flex-1 px-6 py-8 space-y-3 text-slate-600 dark:text-slate-300 transition-colors duration-300">
         {navigation.map((item, index) => {
-          const isActive = location.pathname === item.href;
+          const isActive = location.pathname === item.href || (item.submenu && item.submenu.some(sub => location.pathname === sub.href));
+          const hasSubmenu = item.submenu && item.submenu.length > 0;
+          const isExpanded = expandedMenus.has(item.name);
+
           return (
             <motion.div
               key={item.name}
@@ -444,42 +479,91 @@ const SidebarContent = memo(
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: index * 0.05, duration: 0.3 }}
             >
-              <Link
-                to={item.href}
-                onClick={closeSidebar}
-                className={cn(
-                  "group flex items-center px-4 py-3 text-sm font-semibold rounded-2xl transition-all duration-300 relative overflow-hidden",
-                  isActive
-                    ? "bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg transform scale-105"
-                    : "text-gray-600 hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-100 hover:text-gray-900 hover:scale-105 dark:text-slate-300 dark:hover:from-slate-800 dark:hover:to-slate-900 dark:hover:text-white"
-                )}
-              >
-                {isActive && (
-                  <motion.div
-                    layoutId="activeBackground"
-                    className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl"
-                    initial={false}
-                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                  />
-                )}
-                <item.icon
-                  className={cn(
-                    "relative mr-4 h-5 w-5 transition-all duration-300",
-                    isActive
-                      ? "text-white drop-shadow-sm"
-                      : "text-gray-400 group-hover:text-indigo-600 group-hover:scale-110 dark:text-slate-400 dark:group-hover:text-indigo-400"
+              <div>
+                <div className="flex items-center">
+                  <Link
+                    to={item.href}
+                    onClick={closeSidebar}
+                    className={cn(
+                      "group flex-1 flex items-center px-4 py-3 text-sm font-semibold rounded-2xl transition-all duration-300 relative overflow-hidden",
+                      isActive
+                        ? "bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg transform scale-105"
+                        : "text-gray-600 hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-100 hover:text-gray-900 hover:scale-105 dark:text-slate-300 dark:hover:from-slate-800 dark:hover:to-slate-900 dark:hover:text-white"
+                    )}
+                  >
+                    {isActive && (
+                      <motion.div
+                        layoutId="activeBackground"
+                        className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl"
+                        initial={false}
+                        transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                      />
+                    )}
+                    <item.icon
+                      className={cn(
+                        "relative mr-4 h-5 w-5 transition-all duration-300",
+                        isActive
+                          ? "text-white drop-shadow-sm"
+                          : "text-gray-400 group-hover:text-indigo-600 group-hover:scale-110 dark:text-slate-400 dark:group-hover:text-indigo-400"
+                      )}
+                      aria-hidden="true"
+                    />
+                    <span className="relative">{item.name}</span>
+                    {isActive && (
+                      <motion.div
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        className="ml-auto w-2 h-2 bg-white/60 rounded-full"
+                      />
+                    )}
+                  </Link>
+                  {hasSubmenu && (
+                    <button
+                      onClick={() => toggleMenu(item.name)}
+                      className={cn(
+                        "ml-2 p-2 rounded-lg transition-colors",
+                        isActive
+                          ? "text-white hover:bg-white/20"
+                          : "text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-slate-800"
+                      )}
+                    >
+                      {isExpanded ? (
+                        <ChevronDownIcon className="h-4 w-4" />
+                      ) : (
+                        <ChevronRightIcon className="h-4 w-4" />
+                      )}
+                    </button>
                   )}
-                  aria-hidden="true"
-                />
-                <span className="relative">{item.name}</span>
-                {isActive && (
+                </div>
+                {hasSubmenu && isExpanded && (
                   <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    className="ml-auto w-2 h-2 bg-white/60 rounded-full"
-                  />
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="ml-8 mt-2 space-y-1"
+                  >
+                    {item.submenu!.map((subItem) => {
+                      const isSubActive = location.pathname === subItem.href;
+                      return (
+                        <Link
+                          key={subItem.href}
+                          to={subItem.href}
+                          onClick={closeSidebar}
+                          className={cn(
+                            "group flex items-center px-4 py-2 text-sm font-medium rounded-xl transition-all duration-300",
+                            isSubActive
+                              ? "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300"
+                              : "text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white"
+                          )}
+                        >
+                          <subItem.icon className="mr-3 h-4 w-4" />
+                          <span>{subItem.name}</span>
+                        </Link>
+                      );
+                    })}
+                  </motion.div>
                 )}
-              </Link>
+              </div>
             </motion.div>
           );
         })}

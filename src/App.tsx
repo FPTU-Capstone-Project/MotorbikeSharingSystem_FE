@@ -17,6 +17,7 @@ const UserManagement = lazy(() => import('./pages/UserManagement'));
 const VerificationManagement = lazy(() => import('./pages/VerificationManagement'));
 const RideManagement = lazy(() => import('./pages/RideManagement'));
 const PaymentManagement = lazy(() => import('./pages/PaymentManagement'));
+const PayoutManagement = lazy(() => import('./pages/PayoutManagement'));
 const SafetyManagement = lazy(() => import('./pages/SafetyManagement'));
 // const Analytics = lazy(() => import('./pages/Analytics'));
 const RiderVehicleVerification = lazy(() => import('./pages/RiderVehicleVerification'));
@@ -113,6 +114,16 @@ function App() {
                       <ProtectedRoute>
                         <Layout>
                           <PaymentManagement />
+                        </Layout>
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/payouts"
+                    element={
+                      <ProtectedRoute>
+                        <Layout>
+                          <PayoutManagement />
                         </Layout>
                       </ProtectedRoute>
                     }
