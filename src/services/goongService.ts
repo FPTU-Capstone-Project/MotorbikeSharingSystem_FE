@@ -1,7 +1,7 @@
 const GOONG_MAPS_KEY =
   process.env.REACT_APP_GOONG_MAPS_KEY || 'KbM1t2DRaXJORXjDDIuySa95lsm3Rr76Gjd614HL';
 const GOONG_PLACES_KEY =
-  process.env.REACT_APP_GOONG_PLACES_KEY || '0wfldOkiVmb1eeKjtwnOV1InDkoB1izWGxBPXNvc';
+  process.env.REACT_APP_GOONG_PLACES_KEY || '2ijMiek93vt7uvQW6cJBEExvzUvT5VKkscRhpaBn';
 
 const BASE_URL = 'https://rsapi.goong.io';
 const PLACES_URL = `${BASE_URL}/Place`;
