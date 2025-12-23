@@ -9,13 +9,18 @@ interface ApiConfig {
   retryDelay: number;
 }
 
-// Determine API base URL - check environment variable first, then detect production
+// Production API URL
+const PRODUCTION_API_URL = 'https://api.mssus.it.com/api/v1';
+
+// Determine API base URL - always use production API as the reliable fallback
 const getBaseUrl = (): string => {
-  if (process.env.REACT_APP_API_BASE_URL) {
-    return process.env.REACT_APP_API_BASE_URL;
+  // Check environment variable - must be non-empty and start with http
+  const envUrl = process.env.REACT_APP_API_BASE_URL?.trim();
+  if (envUrl && envUrl.startsWith('http')) {
+    return envUrl;
   }
-  // Always use the production API domain as fallback
-  return 'https://api.mssus.it.com/api/v1';
+  // Always fallback to production API
+  return PRODUCTION_API_URL;
 };
 
 const BASE_URL = getBaseUrl();
