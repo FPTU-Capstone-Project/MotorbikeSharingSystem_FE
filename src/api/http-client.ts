@@ -19,23 +19,29 @@ interface CacheEntry<T> {
 class HttpClient {
   private cache: Map<string, CacheEntry<any>> = new Map();
   private pendingRequests: Map<string, Promise<any>> = new Map();
-  private authToken: string | null = null;
 
   constructor() {
-    this.authToken = localStorage.getItem('authToken');
+    // Token is now read dynamically from localStorage on each request
   }
 
   setAuthToken(token: string | null) {
-    this.authToken = token;
     if (token) {
       localStorage.setItem('authToken', token);
+      localStorage.setItem('token', token);
+      localStorage.setItem('accessToken', token);
     } else {
       localStorage.removeItem('authToken');
+      localStorage.removeItem('token');
+      localStorage.removeItem('accessToken');
     }
   }
 
   getAuthToken(): string | null {
-    return this.authToken;
+    // Always read fresh token from localStorage
+    return localStorage.getItem('authToken') 
+      || localStorage.getItem('token') 
+      || localStorage.getItem('accessToken')
+      || localStorage.getItem('access_token');
   }
 
   private buildUrl(endpoint: string, params?: Record<string, any>): string {
@@ -267,8 +273,9 @@ class HttpClient {
       ...fetchConfig.headers,
     };
 
-    if (this.authToken) {
-      headers['Authorization'] = `Bearer ${this.authToken}`;
+    const token = this.getAuthToken();
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
     }
 
     const requestPromise = this.fetchWithRetry<T>(url, { ...fetchConfig, method, headers }, retryAttempts);
