@@ -542,7 +542,7 @@ export default function RideManagement() {
 
   const getWsBaseUrl = (): string | null => {
     const base =
-      process.env.REACT_APP_API_BASE_URL || "http://localhost:8081/api/v1";
+      process.env.REACT_APP_API_BASE_URL || "https://api.mssus.it.com/api/v1";
     try {
       const url = new URL(base);
       url.protocol = url.protocol === "https:" ? "wss:" : "ws:";

@@ -1,7 +1,7 @@
 import toast from 'react-hot-toast';
 import { tokenService } from '../services/tokenService';
 
-const BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8081/api/v1';
+const BASE_URL = process.env.REACT_APP_API_BASE_URL || 'https://api.mssus.it.com/api/v1';
 let isRedirectingForAuth = false;
 
 export interface PageResponse<T> {
