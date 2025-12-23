@@ -22,7 +22,7 @@ export default function ForgotPasswordPage() {
 
     const trimmed = emailOrPhone.trim();
     if (!trimmed) {
-      toast.error('Vui lòng nhập email hoặc số điện thoại liên kết với tài khoản quản trị.');
+      toast.error('Vui lòng nhập email hoặc số điện thoại liên kết với tài khoản quản trị!');
       return;
     }
 
