@@ -9,8 +9,16 @@ interface ApiConfig {
   retryDelay: number;
 }
 
-// Use environment variable or fallback to production API
-const BASE_URL = process.env.REACT_APP_API_BASE_URL || 'https://api.mssus.it.com/api/v1';
+// Determine API base URL - check environment variable first, then detect production
+const getBaseUrl = (): string => {
+  if (process.env.REACT_APP_API_BASE_URL) {
+    return process.env.REACT_APP_API_BASE_URL;
+  }
+  // Always use the production API domain as fallback
+  return 'https://api.mssus.it.com/api/v1';
+};
+
+const BASE_URL = getBaseUrl();
 
 const API_CONFIG: ApiConfig = {
   baseURL: BASE_URL,
