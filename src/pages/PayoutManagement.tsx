@@ -124,6 +124,7 @@ export default function PayoutManagement() {
   const [failReason, setFailReason] = useState('');
   const [currentPage, setCurrentPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
+  const [viewMode, setViewMode] = useState<'pending' | 'all'>('all');
   const [pagination, setPagination] = useState({
     page: 0,
     page_size: 10,
@@ -133,45 +134,109 @@ export default function PayoutManagement() {
 
   useEffect(() => {
     loadPayouts();
-  }, [currentPage, pageSize]);
+  }, [currentPage, pageSize, viewMode]);
 
   const loadPayouts = async () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await transactionService.getAllTransactions({
-        page: currentPage,
-        size: pageSize,
-        sortBy: 'createdAt',
-        sortDir: 'desc',
-        type: 'PAYOUT',
-        actorKind: 'USER',
-      });
+      
+      if (viewMode === 'pending') {
+        // Use admin API to get pending payouts, then also fetch PROCESSING ones
+        const pendingPayouts = await walletService.getPendingPayouts();
+        
+        // Also get PROCESSING payouts from transactions (admin API only returns PENDING)
+        const processingResponse = await transactionService.getAllTransactions({
+          page: 0,
+          size: 100, // Get all processing payouts
+          sortBy: 'createdAt',
+          sortDir: 'desc',
+          type: 'PAYOUT',
+          status: 'PROCESSING',
+          actorKind: 'USER',
+        });
 
-      // Map TransactionResponse to PayoutDisplayData
-      const mappedPayouts: PayoutDisplayData[] = response.data.map((txn: TransactionResponse) => {
-        const bankInfo = extractBankInfoFromNote(txn.note);
-        return {
-          payoutRef: txn.pspRef || `TXN-${txn.txnId}`,
-          amount: txn.amount || 0,
-          bankName: bankInfo.bankName,
-          maskedAccountNumber: bankInfo.maskedAccountNumber,
-          accountHolderName: bankInfo.accountHolderName,
-          userEmail: txn.actorUsername || `user${txn.actorUserId}`,
-          userId: txn.actorUserId,
-          status: txn.status,
-          requestedAt: txn.createdAt,
-          txnId: txn.txnId,
-          groupId: txn.groupId || '',
-        };
-      });
+        // Map PendingPayoutResponse to PayoutDisplayData
+        const pendingMapped: PayoutDisplayData[] = pendingPayouts.map((payout) => ({
+          payoutRef: payout.payoutRef,
+          amount: payout.amount,
+          bankName: payout.bankName,
+          maskedAccountNumber: payout.maskedAccountNumber,
+          accountHolderName: payout.accountHolderName,
+          userEmail: payout.userEmail,
+          userId: payout.userId,
+          status: payout.status,
+          requestedAt: payout.requestedAt,
+          txnId: 0,
+          groupId: '',
+        }));
 
-      setPayouts(mappedPayouts);
-      setPagination(response.pagination);
+        // Map PROCESSING transactions
+        const processingMapped: PayoutDisplayData[] = processingResponse.data.map((txn: TransactionResponse) => {
+          const bankInfo = extractBankInfoFromNote(txn.note);
+          return {
+            payoutRef: txn.pspRef || `TXN-${txn.txnId}`,
+            amount: txn.amount || 0,
+            bankName: bankInfo.bankName,
+            maskedAccountNumber: bankInfo.maskedAccountNumber,
+            accountHolderName: bankInfo.accountHolderName,
+            userEmail: txn.actorUsername || `user${txn.actorUserId}`,
+            userId: txn.actorUserId,
+            status: txn.status,
+            requestedAt: txn.createdAt,
+            txnId: txn.txnId,
+            groupId: txn.groupId || '',
+          };
+        });
+
+        // Combine and sort by requestedAt
+        const combined = [...pendingMapped, ...processingMapped].sort((a, b) => 
+          new Date(b.requestedAt).getTime() - new Date(a.requestedAt).getTime()
+        );
+
+        setPayouts(combined);
+        setPagination({
+          page: 0,
+          page_size: combined.length,
+          total_pages: 1,
+          total_records: combined.length,
+        });
+      } else {
+        // View all payouts (including completed/failed) using transaction service
+        const allTransactionsResponse = await transactionService.getAllTransactions({
+          page: currentPage,
+          size: pageSize,
+          sortBy: 'createdAt',
+          sortDir: 'desc',
+          type: 'PAYOUT',
+          actorKind: 'USER',
+        });
+
+        // Map TransactionResponse to PayoutDisplayData
+        const mappedPayouts: PayoutDisplayData[] = allTransactionsResponse.data.map((txn: TransactionResponse) => {
+          const bankInfo = extractBankInfoFromNote(txn.note);
+          return {
+            payoutRef: txn.pspRef || `TXN-${txn.txnId}`,
+            amount: txn.amount || 0,
+            bankName: bankInfo.bankName,
+            maskedAccountNumber: bankInfo.maskedAccountNumber,
+            accountHolderName: bankInfo.accountHolderName,
+            userEmail: txn.actorUsername || `user${txn.actorUserId}`,
+            userId: txn.actorUserId,
+            status: txn.status,
+            requestedAt: txn.createdAt,
+            txnId: txn.txnId,
+            groupId: txn.groupId || '',
+          };
+        });
+
+        setPayouts(mappedPayouts);
+        setPagination(allTransactionsResponse.pagination);
+      }
     } catch (err: any) {
       console.error('Error loading payouts:', err);
       setError('Không thể tải danh sách yêu cầu rút tiền');
-      toast.error('Không thể tải danh sách yêu cầu rút tiền');
+      toast.error(err.message || 'Không thể tải danh sách yêu cầu rút tiền');
     } finally {
       setLoading(false);
     }
@@ -287,6 +352,34 @@ export default function PayoutManagement() {
             <p className="mt-2 text-gray-600">
               Xem và xử lý các yêu cầu rút tiền từ người dùng
             </p>
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => {
+                setViewMode('pending');
+                setCurrentPage(0);
+              }}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                viewMode === 'pending'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+            >
+              Chờ xử lý
+            </button>
+            <button
+              onClick={() => {
+                setViewMode('all');
+                setCurrentPage(0);
+              }}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                viewMode === 'all'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+            >
+              Tất cả
+            </button>
           </div>
         </div>
 
@@ -481,16 +574,18 @@ export default function PayoutManagement() {
                             >
                               <EyeIcon className="h-4 w-4" />
                             </button>
-                            {payout.status === 'PENDING' && (
+                            {(payout.status === 'PENDING' || payout.status === 'PROCESSING') && (
                               <>
-                                <button
-                                  onClick={() => openProcessModal(payout)}
-                                  className="text-blue-600 hover:text-blue-900 p-1 rounded"
-                                  title="Đánh dấu đang xử lý"
-                                  disabled={processingPayoutRef === payout.payoutRef}
-                                >
-                                  <ClockIcon className="h-4 w-4" />
-                                </button>
+                                {payout.status === 'PENDING' && (
+                                  <button
+                                    onClick={() => openProcessModal(payout)}
+                                    className="text-blue-600 hover:text-blue-900 p-1 rounded transition-colors"
+                                    title="Đánh dấu đang xử lý (Process)"
+                                    disabled={processingPayoutRef === payout.payoutRef}
+                                  >
+                                    <ClockIcon className="h-5 w-5" />
+                                  </button>
+                                )}
                                 <button
                                   onClick={() => openCompleteModal(payout)}
                                   className="text-green-600 hover:text-green-900 p-1 rounded"
@@ -517,17 +612,19 @@ export default function PayoutManagement() {
                 </tbody>
               </table>
             </div>
-            {/* Pagination */}
-            <Pagination
-              currentPage={currentPage}
-              totalPages={pagination.total_pages}
-              totalRecords={pagination.total_records}
-              pageSize={pageSize}
-              onPageChange={handlePageChange}
-              onPageSizeChange={handlePageSizeChange}
-              loading={loading}
-              pageSizeOptions={[5, 10, 25, 50]}
-            />
+            {/* Pagination - Only show for 'all' view mode */}
+            {viewMode === 'all' && (
+              <Pagination
+                currentPage={currentPage}
+                totalPages={pagination.total_pages}
+                totalRecords={pagination.total_records}
+                pageSize={pageSize}
+                onPageChange={handlePageChange}
+                onPageSizeChange={handlePageSizeChange}
+                loading={loading}
+                pageSizeOptions={[5, 10, 25, 50]}
+              />
+            )}
           </motion.div>
         )}
       </div>
@@ -719,6 +816,9 @@ export default function PayoutManagement() {
                         <XCircleIcon className="h-6 w-6" />
                       </button>
                     </div>
+                    <p className="text-sm text-gray-600 mb-4">
+                      Hoàn thành yêu cầu rút tiền <strong>{selectedPayout.payoutRef}</strong> bằng cách tải lên file bằng chứng chuyển khoản.
+                    </p>
                     <div className="space-y-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -788,6 +888,9 @@ export default function PayoutManagement() {
                         <XCircleIcon className="h-6 w-6" />
                       </button>
                     </div>
+                    <p className="text-sm text-gray-600 mb-4">
+                      Từ chối yêu cầu rút tiền <strong>{selectedPayout.payoutRef}</strong>. Số tiền sẽ được hoàn lại vào ví của người dùng.
+                    </p>
                     <div className="space-y-4">
                       <div className="bg-red-50 border border-red-200 rounded-lg p-3">
                         <div className="flex items-start">
