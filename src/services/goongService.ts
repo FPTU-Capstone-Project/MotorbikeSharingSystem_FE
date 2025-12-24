@@ -1,7 +1,8 @@
-const GOONG_MAPS_KEY =
-  process.env.REACT_APP_GOONG_MAPS_KEY || 'KbM1t2DRaXJORXjDDIuySa95lsm3Rr76Gjd614HL';
-const GOONG_PLACES_KEY =
-  process.env.REACT_APP_GOONG_PLACES_KEY || '2ijMiek93vt7uvQW6cJBEExvzUvT5VKkscRhpaBn';
+// Unified Goong API Key - same key used across all map components
+const GOONG_API_KEY = 'HSFVF5OYPQRcB5mKoJvyYJuknI16LAzvrgtDARwO';
+
+const GOONG_MAPS_KEY = process.env.REACT_APP_GOONG_MAPS_KEY || GOONG_API_KEY;
+const GOONG_PLACES_KEY = process.env.REACT_APP_GOONG_PLACES_KEY || GOONG_API_KEY;
 
 const BASE_URL = 'https://rsapi.goong.io';
 const PLACES_URL = `${BASE_URL}/Place`;
