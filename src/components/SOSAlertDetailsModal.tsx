@@ -883,11 +883,11 @@ export default function SOSAlertDetailsModal({
                                   ({contact.relationship})
                                 </span>
                               )}
-                              {/* {contact.isPrimary && (
+                              {contact.isPrimary && (
                                 <span className="ml-2 text-xs text-yellow-600">
                                   (Chính)
                                 </span>
-                              )} */}
+                              )}
                             </div>
                             <a
                               href={`tel:${contact.phone}`}
