@@ -351,6 +351,24 @@ function transformTimelineEvent(
   };
 }
 
+function transformContactInfo(contacts: any): EmergencyContact[] | undefined {
+  if (!contacts) return undefined;
+  
+  const parsed = typeof contacts === 'string' ? parseJson<any[]>(contacts) : contacts;
+  if (!Array.isArray(parsed)) return undefined;
+  
+  return parsed.map((c: any) => ({
+    id: c.contactId ?? c.id ?? 0,
+    userId: c.userId ?? 0,
+    name: c.name ?? '',
+    phone: c.phone ?? '',
+    relationship: c.relationship ?? undefined,
+    isPrimary: c.primary ?? c.isPrimary ?? false,
+    createdAt: c.createdAt ?? new Date().toISOString(),
+    updatedAt: c.updatedAt ?? undefined,
+  }));
+}
+
 function transformSosAlertResponse(alert: any): SOSAlert {
   if (!alert) {
     return {
@@ -385,7 +403,7 @@ function transformSosAlertResponse(alert: any): SOSAlert {
     currentLng: alert.currentLng ?? 0,
     description: alert.description || undefined,
     status: (alert.status || 'ACTIVE') as any,
-    contactInfo: parseJson(alert.contactInfo) || alert.contactInfo,
+    contactInfo: transformContactInfo(alert.contactInfo),
     rideSnapshot: parseJson(alert.rideSnapshot) || alert.rideSnapshot,
     fallbackContactUsed: Boolean(alert.fallbackContactUsed),
     autoCallTriggered: Boolean(alert.autoCallTriggered),

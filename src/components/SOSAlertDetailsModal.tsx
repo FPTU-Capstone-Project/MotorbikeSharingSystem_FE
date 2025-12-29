@@ -878,15 +878,23 @@ export default function SOSAlertDetailsModal({
                           <div key={index} className="text-sm">
                             <div className="font-medium text-gray-900">
                               {contact.name}
-                              {contact.isPrimary && (
+                              {contact.relationship && (
+                                <span className="ml-2 text-xs text-gray-500">
+                                  ({contact.relationship})
+                                </span>
+                              )}
+                              {/* {contact.isPrimary && (
                                 <span className="ml-2 text-xs text-yellow-600">
                                   (Chính)
                                 </span>
-                              )}
+                              )} */}
                             </div>
-                            <div className="text-gray-600 dark:text-slate-300">
+                            <a
+                              href={`tel:${contact.phone}`}
+                              className="text-blue-600 hover:text-blue-800 hover:underline"
+                            >
                               {contact.phone}
-                            </div>
+                            </a>
                           </div>
                         ))}
                       </div>
