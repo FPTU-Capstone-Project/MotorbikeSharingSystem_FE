@@ -8,6 +8,7 @@ import LoadingSpinner from './components/LoadingSpinner';
 import PerformanceOptimizer from './components/PerformanceOptimizer';
 import ProtectedRoute from './components/ProtectedRoute';
 import GlobalTokenMonitor from './components/GlobalTokenMonitor';
+import GlobalSosNotification from './components/GlobalSosNotification';
 
 // Lazy load all pages for optimal performance
 const LoginPage = lazy(() => import('./pages/LoginPage'));
@@ -37,6 +38,7 @@ function App() {
         <ThemeProvider>
           <AuthProvider>
             <GlobalTokenMonitor />
+            <GlobalSosNotification />
             <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
               <Suspense fallback={<LoadingSpinner />}>
                 <Routes>
